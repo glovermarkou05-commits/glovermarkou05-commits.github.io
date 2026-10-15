@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#07111f">
+<title>MG Web Studio Cloud | Portal del cliente (demo)</title>
+<style>
+:root{--bg:#07111f;--side:#0a1b2c;--card:#0f263e;--card2:#132e49;--line:rgba(255,255,255,.09);--ink:#eaf5ff;--muted:#91aabd;--accent:#51cfff;--violet:#8495ff;--ok:#56dfb0;--warning:#ffd187}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:radial-gradient(circle at 90% 0,rgba(61,127,224,.09),transparent 36%),var(--bg);color:var(--ink);font:14px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+a{color:inherit;text-decoration:none}h1,h2,h3,p{margin-top:0}h1{font-size:clamp(26px,3.1vw,38px);line-height:1.13;letter-spacing:-.05em;margin:7px 0}h2{font-size:18px}h3{font-size:15px}
+.app{min-height:100vh;display:grid;grid-template-columns:255px minmax(0,1fr)}
+.sidebar{background:var(--side);border-right:1px solid var(--line);padding:25px 15px;display:flex;flex-direction:column;gap:20px}
+.logo{display:flex;align-items:center;gap:10px;padding:2px 11px 18px}.logo-mark{background:linear-gradient(125deg,var(--accent),var(--violet));border-radius:13px;width:43px;height:43px;display:grid;place-items:center;color:#061523;font-size:16px;font-weight:1000;letter-spacing:-2px}
+.logo b{display:block;font-size:12px;letter-spacing:.09em;line-height:1.1}.logo small{display:block;color:#7d9ab2;font-size:9px;letter-spacing:.12em;margin-top:5px}
+.navtitle{font-weight:900;color:#7798af;font-size:10px;letter-spacing:.16em;padding:0 12px}.nav{display:grid;gap:4px}.nav button{display:flex;align-items:center;gap:11px;text-align:left;border:1px solid transparent;background:transparent;color:#a5bccf;border-radius:11px;padding:10px 12px;font-weight:700}.nav button[aria-current=page]{color:#f0faff;background:rgba(81,207,255,.12);border-color:rgba(81,207,255,.17)}.nav button:hover{background:rgba(255,255,255,.045)}
+.ico{font-size:18px;width:23px;text-align:center}.navbottom{margin-top:auto;border:1px solid var(--line);border-radius:14px;padding:14px;background:rgba(255,255,255,.025)}.navbottom b{display:block;margin-bottom:3px}.navbottom small{color:#9bb3c5}
+main{min-width:0;padding:20px clamp(16px,3vw,44px) 42px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:3px 0 18px}.top small{color:#9cb4c7}.top-right{display:flex;align-items:center;gap:11px}.badge{font-size:10px;font-weight:850;letter-spacing:.07em;color:#ffdd9b;border:1px solid rgba(255,211,135,.23);background:rgba(255,211,135,.065);border-radius:999px;padding:6px 10px}.avatar{height:37px;width:37px;border-radius:11px;display:grid;place-items:center;color:#031521;background:linear-gradient(130deg,#64daff,#959cff);font-weight:900}
+.menuToggle{display:none}.content{max-width:1240px;margin:auto;padding-top:34px}
+.pagehead{display:flex;align-items:end;justify-content:space-between;gap:15px;margin-bottom:25px}.pagehead p{max-width:680px;color:var(--muted);margin:7px 0 0}.eyebrow{color:#8adfff;font-size:11px;font-weight:850;letter-spacing:.15em;text-transform:uppercase}
+.primary,.secondary,.danger{border-radius:11px;padding:11px 15px;font-weight:800;font-size:12px}.primary{border:0;background:linear-gradient(120deg,#52d0ff,#8d95ff);color:#061523}.secondary{background:rgba(255,255,255,.035);border:1px solid var(--line);color:#e6f6ff}.danger{border:1px solid rgba(255,158,158,.25);color:#ffc6c6;background:rgba(246,93,93,.065)}
+.row{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.grid{display:grid;gap:16px}.kpis{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:18px}.split{grid-template-columns:minmax(0,1.1fr) minmax(300px,.9fr)}.cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+.card{background:linear-gradient(135deg,rgba(17,41,68,.94),rgba(11,30,49,.97));border:1px solid var(--line);border-radius:18px;padding:20px}.card h2{margin:0 0 13px}.card p{color:var(--muted)}
+.kpi span{color:#a0b7cb;font-size:12px;font-weight:750}.kpi strong{display:block;font-size:28px;letter-spacing:-.05em;margin:10px 0 4px}.hint{font-size:11px;color:var(--muted)}
+.tag{display:inline-flex;background:rgba(83,218,177,.085);border:1px solid rgba(83,218,177,.14);color:#90f4cf;border-radius:8px;padding:4px 8px;font-size:10px;font-weight:850}.tag.warn{background:rgba(255,210,135,.06);border-color:rgba(255,210,135,.16);color:#ffe0a5}
+.field{display:grid;gap:5px;font-size:12px;font-weight:700;color:#bdd3e5}.field input,.field select,.field textarea{width:100%;padding:11px 12px;background:#081b2f;border:1px solid rgba(255,255,255,.12);border-radius:10px;color:#f1f9ff}.field textarea{min-height:106px;resize:vertical}.field input[type=color]{padding:4px;height:42px;max-width:105px}
+.formgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}.full{grid-column:1/-1}.sectionactions{margin-top:18px;display:flex;justify-content:flex-end;gap:9px;flex-wrap:wrap}
+.tableScroll{overflow-x:auto}.table{width:100%;border-collapse:collapse;min-width:470px}.table th{text-align:left;font-size:10px;letter-spacing:.08em;color:#83a0b5;padding:12px 10px;border-bottom:1px solid var(--line)}.table td{padding:13px 10px;border-bottom:1px solid rgba(255,255,255,.05);font-size:12px;vertical-align:middle}.table tr:last-child td{border-bottom:0}
+.sitePreview{overflow:hidden;border-radius:17px;border:1px solid rgba(255,255,255,.16);background:#fbfcff;color:#203044}.previewbar{padding:10px 13px;background:#e9eef7;color:#4d6375;font-size:10px;display:flex;align-items:center;justify-content:space-between;gap:10px}.previewbar span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.previewInner{--site-accent:#186999}.previewHero{padding:42px 23px;background:linear-gradient(130deg,color-mix(in srgb,var(--site-accent) 13%,white),#fff);min-height:220px}.previewLogo{font-size:12px;color:var(--site-accent);font-weight:850;letter-spacing:.12em;text-transform:uppercase}.previewHero h2{font-size:clamp(22px,3vw,34px);line-height:1.12;margin:22px 0 12px;max-width:500px;letter-spacing:-.04em}.previewHero p{font-size:12px;line-height:1.6;color:#476175;max-width:440px}.previewBtn{display:inline-block;margin-top:12px;padding:10px 16px;font-weight:800;font-size:11px;background:var(--site-accent);color:white;border-radius:9px}
+.previewSection{padding:23px}.previewSection h3{font-size:15px;margin-bottom:10px}.previewProducts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.previewProduct{border:1px solid #d9e5ee;border-radius:10px;padding:12px;font-size:11px}.previewProduct b{display:block;margin-top:5px;color:#1c506e}.previewPromo{background:#ffefd1;border:1px solid #ecd6a9;color:#745014;border-radius:9px;padding:11px;margin-top:15px;font-size:12px}
+.tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px}.tile{border:1px solid var(--line);background:rgba(255,255,255,.03);padding:15px;border-radius:14px}.tile b{display:block;font-size:13px;margin-bottom:5px}.tile small{color:var(--muted)}
+.note{border-left:3px solid var(--accent);padding:11px 15px;background:rgba(81,207,255,.035);font-size:12px;color:#9eb9cc;margin-top:18px}.warnnote{border-left-color:var(--warning);background:rgba(255,211,135,.035)}
+.empty{color:var(--muted);padding:30px;text-align:center}.historyItem{border:1px solid var(--line);padding:13px;border-radius:12px;margin-bottom:10px}.historyItem b{display:block}
+.dialog{max-width:560px;width:calc(100% - 28px);background:#112a43;border:1px solid rgba(81,207,255,.24);color:#eaf6ff;border-radius:18px;padding:25px;box-shadow:0 24px 90px rgba(0,0,0,.8)}.dialog::backdrop{background:rgba(0,0,0,.73)}.dialog p{color:var(--muted)}
+.dialogActions{margin-top:18px;display:flex;justify-content:flex-end;gap:9px}
+.toast{position:fixed;right:18px;bottom:18px;z-index:99;display:none;max-width:400px;background:#173d5c;border:1px solid #306f91;border-radius:12px;padding:13px 17px;color:#e5f7ff;box-shadow:0 18px 50px #0009}
+footer{padding-top:35px;color:#7794a9;font-size:11px}
+@media(max-width:1120px){.app{grid-template-columns:210px minmax(0,1fr)}.kpis{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}}
+@media(max-width:750px){.app{grid-template-columns:1fr}.sidebar{position:fixed;z-index:50;inset:0 auto 0 0;width:255px;transform:translateX(-100%);transition:transform .22s}.sidebar.open{transform:translateX(0)}.menuToggle{display:inline-block;margin-bottom:4px}.top{flex-wrap:wrap}.kpis,.cards,.formgrid,.tiles{grid-template-columns:1fr}.full{grid-column:auto}.pagehead{align-items:start;flex-direction:column}.content{padding-top:23px}.previewProducts{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){.sidebar{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar" id="sidebar">
+<div class="logo"><div class="logo-mark">MG</div><div><b>MG WEB STUDIO</b><small>CLOUD · PORTAL CLIENTE</small></div></div>
+<div class="navtitle">MI NEGOCIO</div><nav class="nav" id="nav" aria-label="Menú del cliente"></nav>
+<div class="navbottom"><b>Panel de demostración</b><small>Datos ficticios, edición local temporal. No se conecta a Supabase ni publica en internet.</small></div>
+</aside>
+<main>
+<header class="top">
+<div><button class="secondary menuToggle" id="menuToggle" aria-label="Abrir menú">☰ Menú</button><div class="eyebrow">MG DIGITAL SOLUTIONS / CLIENTE</div><small>Una plataforma para administrar tu presencia digital.</small></div>
+<div class="top-right"><span class="badge">MODO DEMOSTRACIÓN</span><div class="avatar">MG</div></div>
+</header>
+<div class="content" id="content"></div>
+<footer>© MG Digital Solutions — Portal de demostración. Las operaciones no se almacenan ni se envían a servicios externos.</footer>
+</main>
+</div>
+<dialog class="dialog" id="dialog"><h2 id="dialogTitle">Nuevo registro</h2><p id="dialogDescription">No se guardará en un servidor.</p><form id="modalForm"><div id="modalFields" class="formgrid"></div><div class="dialogActions"><button class="secondary" type="button" id="modalClose">Cancelar</button><button class="primary" type="submit">Guardar en demo</button></div></form></dialog>
+<div role="status" aria-live="polite" id="toast" class="toast"></div>
+<script>
+(function(){
+"use strict";
+var seed=[
+{id:"o-a",name:"Café Horizonte (ejemplo)",site:{name:"Café Horizonte",slug:"cafe-horizonte",plan:"Business",domain:"cafe-horizonte.ejemplo.invalid",draft:{title:"Un café para compartir buenos momentos",description:"Disfruta café de especialidad, postres y un ambiente acogedor.",cta:"Conoce nuestro menú",color:"#186999",phone:"Teléfono por configurar",products:[{id:"p1",name:"Café americano",price:2.5,visible:true},{id:"p2",name:"Capuchino",price:3.5,visible:true}],promos:[{id:"pr1",title:"Combina café y postre",active:true}]},published:null,history:[],draftRevision:1}},
+{id:"o-b",name:"Papelería Nube (ejemplo)",site:{name:"Papelería Nube",slug:"papeleria-nube",plan:"Start",domain:"papeleria-nube.ejemplo.invalid",draft:{title:"Ideas, color y materiales para crear",description:"Encuentra artículos escolares, papelería y materiales artísticos.",cta:"Explorar catálogo",color:"#744db6",phone:"Contacto por configurar",products:[{id:"p1",name:"Cuaderno universitario",price:2.75,visible:true},{id:"p2",name:"Set de marcadores",price:5.95,visible:true}],promos:[]},published:null,history:[],draftRevision:1}}
+];
+function deepCopy(x){return JSON.parse(JSON.stringify(x));}
+var organizations=deepCopy(seed),activeOrg="o-a",activeRole="CLIENT_OWNER",tab="inicio",previewMode="draft",viewPublication=false;
+var navItems=[["inicio","▦","Inicio"],["contenido","✎","Editar página"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
+var $=function(id){return document.getElementById(id);};
+function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function getOrg(){return organizations.find(function(x){return x.id===activeOrg;});}
+function site(){return getOrg().site;}
+function canEdit(){return activeRole!=="CLIENT_VIEWER";}
+function canPublish(){return activeRole==="CLIENT_OWNER"||activeRole==="CLIENT_ADMIN";}
+function money(v){return new Intl.NumberFormat("es-EC",{style:"currency",currency:"USD"}).format(v);}
+function notice(msg){var t=$("toast");t.textContent=msg;t.style.display="block";clearTimeout(notice.timer);notice.timer=setTimeout(function(){t.style.display="none";},4200);}
+function banner(){return '<div class="note warnnote"><strong>SIMULACIÓN:</strong> sin inicio de sesión, sin base de datos y sin publicación real. Las restricciones de rol que se muestran aquí son únicamente visuales. Nunca introduzcas datos personales reales.</div>';}
+function dropdown(){
+return '<label class="field" style="min-width:205px">Negocio de ejemplo<select id="orgSwitch">'+organizations.map(function(o){return '<option value="'+esc(o.id)+'" '+(o.id===activeOrg?"selected":"")+'>'+esc(o.name)+'</option>';}).join("")+'</select></label>'+
+'<label class="field" style="min-width:170px">Vista de rol (simulada)<select id="roleSwitch">'+["CLIENT_OWNER","CLIENT_ADMIN","CLIENT_EDITOR","CLIENT_VIEWER"].map(function(r){return '<option value="'+r+'" '+(r===activeRole?"selected":"")+'>'+r.replace("CLIENT_","")+'</option>';}).join("")+'</select></label>';
+}
+function head(title,desc,actions){return '<div class="pagehead"><div><div class="eyebrow">'+esc(getOrg().name)+'</div><h1>'+title+'</h1><p>'+desc+'</p></div>'+ (actions||"")+'</div>';}
+function navDraw(){$("nav").innerHTML=navItems.map(function(item){return '<button type="button" data-tab="'+item[0]+'" '+(item[0]===tab?'aria-current="page"':"")+'><span class="ico">'+item[1]+'</span>'+item[2]+'</button>';}).join("");$("nav").querySelectorAll("[data-tab]").forEach(function(el){el.addEventListener("click",function(){tab=el.dataset.tab;$("sidebar").classList.remove("open");render();});});}
+function tag(s){return '<span class="tag '+(s==="Borrador"?"warn":"")+'">'+esc(s)+'</span>';}
+function previewCard(data,label){
+var products=data.products.filter(function(p){return p.visible;});
+var promos=data.promos.filter(function(p){return p.active;});
+var color=/^#[0-9a-fA-F]{6}$/.test(data.color)?data.color:"#186999";
+return '<div class="sitePreview"><div class="previewbar"><span>◉ '+esc(site().domain)+'</span><b>'+esc(label)+'</b></div><div class="previewInner" style="--site-accent:'+color+'">'+
+'<div class="previewHero"><div class="previewLogo">'+esc(site().name)+'</div><h2>'+esc(data.title)+'</h2><p>'+esc(data.description)+'</p><span class="previewBtn">'+esc(data.cta)+' →</span></div>'+
+'<div class="previewSection"><h3>Productos y servicios</h3><div class="previewProducts">'+(products.length?products.slice(0,4).map(function(p){return '<div class="previewProduct">'+esc(p.name)+'<b>'+money(p.price)+'</b></div>';}).join(""):'<div class="previewProduct">Sin productos visibles.</div>')+'</div>'+
+promos.slice(0,2).map(function(p){return '<div class="previewPromo">✦ '+esc(p.title)+'</div>';}).join("")+'</div></div></div>';
+}
+function intro(){
+var s=site(),draft=s.draft;
+return head("Bienvenido a tu espacio","Administra tu página web de forma sencilla: personaliza, agrega productos y revisa antes de publicar.",'<button class="primary" data-go="contenido">Editar mi página →</button>')+
+'<div class="grid kpis">'+
+'<div class="card kpi"><span>Plan asignado (demo)</span><strong>'+esc(s.plan)+'</strong><div class="hint">Servicio de muestra</div></div>'+
+'<div class="card kpi"><span>Productos</span><strong>'+draft.products.length+'</strong><div class="hint">Catálogo del negocio</div></div>'+
+'<div class="card kpi"><span>Promociones activas</span><strong>'+draft.promos.filter(function(x){return x.active;}).length+'</strong><div class="hint">Borrador editable</div></div>'+
+'<div class="card kpi"><span>Versiones publicadas</span><strong>'+s.history.length+'</strong><div class="hint">Simulación sin despliegue</div></div></div>'+
+'<div class="grid split"><section class="card"><h2>Tu página web</h2>'+previewCard(draft,"Vista de borrador")+'<div class="sectionactions"><button class="secondary" data-go="vista">Revisar vista previa</button></div></section>'+
+'<section class="card"><h2>Tu lista de trabajo</h2><div class="tiles" style="grid-template-columns:1fr">'+
+'<div class="tile"><b>1. Personaliza tu portada</b><small>Cambia el título, la descripción y el botón principal.</small></div>'+
+'<div class="tile"><b>2. Revisa tu catálogo</b><small>Agrega productos, precios y controla la visibilidad.</small></div>'+
+'<div class="tile"><b>3. Promociona novedades</b><small>Activa o desactiva campañas según tu negocio.</small></div>'+
+'<div class="tile"><b>4. Publica cuando esté listo</b><small>El propietario o administrador puede simular la publicación.</small></div></div></section></div>'+banner();
+}
+function editor(){
+var d=site().draft;
+return head("Editar mi página","Personaliza el contenido principal. Guarda borradores antes de simular una publicación.",'')+
+'<div class="grid split"><section class="card"><h2>Contenido y diseño</h2><form id="editForm" class="formgrid">'+
+'<label class="field full">Título principal<input name="title" maxlength="100" required value="'+esc(d.title)+'"></label>'+
+'<label class="field full">Descripción<textarea name="description" maxlength="300" required>'+esc(d.description)+'</textarea></label>'+
+'<label class="field">Texto del botón<input name="cta" maxlength="45" required value="'+esc(d.cta)+'"></label>'+
+'<label class="field">Color principal<input name="color" type="color" value="'+esc(d.color)+'"></label>'+
+'<label class="field full">Contacto visible<input name="phone" maxlength="80" value="'+esc(d.phone)+'"></label>'+
+'<div class="sectionactions full"><button type="submit" class="primary" '+(!canEdit()?"disabled":"")+'>Guardar borrador</button></div></form></section>'+
+'<section class="card"><h2>Vista de tu diseño</h2>'+previewCard(d,"Vista de borrador")+'</section></div>'+banner();
+}
+function catalog(){
+var s=site();return head("Mi catálogo","Crea productos, revisa precios y elige qué artículos mostrar en tu página.",'<button class="primary" data-modal="product" '+(!canEdit()?"disabled":"")+'>+ Agregar producto</button>')+
+'<section class="card"><div class="tableScroll"><table class="table"><thead><tr><th>PRODUCTO</th><th>PRECIO USD</th><th>VISIBILIDAD</th><th>ACCIÓN</th></tr></thead><tbody>'+
+s.draft.products.map(function(p){return '<tr><td>'+esc(p.name)+'</td><td>'+money(p.price)+'</td><td>'+tag(p.visible?"Visible":"Oculto")+'</td><td><div class="row"><button class="secondary" data-toggle-product="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>'+(p.visible?"Ocultar":"Mostrar")+'</button><button class="danger" data-remove-product="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Quitar</button></div></td></tr>';}).join("")+
+'</tbody></table></div>'+(s.draft.products.length?"":'<div class="empty">Todavía no tienes productos en el borrador.</div>')+'</section>'+banner();
+}
+function promotions(){
+return head("Promociones","Administra banners y campañas sencillas, sin modificar otras páginas.",'<button class="primary" data-modal="promo" '+(!canEdit()?"disabled":"")+'>+ Nueva promoción</button>')+
+'<div class="grid cards">'+(site().draft.promos.length?site().draft.promos.map(function(p){return '<article class="card"><div class="eyebrow">PROMOCIÓN</div><h2 style="margin-top:12px">'+esc(p.title)+'</h2>'+tag(p.active?"Activa":"Pausada")+
+'<div class="sectionactions"><button class="secondary" data-toggle-promo="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>'+(p.active?"Pausar":"Activar")+'</button><button class="danger" data-remove-promo="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Quitar</button></div></article>';}).join(""):'<div class="card empty">Aún no has creado promociones de demostración.</div>')+'</div>'+banner();
+}
+function preview(){
+var s=site();var published=Boolean(s.published);var viewing=previewMode==="published"&&published;var data=viewing?s.published:s.draft;
+return head("Vista previa de mi página","Compara el borrador con la última versión publicada de manera simulada.",'<div class="row"><button class="secondary" data-preview="draft">Borrador</button><button class="secondary" data-preview="published" '+(!published?"disabled":"")+'>Publicada (demo)</button></div>')+
+'<div class="grid split"><section class="card"><h2>'+(viewing?"Última publicación simulada":"Borrador actual")+'</h2>'+previewCard(data,viewing?"Publicación simulada":"Borrador")+'</section>'+
+'<section class="card"><h2>Control editorial</h2><div class="tiles" style="grid-template-columns:1fr"><div class="tile"><b>Revisión de borrador: '+s.draftRevision+'</b><small>Los cambios solo viven durante esta sesión.</small></div>'+
+'<div class="tile"><b>Publicaciones simuladas: '+s.history.length+'</b><small>Publicar aquí no modifica páginas reales, DNS ni hosting.</small></div><div class="tile"><b>Permiso actual: '+esc(activeRole)+'</b><small>La verificación de permisos real llegará con la autenticación y la base de datos.</small></div></div>'+
+'<div class="sectionactions"><button class="primary" data-publish="yes" '+(!canPublish()?"disabled":"")+'>Simular publicación</button></div></section></div>'+banner();
+}
+function history(){
+var s=site();
+return head("Historial de versiones","Cada publicación simulada genera una copia del contenido que se puede recuperar en la demostración.")+
+'<section class="card"><h2>Publicaciones guardadas durante esta sesión</h2>'+
+(s.history.length?s.history.slice().reverse().map(function(v){return '<div class="historyItem"><div class="row" style="justify-content:space-between"><div><b>Publicación '+v.n+'</b><div class="hint">Revisión '+v.rev+' · '+esc(v.at)+'</div></div><button class="secondary" data-restore="'+v.n+'" '+(!canEdit()?"disabled":"")+'>Recuperar como borrador</button></div></div>';}).join(""):'<div class="empty">Todavía no hay publicaciones simuladas.</div>')+'</section>'+banner();
+}
+function domain(){
+var s=site();
+return head("Dominio y plan","Consulta la configuración de ejemplo. La administración real de DNS, facturación y correo se habilitará posteriormente.")+
+'<div class="grid cards"><article class="card"><h2>Dominio de ejemplo</h2><div class="tile"><b>'+esc(s.domain)+'</b><small>No es una dirección publicada. El sufijo .invalid evita usar un sitio real.</small></div><p style="margin-top:18px">Para conectar dominios reales será necesario verificar su titularidad y configurar el certificado SSL.</p></article>'+
+'<article class="card"><h2>Plan actual (demo)</h2><div class="tile"><b>MG '+esc(s.plan)+'</b><small>Precio, capacidades y condiciones comerciales pendientes de aprobación final.</small></div><p style="margin-top:18px">No existen cobros, renovaciones ni suscripciones activas en esta pantalla.</p></article></div>'+banner();
+}
+function support(){
+return head("Ayuda y soporte","Una guía inicial para autogestionar tu página. El sistema real de tickets se incorporará más adelante.")+
+'<div class="grid cards"><div class="card"><h2>¿Cómo actualizo mi página?</h2><p>Entra a «Editar página», actualiza los campos y guarda el borrador. Luego revisa «Vista previa».</p></div><div class="card"><h2>¿Cómo cambio un precio?</h2><p>En esta demostración puedes quitar el producto y agregarlo con un precio nuevo. La edición completa llegará con el CMS real.</p></div><div class="card"><h2>¿Cómo publico?</h2><p>En «Vista previa», el propietario o administrador puede simular la publicación. No se realizan despliegues externos.</p></div><div class="card"><h2>¿Cómo solicito soporte?</h2><p>En producción podrás abrir tickets, adjuntar archivos y consultar el seguimiento dentro de tu cuenta.</p></div></div>'+banner();
+}
+function render(){
+navDraw();
+var pages={inicio:intro,contenido:editor,catalogo:catalog,promociones:promotions,vista:preview,historial:history,dominio:domain,soporte:support};
+$("content").innerHTML='<div class="card" style="margin-bottom:20px"><div class="row" style="justify-content:space-between;align-items:end"><div><div class="eyebrow">SESIÓN DE PRUEBA</div><p style="margin:5px 0 0;color:var(--muted)">Alterna negocios y roles ficticios para revisar el diseño. Esta selección NO es autenticación.</p></div><div class="row">'+dropdown()+'</div></div></div>'+pages[tab]();
+$("orgSwitch").onchange=function(){activeOrg=this.value;previewMode="draft";render();};
+$("roleSwitch").onchange=function(){activeRole=this.value;render();};
+$("content").querySelectorAll("[data-go]").forEach(function(b){b.onclick=function(){tab=b.dataset.go;render();};});
+$("content").querySelectorAll("[data-modal]").forEach(function(b){b.onclick=function(){if(!canEdit())return;showModal(b.dataset.modal);};});
+$("content").querySelectorAll("[data-preview]").forEach(function(b){b.onclick=function(){previewMode=b.dataset.preview;render();};});
+$("content").querySelectorAll("[data-toggle-product]").forEach(function(b){b.onclick=function(){if(!canEdit())return;var p=site().draft.products.find(function(x){return x.id===b.dataset.toggleProduct;});if(p){p.visible=!p.visible;bump();}};});
+$("content").querySelectorAll("[data-remove-product]").forEach(function(b){b.onclick=function(){if(!canEdit())return;site().draft.products=site().draft.products.filter(function(x){return x.id!==b.dataset.removeProduct;});bump();};});
+$("content").querySelectorAll("[data-toggle-promo]").forEach(function(b){b.onclick=function(){if(!canEdit())return;var p=site().draft.promos.find(function(x){return x.id===b.dataset.togglePromo;});if(p){p.active=!p.active;bump();}};});
+$("content").querySelectorAll("[data-remove-promo]").forEach(function(b){b.onclick=function(){if(!canEdit())return;site().draft.promos=site().draft.promos.filter(function(x){return x.id!==b.dataset.removePromo;});bump();};});
+$("content").querySelectorAll("[data-publish]").forEach(function(b){b.onclick=function(){if(!canPublish()){notice("Rol sin permiso para simular publicación.");return;}var s=site();var n=s.history.length+1;var snapshot=deepCopy(s.draft);s.published=snapshot;s.history.push({n:n,rev:s.draftRevision,at:new Date().toLocaleString("es-EC"),data:snapshot});previewMode="published";render();notice("Publicación simulada guardada en memoria. No se modificó ningún sitio real.");};});
+$("content").querySelectorAll("[data-restore]").forEach(function(b){b.onclick=function(){if(!canEdit())return;var v=site().history.find(function(x){return String(x.n)===b.dataset.restore;});if(v){site().draft=deepCopy(v.data);bump();notice("Versión restaurada únicamente al borrador de la demo.");}};});
+var edit=$("editForm");if(edit)edit.onsubmit=function(e){e.preventDefault();if(!canEdit())return;var d=new FormData(edit),t=site().draft;var title=String(d.get("title")||"").trim(),description=String(d.get("description")||"").trim(),cta=String(d.get("cta")||"").trim(),color=String(d.get("color")||"");
+if(title.length<3||title.length>100||description.length<3||description.length>300||cta.length<2||cta.length>45||!/^#[0-9a-fA-F]{6}$/.test(color)){notice("Revisa la longitud de los textos y el color.");return;}
+t.title=title;t.description=description;t.cta=cta;t.color=color;t.phone=String(d.get("phone")||"").trim().slice(0,80);bump();notice("Borrador actualizado en la demostración.");};
+}
+function bump(){site().draftRevision++;render();}
+function showModal(kind){
+$("dialogTitle").textContent=kind==="product"?"Nuevo producto":"Nueva promoción";$("dialogDescription").textContent="Los datos se agregan al negocio de ejemplo seleccionado y desaparecen al recargar.";
+$("modalForm").dataset.kind=kind;
+$("modalFields").innerHTML=kind==="product"?'<label class="field full">Nombre<input name="name" required maxlength="90" placeholder="Ejemplo: Taza decorada"></label><label class="field">Precio USD<input name="price" type="number" required min="0" max="100000" step="0.01" placeholder="5.00"></label><label class="field">Visible<select name="visible"><option value="yes">Sí</option><option value="no">No</option></select></label>':'<label class="field full">Título de promoción<input name="name" required maxlength="100" placeholder="Ejemplo: Descuento de temporada"></label><label class="field full">Estado<select name="active"><option value="yes">Activa</option><option value="no">Pausada</option></select></label>';
+$("dialog").showModal();
+}
+$("modalForm").onsubmit=function(e){
+e.preventDefault();if(!canEdit())return;
+var kind=e.currentTarget.dataset.kind,d=new FormData(e.currentTarget),name=String(d.get("name")||"").trim();
+if(name.length<2){notice("Ingresa un nombre válido.");return;}
+var id="demo-"+String(Date.now())+"-"+String(Math.floor(Math.random()*100000));
+if(kind==="product"){var amount=Number(d.get("price"));if(!Number.isFinite(amount)||amount<0||amount>100000||Math.round(amount*100)/100!==amount){notice("Ingresa un precio válido con máximo dos decimales.");return;}site().draft.products.push({id:id,name:name,price:amount,visible:d.get("visible")==="yes"});}
+else{site().draft.promos.push({id:id,title:name,active:d.get("active")==="yes"});}
+$("dialog").close();bump();notice("Registro agregado solo a la demostración.");
+};
+$("modalClose").onclick=function(){$("dialog").close();};
+$("menuToggle").onclick=function(){$("sidebar").classList.toggle("open");};
+render();
+})();
+</script>
+</body>
+</html>
