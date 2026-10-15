@@ -103,7 +103,7 @@ var seed=[
 function deepCopy(x){return JSON.parse(JSON.stringify(x));}
 var organizations=deepCopy(seed),activeOrg="o-a",activeRole="CLIENT_OWNER",tab="inicio",previewMode="draft",viewPublication=false;
 
-/* Límites aprobados MG Web Emprende. Son controles DEMO, no sustituyen backend/RLS. */
+/* Límites de ejemplo NO APROBADOS; pendientes de definición comercial. Controles DEMO, no reemplazan backend/RLS. */
 var PLAN_RULES={Start:{sections:5,pages:1},Crece:{sections:8,pages:3},Pro:{sections:12,pages:5}};
 var BLOCKS={
  text:{name:"Texto y descripción",tier:"Start",defaultTitle:"Nuestra historia",defaultBody:"Escribe aquí una presentación de tu negocio."},
@@ -266,7 +266,7 @@ function visualBuilder(){
  imageInput+'<div class="sectionactions"><button type="submit" class="secondary" '+disabled+'>Guardar cambios</button></div></form></article>';
  }).join("");
  return head("Editor visual","Agrega, edita, oculta y reordena secciones sin programar. Cada plan tiene un límite establecido.")+
- '<div class="card" style="margin-bottom:16px"><div class="builderrule"><strong>Plan MG '+esc(plan)+'</strong> · '+count+' de '+max+' secciones · '+remaining+' disponibles · hasta '+PLAN_RULES[plan].pages+' página(s). Los bloques avanzados dependen del plan.</div>'+controls+'</div>'+
+ '<div class="card" style="margin-bottom:16px"><div class="builderrule"><strong>Plan MG '+esc(plan)+'</strong> · '+count+' de '+max+' secciones · '+remaining+' disponibles · hasta '+PLAN_RULES[plan].pages+' página(s). Los límites de secciones y páginas son ilustrativos y requieren aprobación comercial; los bloques avanzados dependen del plan.</div>'+controls+'</div>'+
  '<div class="builder"><div class="builderlist">'+(elems||'<div class="card empty">Todavía no tienes secciones. Agrega una para comenzar.</div>')+'</div>'+
  '<div class="builderpreview card"><div class="row" style="justify-content:space-between;margin-bottom:12px"><h2 style="margin:0">Vista previa en vivo</h2>'+tag("Borrador")+'</div>'+
  '<div id="visualPreview">'+previewCard(d,"Borrador")+'</div></div></div>'+banner();
