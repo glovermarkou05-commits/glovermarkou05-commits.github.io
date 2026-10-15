@@ -110,6 +110,18 @@ footer{padding-top:35px;color:#7794a9;font-size:11px}
 .previewLogoImg{display:inline-block;width:33px;height:33px;object-fit:contain;vertical-align:middle;margin-right:8px}
 @media(max-width:1060px){.mediaGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:680px){.mediaGrid{grid-template-columns:1fr}}
+
+.scheduleList{display:grid;gap:9px}
+.scheduleRow{display:grid;grid-template-columns:minmax(84px,.65fr) 100px 1fr 1fr;gap:9px;align-items:center;padding:11px;border:1px solid var(--line);border-radius:11px}
+.scheduleRow>span{font-weight:780}.scheduleRow>label:not(.field){font-size:12px}
+.seoPreview{padding:17px;background:#fbfcff;border-radius:12px;color:#263748}
+.seoPreview .seoUrl{font-size:11px;color:#4e775d;word-break:break-all}
+.seoPreview .seoTitle{font-size:18px;color:#176ab1;margin:7px 0}
+.seoPreview p{color:#506475;font-size:12px;white-space:pre-wrap}
+.previewBusiness{border-top:1px solid #e5edf5;padding:20px 23px;background:#f5f8fb;color:#314b5d}
+.previewBusiness h3{font-size:15px;margin:0 0 9px}.previewBusiness p{font-size:11px;margin:6px 0;overflow-wrap:anywhere}
+.previewBusiness small{font-size:10px;color:#758a9d}
+@media(max-width:790px){.scheduleRow{grid-template-columns:1fr 1fr}.scheduleRow>span{grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -178,7 +190,14 @@ var PAGE_TEMPLATES=[
 ];
 organizations.forEach(function(org){
  var s=org.site,d=s.draft,p=s.published,h=s.history,r=s.draftRevision;
- s.sharedDraft={brand:{color:d.color,phone:d.phone,logoAssetId:"",bannerAssetId:""},products:deepCopy(d.products),promos:deepCopy(d.promos),media:[]};
+  s.sharedDraft={brand:{color:d.color,phone:d.phone,logoAssetId:"",bannerAssetId:""},
+  business:{address:"",city:"",province:"",country:"Ecuador",whatsapp:"",mapUrl:"",
+    socials:{instagram:"",facebook:"",tiktok:"",youtube:""},
+    hours:["Lunes","Martes","Miércoles","Jueves","Viernes","Sábado","Domingo"].map(function(day,i){
+      return {day:day,closed:i===6,start:"09:00",end:i===5?"14:00":"18:00"};
+    })},
+  products:deepCopy(d.products),promos:deepCopy(d.promos),media:[]};
+ d.seo={title:"",description:"",shareTitle:"",shareDescription:"",noindex:false};
  
 // Campos comerciales nuevos con valores de ejemplo; cada negocio retiene su propio catálogo.
  s.sharedDraft.products.forEach(function(p){
@@ -214,7 +233,7 @@ function templateDraft(t,source){
 }
 function pageAddress(page){return site().domain+(page.id==="home"?"":"/"+page.slug);}
 
-var navItems=[["inicio","▦","Inicio"],["identidad","◉","Mi negocio"],["medios","▧","Biblioteca multimedia"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["revision","✓","Revisión previa"],["publicaciones","⇄","Publicaciones"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
+var navItems=[["inicio","▦","Inicio"],["identidad","◉","Mi negocio"],["configuracion","⌂","Datos y horarios"],["seo","⌕","SEO de páginas"],["medios","▧","Biblioteca multimedia"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["revision","✓","Revisión previa"],["publicaciones","⇄","Publicaciones"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
 var $=function(id){return document.getElementById(id);};
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function getOrg(){return organizations.find(function(x){return x.id===activeOrg;});}
@@ -415,7 +434,7 @@ var logo=mediaURL(common.brand.logoAssetId,common),banner=mediaURL(common.brand.
 return '<div class="sitePreview"><div class="previewbar"><span>◉ '+esc(address)+'</span><b>'+esc(label)+'</b></div><div class="previewInner" style="--site-accent:'+color+'">'+
 '<div class="previewHero">'+(banner?'<img class="previewBanner" src="'+banner+'" alt="Banner">':'')+'<div class="previewLogo">'+(logo?'<img class="previewLogoImg" src="'+logo+'" alt="Logotipo">':'')+esc(businessName)+'</div><h2>'+esc(data.title)+'</h2><p>'+esc(data.description)+'</p><span class="previewBtn">'+esc(data.cta)+' →</span></div>'+
 '<div class="previewSection"><h3>Productos y servicios</h3><div class="previewProducts">'+(products.length?products.slice(0,4).map(function(p){return '<div class="previewProduct">'+((mediaURL(p.photoAssetId,common)||p.photo)&&validImageSource(mediaURL(p.photoAssetId,common)||p.photo)?'<img class="previewProductPhoto" src="'+(mediaURL(p.photoAssetId,common)||p.photo)+'" alt="'+esc(p.name)+'">':"")+'<span class="catalogCategory">'+esc(p.category||"Otros")+'</span><div>'+esc(p.name)+'</div><b>'+money(p.price)+'</b><small>'+esc(AVAILABILITY[p.availability]||"Disponible")+'</small></div>';}).join(""):'<div class="previewProduct">Sin productos visibles.</div>')+'</div>'+
-promos.slice(0,2).map(function(p){return '<div class="previewPromo">✦ '+esc(p.title)+'</div>';}).join("")+'</div>'+publicBlocks(data,common)+'</div></div>';
+promos.slice(0,2).map(function(p){return '<div class="previewPromo">✦ '+esc(p.title)+'</div>';}).join("")+'</div>'+publicBlocks(data,common)+businessDetailsHTML(common)+'</div></div>';
 }
 function intro(){
 var s=site(),draft=s.draft,shared=s.sharedDraft;
@@ -502,6 +521,8 @@ function checkBeforePublish(){
  }
  if(!String(s.name||"").trim()||String(s.name||"").trim().length<2)issue("error","BRAND_NAME","Completa el nombre comercial del sitio.","identidad");
  if(!data||!data.brand||!/^#[0-9a-fA-F]{6}$/.test(data.brand.color||""))issue("error","BRAND_COLOR","Configura un color de marca válido.","identidad");
+ var businessError=validateBusiness(data.business);
+ if(businessError)issue("error","BUSINESS_INVALID",businessError,"configuracion");
  if(!data||!Array.isArray(data.products)||!Array.isArray(data.promos)){
   issue("error","SHARED_MISSING","Faltan catálogo o promociones compartidos.","catalogo");
  } else {
@@ -535,6 +556,10 @@ function checkBeforePublish(){
    issue("error","PAGE_DESCRIPTION",label+": descripción de al menos 12 caracteres.","contenido");
   if(String(d.cta||"").trim().length<2||String(d.cta||"").length>45)
    issue("error","PAGE_CTA",label+": texto del botón principal incompleto.","contenido");
+  var seoError=validatePageSEO(d.seo);
+  if(seoError)issue("error","SEO_INVALID",label+": "+seoError,"seo");
+  else if(!d.seo.title||!d.seo.description)issue("warning","SEO_RECOMMENDED",label+": configura un título y descripción SEO personalizados.","seo");
+  else if(d.seo.title.length>60||d.seo.description.length>160)issue("warning","SEO_LENGTH",label+": el título o la descripción SEO son largos para los resultados de búsqueda.","seo");
   if(!Array.isArray(d.blocks)){issue("error","BLOCKS_MISSING",label+": la estructura de secciones no es válida.","visual");return;}
   if(d.blocks.length>rule.sections)issue("error","SECTION_LIMIT",label+": supera el máximo provisional de secciones.","visual");
   d.blocks.forEach(function(b,j){
@@ -556,6 +581,8 @@ function checkBeforePublish(){
  });
  if(!data||!data.brand||!String(data.brand.phone||"").trim()||/por configurar/i.test(data.brand.phone))
   issue("warning","CONTACT_PENDING","Completa el teléfono o contacto público del negocio.","identidad");
+ if(data.business&&!data.business.whatsapp)issue("warning","WHATSAPP_PENDING","Agrega WhatsApp si quieres recibir consultas de clientes.","configuracion");
+ if(data.business&&!data.business.address&&!data.business.city)issue("warning","ADDRESS_PENDING","Agrega ciudad o ubicación si tu negocio atiende presencialmente.","configuracion");
  // .invalid es reservado para ejemplos y jamás significa dominio, DNS o TLS operativo.
  if(/\.invalid(?:$|\/)/i.test(String(s.domain||"")))
   issue("warning","DEMO_DOMAIN","Dominio ficticio .invalid: no existe DNS ni certificado SSL configurado. Esta simulación no lo verifica.","dominio");
@@ -809,6 +836,148 @@ function bindVisual(){
 
 
 
+
+/* Configuración comercial en memoria. URLs solo https, sin scripts ni credenciales.
+   Datos validados otra vez por API segura en la implementación real. */
+var SOCIAL_HOSTS={
+ instagram:["instagram.com","www.instagram.com"],
+ facebook:["facebook.com","www.facebook.com","m.facebook.com"],
+ tiktok:["tiktok.com","www.tiktok.com"],
+ youtube:["youtube.com","www.youtube.com","youtu.be"]
+};
+function parseHttps(value){
+ var raw=String(value||"").trim();
+ if(!raw)return null;
+ if(!/^https:\/\/[^\/\s@?#]+(?:[\/?#][^\s]*)?$/i.test(raw))return null;
+ try{
+  var url=new URL(raw);
+  if(url.protocol!=="https:"||url.username||url.password||!url.hostname.includes("."))return null;
+  return url;
+ }catch(e){return null;}
+}
+function validSocialLink(type,value){
+ if(!value)return true;
+ var u=parseHttps(value);return !!u&&(SOCIAL_HOSTS[type]||[]).includes(u.hostname.toLowerCase());
+}
+function validMapLink(value){
+ if(!value)return true;
+ var u=parseHttps(value);
+ if(!u)return false;
+ var host=u.hostname.toLowerCase();
+ return ["maps.google.com","maps.app.goo.gl","goo.gl","www.google.com","google.com"].includes(host)&&
+   (host!=="google.com"&&host!=="www.google.com"||u.pathname.startsWith("/maps"));
+}
+function validWhatsApp(number){
+ return !number||/^\+?[1-9]\d{7,14}$/.test(String(number).trim());
+}
+function timeInRange(value){return /^([01]\d|2[0-3]):[0-5]\d$/.test(String(value||""));}
+function validateBusiness(info){
+ if(!info||typeof info!=="object"||!info.socials||!Array.isArray(info.hours)||info.hours.length!==7)return "Faltan datos de horarios o redes.";
+ if(String(info.address||"").length>180||String(info.city||"").length>90||String(info.province||"").length>90)return "La dirección o ciudad supera el máximo permitido.";
+ if(!validWhatsApp(info.whatsapp))return "El número de WhatsApp debe incluir código de país y tener de 8 a 15 dígitos.";
+ if(!validMapLink(info.mapUrl))return "El enlace de ubicación debe ser HTTPS de Google Maps.";
+ for(var platform of Object.keys(SOCIAL_HOSTS)){
+  if(!validSocialLink(platform,info.socials[platform]))return "Revisa el enlace HTTPS de "+platform+".";
+ }
+ for(var d of info.hours){
+  if(!d||typeof d.closed!=="boolean")return "Horario incompleto.";
+  if(!d.closed&&(!timeInRange(d.start)||!timeInRange(d.end)||d.start>=d.end))return "El horario de "+d.day+" debe tener apertura anterior al cierre.";
+ }
+ return null;
+}
+function validatePageSEO(seo){
+ if(!seo||typeof seo!=="object")return "Faltan campos SEO.";
+ if(String(seo.title||"").length>100||String(seo.description||"").length>300||
+    String(seo.shareTitle||"").length>100||String(seo.shareDescription||"").length>300)
+  return "Algún campo SEO supera la longitud máxima.";
+ if(typeof seo.noindex!=="boolean")return "La opción de indexación es inválida.";
+ return null;
+}
+function businessConfig(){
+ var b=site().sharedDraft.business,disabled=canEdit()?"":"disabled";
+ var socialInputs=Object.keys(SOCIAL_HOSTS).map(function(platform){
+   return '<label class="field">'+platform[0].toUpperCase()+platform.slice(1)+
+    '<input name="social_'+platform+'" inputmode="url" maxlength="260" placeholder="https://'+SOCIAL_HOSTS[platform][0]+'/..." value="'+esc(b.socials[platform]||"")+'" '+disabled+'></label>';
+ }).join("");
+ var schedules=b.hours.map(function(h,i){
+  return '<div class="scheduleRow"><span>'+esc(h.day)+'</span>'+
+   '<label><input type="checkbox" name="closed_'+i+'" '+(h.closed?"checked":"")+" "+disabled+'> Cerrado</label>'+
+   '<label class="field">Desde<input type="time" name="start_'+i+'" value="'+esc(h.start)+'" '+disabled+'></label>'+
+   '<label class="field">Hasta<input type="time" name="end_'+i+'" value="'+esc(h.end)+'" '+disabled+'></label></div>';
+ }).join("");
+ return head("Datos comerciales y horarios","Configura cómo los clientes pueden encontrar, contactar y visitar tu negocio. Los datos se comparten entre las páginas.")+
+ '<form id="businessForm" class="grid"><div class="grid split"><section class="card"><h2>Ubicación y contacto</h2><div class="formgrid">'+
+ '<label class="field full">Dirección del negocio<textarea name="address" maxlength="180" placeholder="Calle, número y referencia" '+disabled+'>'+esc(b.address)+'</textarea></label>'+
+ '<label class="field">Ciudad<input name="city" maxlength="90" placeholder="Ej.: Guayaquil" value="'+esc(b.city)+'" '+disabled+'></label>'+
+ '<label class="field">Provincia<input name="province" maxlength="90" placeholder="Ej.: Guayas" value="'+esc(b.province)+'" '+disabled+'></label>'+
+ '<label class="field">País<input name="country" value="Ecuador" disabled></label>'+
+ '<label class="field">WhatsApp con código de país<input name="whatsapp" inputmode="tel" maxlength="16" placeholder="Ej.: 5939XXXXXXXX" value="'+esc(b.whatsapp)+'" '+disabled+'></label>'+
+ '<label class="field full">Enlace HTTPS de Google Maps<input name="mapUrl" inputmode="url" maxlength="400" placeholder="https://maps.app.goo.gl/..." value="'+esc(b.mapUrl)+'" '+disabled+'></label></div></section>'+
+ '<section class="card"><h2>Redes sociales</h2><div class="formgrid">'+socialInputs+'</div>'+
+ '<div class="note">Se admiten enlaces HTTPS de cada plataforma. No conectamos cuentas ni publicamos automáticamente en redes sociales.</div></section></div>'+
+ '<section class="card"><h2>Horarios semanales</h2><p class="hint">Zona horaria utilizada en esta demostración: America/Guayaquil. El domingo inicia marcado como cerrado; puedes cambiarlo.</p>'+
+ '<div class="scheduleList">'+schedules+'</div></section>'+
+ '<div class="sectionactions"><button class="primary" type="submit" '+disabled+'>Guardar datos comerciales</button></div></form>'+banner();
+}
+function bindBusinessConfig(){
+ var form=$("businessForm");if(!form)return;
+ form.onsubmit=function(e){
+  e.preventDefault();if(!canEdit())return;
+  var d=new FormData(form),now=site().sharedDraft.business;
+  var b={address:String(d.get("address")||"").trim(),city:String(d.get("city")||"").trim(),
+   province:String(d.get("province")||"").trim(),country:"Ecuador",
+   whatsapp:String(d.get("whatsapp")||"").trim(),mapUrl:String(d.get("mapUrl")||"").trim(),
+   socials:{},hours:[]};
+  Object.keys(SOCIAL_HOSTS).forEach(function(k){b.socials[k]=String(d.get("social_"+k)||"").trim();});
+  now.hours.forEach(function(row,i){b.hours.push({day:row.day,closed:d.has("closed_"+i),
+    start:String(d.get("start_"+i)||row.start),end:String(d.get("end_"+i)||row.end)});});
+  var error=validateBusiness(b);if(error){notice(error);return;}
+  site().sharedDraft.business=b;bumpShared();notice("Datos comerciales actualizados para todas las páginas de demostración.");
+ };
+}
+function siteSEO(){
+ var page=currentPage(),seo=page.draft.seo||{title:"",description:"",shareTitle:"",shareDescription:"",noindex:false};
+ var title=seo.title||page.draft.title,description=seo.description||page.draft.description;
+ return head("SEO de páginas","Personaliza cómo podría mostrarse cada página en buscadores y redes. Solo se simula la vista previa, sin indexación real.")+
+ '<div class="grid split"><section class="card"><h2>Metadatos · '+esc(page.name)+'</h2><form id="seoForm" class="formgrid">'+
+ '<label class="field full">Título SEO (recomendado: 30–60 caracteres)<input name="title" maxlength="100" value="'+esc(seo.title||"")+'" placeholder="Si está vacío, se usa el título de la página" '+(!canEdit()?"disabled":"")+'></label>'+
+ '<label class="field full">Descripción SEO (recomendado: 50–160 caracteres)<textarea name="description" maxlength="300" '+(!canEdit()?"disabled":"")+'>'+esc(seo.description||"")+'</textarea></label>'+
+ '<label class="field full">Título al compartir en redes<input name="shareTitle" maxlength="100" value="'+esc(seo.shareTitle||"")+'" '+(!canEdit()?"disabled":"")+'></label>'+
+ '<label class="field full">Descripción al compartir<textarea name="shareDescription" maxlength="300" '+(!canEdit()?"disabled":"")+'>'+esc(seo.shareDescription||"")+'</textarea></label>'+
+ '<label class="field full"><span><input type="checkbox" name="noindex" '+(seo.noindex?"checked":"")+' '+(!canEdit()?"disabled":"")+' > Solicitar no indexar esta página cuando esté publicada en el futuro</span></label>'+
+ '<div class="sectionactions full"><button class="primary" type="submit" '+(!canEdit()?"disabled":"")+'>Guardar metadatos</button></div></form></section>'+
+ '<section class="card"><h2>Vista previa de búsqueda</h2><div class="seoPreview"><div class="seoUrl">'+esc(pageAddress(page))+'</div>'+
+ '<div class="seoTitle">'+esc(title)+'</div><p>'+esc(description)+'</p></div>'+
+ '<div class="note">Esta vista no genera etiquetas &lt;title&gt;, robots, Open Graph, canonical ni sitemap en un sitio alojado. Eso se implementará en el renderizador cuando exista backend y hosting.</div>'+
+ '<div class="sectionactions"><button class="secondary" data-go="paginas">Cambiar página</button></div></section></div>'+banner();
+}
+function bindSEO(){
+ var form=$("seoForm");if(!form)return;
+ form.onsubmit=function(e){
+  e.preventDefault();if(!canEdit())return;
+  var d=new FormData(form),seo={
+   title:String(d.get("title")||"").trim(),description:String(d.get("description")||"").trim(),
+   shareTitle:String(d.get("shareTitle")||"").trim(),
+   shareDescription:String(d.get("shareDescription")||"").trim(),noindex:d.has("noindex")};
+  var error=validatePageSEO(seo);if(error){notice(error);return;}
+  site().draft.seo=seo;bump();notice("Metadatos de esta página guardados en el borrador.");
+ };
+}
+function businessDetailsHTML(common){
+ var b=common.business;if(!b)return "";
+ var location=[b.address,b.city,b.province].filter(Boolean).map(esc).join(", ");
+ var hours=(b.hours||[]).filter(function(h){return !h.closed;}).map(function(h){return esc(h.day)+": "+esc(h.start)+"–"+esc(h.end);}).slice(0,7);
+ var hasContent=location||b.whatsapp||Object.values(b.socials||{}).some(Boolean)||hours.length;
+ if(!hasContent)return "";
+ return '<section class="previewBusiness"><h3>Visítanos y contáctanos</h3>'+
+ (location?'<p><strong>Ubicación:</strong> '+location+'</p>':"")+
+ (b.whatsapp?'<p><strong>WhatsApp:</strong> '+esc(b.whatsapp)+'</p>':"")+
+ (hours.length?'<p><strong>Horarios:</strong> '+hours.join(" · ")+'</p>':"")+
+ (Object.keys(b.socials||{}).filter(function(k){return b.socials[k];}).length?
+ '<p><strong>Redes:</strong> '+Object.keys(b.socials).filter(function(k){return b.socials[k];}).map(esc).join(" · ")+'</p>':"")+
+ '<small>Vista previa informativa; no realiza llamadas ni abre enlaces automáticamente.</small></section>';
+}
+
 function identity(){
  var s=site(),g=s.sharedDraft.brand;
  return head("Mi negocio","Nombre, color y contacto que se comparten en todas las páginas del sitio.")+
@@ -859,7 +1028,7 @@ function addPage(name,templateId){
  var s=site(),limit=(PLAN_RULES[s.plan]||PLAN_RULES.Start).pages,slug=slugify(name);
  if(s.pages.length>=limit){notice("Límite provisional del plan alcanzado.");return;}
  if(name.length<2||name.length>85||slug.length<2||s.pages.some(function(p){return p.slug===slug;})){notice("El nombre o dirección de esta página no es válido o ya existe.");return;}
- var d={title:name,description:"Presenta la información de esta página.",cta:"Conoce más",blocks:[]};
+ var d={title:name,description:"Presenta la información de esta página.",cta:"Conoce más",blocks:[],seo:{title:"",description:"",shareTitle:"",shareDescription:"",noindex:false}};
  var tpl=getPageTemplate(templateId);if(tpl)d=templateDraft(tpl,d);
  var id="page-"+Date.now()+"-"+Math.floor(Math.random()*100000);
  s.pages.push({id:id,name:name,slug:slug,draft:d,published:null,history:[],draftRevision:1});
@@ -907,12 +1076,14 @@ function bindPageManager(){
 
 function render(){
 navDraw();
-var pages={inicio:intro,identidad:identity,medios:mediaLibrary,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,vista:preview,revision:preflightPanel,publicaciones:sitePublications,historial:history,dominio:domain,soporte:support};
+var pages={inicio:intro,identidad:identity,configuracion:businessConfig,seo:siteSEO,medios:mediaLibrary,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,vista:preview,revision:preflightPanel,publicaciones:sitePublications,historial:history,dominio:domain,soporte:support};
 $("content").innerHTML='<div class="card" style="margin-bottom:20px"><div class="row" style="justify-content:space-between;align-items:end"><div><div class="eyebrow">SESIÓN DE PRUEBA</div><p style="margin:5px 0 0;color:var(--muted)">Alterna negocios y roles ficticios para revisar el diseño. Esta selección NO es autenticación.</p></div><div class="row">'+dropdown()+'</div></div></div>'+pages[tab]();
 $("orgSwitch").onchange=function(){activeOrg=this.value;previewMode="draft";render();};
 $("roleSwitch").onchange=function(){activeRole=this.value;render();};
 if(tab==="visual")bindVisual();
 if(tab==="identidad")bindIdentity();
+if(tab==="configuracion")bindBusinessConfig();
+if(tab==="seo")bindSEO();
 if(tab==="medios")bindMediaLibrary();
 if(tab==="catalogo"){var cf=$("categoryFilter");if(cf)cf.onchange=function(){selectedCategoryByOrg[activeOrg]=this.value;render();};}
 if(tab==="paginas"||tab==="plantillas")bindPageManager();
