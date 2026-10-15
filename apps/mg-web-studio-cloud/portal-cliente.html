@@ -151,6 +151,9 @@ var PAGE_TEMPLATES=[
 ];
 organizations.forEach(function(org){
  var s=org.site,d=s.draft,p=s.published,h=s.history,r=s.draftRevision;
+ s.sharedDraft={brand:{color:d.color,phone:d.phone},products:deepCopy(d.products),promos:deepCopy(d.promos)};
+ s.sharedPublished=null;s.sharedRevision=1;s.sharedHistory=[];
+ delete d.color;delete d.phone;delete d.products;delete d.promos;
  s.pages=[{id:"home",name:"Inicio",slug:"",draft:d,published:p,history:h,draftRevision:r}];
  activePageByOrg[org.id]="home";
  function current(){return s.pages.find(function(page){return page.id===activePageByOrg[org.id];})||s.pages[0];}
@@ -158,6 +161,8 @@ organizations.forEach(function(org){
   Object.defineProperty(s,k,{enumerable:false,get:function(){return current()[k];},set:function(v){current()[k]=v;}});
  });
 });
+function sharedData(published){return published&&site().sharedPublished?site().sharedPublished:site().sharedDraft;}
+function bumpShared(){site().sharedRevision++;render();}
 function currentPage(){
  var o=getOrg();return o.site.pages.find(function(p){return p.id===activePageByOrg[o.id];})||o.site.pages[0];
 }
@@ -171,7 +176,7 @@ function templateDraft(t,source){
 }
 function pageAddress(page){return site().domain+(page.id==="home"?"":"/"+page.slug);}
 
-var navItems=[["inicio","▦","Inicio"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
+var navItems=[["inicio","▦","Inicio"],["identidad","◉","Mi negocio"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
 var $=function(id){return document.getElementById(id);};
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function getOrg(){return organizations.find(function(x){return x.id===activeOrg;});}
@@ -215,22 +220,23 @@ function publicBlocks(data){
  }).join("");
 }
 
-function previewCard(data,label){
-var products=data.products.filter(function(p){return p.visible;});
-var promos=data.promos.filter(function(p){return p.active;});
-var color=/^#[0-9a-fA-F]{6}$/.test(data.color)?data.color:"#186999";
+function previewCard(data,label,commonData){
+var common=commonData||site().sharedDraft;
+var products=common.products.filter(function(p){return p.visible;});
+var promos=common.promos.filter(function(p){return p.active;});
+var color=/^#[0-9a-fA-F]{6}$/.test(common.brand.color)?common.brand.color:"#186999";
 return '<div class="sitePreview"><div class="previewbar"><span>◉ '+esc(pageAddress(currentPage()))+'</span><b>'+esc(label)+'</b></div><div class="previewInner" style="--site-accent:'+color+'">'+
 '<div class="previewHero"><div class="previewLogo">'+esc(site().name)+'</div><h2>'+esc(data.title)+'</h2><p>'+esc(data.description)+'</p><span class="previewBtn">'+esc(data.cta)+' →</span></div>'+
 '<div class="previewSection"><h3>Productos y servicios</h3><div class="previewProducts">'+(products.length?products.slice(0,4).map(function(p){return '<div class="previewProduct">'+esc(p.name)+'<b>'+money(p.price)+'</b></div>';}).join(""):'<div class="previewProduct">Sin productos visibles.</div>')+'</div>'+
 promos.slice(0,2).map(function(p){return '<div class="previewPromo">✦ '+esc(p.title)+'</div>';}).join("")+'</div>'+publicBlocks(data)+'</div></div>';
 }
 function intro(){
-var s=site(),draft=s.draft;
+var s=site(),draft=s.draft,shared=s.sharedDraft;
 return head("Bienvenido a tu espacio","Administra tu página web de forma sencilla: personaliza, agrega productos y revisa antes de publicar.",'<button class="primary" data-go="contenido">Editar mi página →</button>')+
 '<div class="grid kpis">'+
 '<div class="card kpi"><span>Plan asignado (demo)</span><strong>'+esc(s.plan)+'</strong><div class="hint">Servicio de muestra</div></div>'+
-'<div class="card kpi"><span>Productos</span><strong>'+draft.products.length+'</strong><div class="hint">Catálogo del negocio</div></div>'+
-'<div class="card kpi"><span>Promociones activas</span><strong>'+draft.promos.filter(function(x){return x.active;}).length+'</strong><div class="hint">Borrador editable</div></div>'+
+'<div class="card kpi"><span>Productos del negocio</span><strong>'+shared.products.length+'</strong><div class="hint">Catálogo del negocio</div></div>'+
+'<div class="card kpi"><span>Promociones activas</span><strong>'+shared.promos.filter(function(x){return x.active;}).length+'</strong><div class="hint">Borrador editable</div></div>'+
 '<div class="card kpi"><span>Versiones publicadas</span><strong>'+s.history.length+'</strong><div class="hint">Simulación sin despliegue</div></div></div>'+
 '<div class="grid split"><section class="card"><h2>Tu página web</h2>'+previewCard(draft,"Vista de borrador")+'<div class="sectionactions"><button class="secondary" data-go="vista">Revisar vista previa</button></div></section>'+
 '<section class="card"><h2>Tu lista de trabajo</h2><div class="tiles" style="grid-template-columns:1fr">'+
@@ -246,26 +252,26 @@ return head("Editar mi página","Personaliza el contenido principal. Guarda borr
 '<label class="field full">Título principal<input name="title" maxlength="100" required value="'+esc(d.title)+'"></label>'+
 '<label class="field full">Descripción<textarea name="description" maxlength="300" required>'+esc(d.description)+'</textarea></label>'+
 '<label class="field">Texto del botón<input name="cta" maxlength="45" required value="'+esc(d.cta)+'"></label>'+
-'<label class="field">Color principal<input name="color" type="color" value="'+esc(d.color)+'"></label>'+
-'<label class="field full">Contacto visible<input name="phone" maxlength="80" value="'+esc(d.phone)+'"></label>'+
+'<div class="note full">La identidad y el catálogo se comparten entre todas las páginas. Edítalos en «Mi negocio».</div>'+
+
 '<div class="sectionactions full"><button type="submit" class="primary" '+(!canEdit()?"disabled":"")+'>Guardar borrador</button></div></form></section>'+
 '<section class="card"><h2>Vista de tu diseño</h2>'+previewCard(d,"Vista de borrador")+'</section></div>'+banner();
 }
 function catalog(){
-var s=site();return head("Mi catálogo","Crea productos, revisa precios y elige qué artículos mostrar en tu página.",'<button class="primary" data-modal="product" '+(!canEdit()?"disabled":"")+'>+ Agregar producto</button>')+
+var s=site();return head("Mi catálogo","Administra productos compartidos entre todas las páginas de este negocio.",'<button class="primary" data-modal="product" '+(!canEdit()?"disabled":"")+'>+ Agregar producto</button>')+
 '<section class="card"><div class="tableScroll"><table class="table"><thead><tr><th>PRODUCTO</th><th>PRECIO USD</th><th>VISIBILIDAD</th><th>ACCIÓN</th></tr></thead><tbody>'+
-s.draft.products.map(function(p){return '<tr><td>'+esc(p.name)+'</td><td>'+money(p.price)+'</td><td>'+tag(p.visible?"Visible":"Oculto")+'</td><td><div class="row"><button class="secondary" data-toggle-product="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>'+(p.visible?"Ocultar":"Mostrar")+'</button><button class="danger" data-remove-product="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Quitar</button></div></td></tr>';}).join("")+
-'</tbody></table></div>'+(s.draft.products.length?"":'<div class="empty">Todavía no tienes productos en el borrador.</div>')+'</section>'+banner();
+s.sharedDraft.products.map(function(p){return '<tr><td>'+esc(p.name)+'</td><td>'+money(p.price)+'</td><td>'+tag(p.visible?"Visible":"Oculto")+'</td><td><div class="row"><button class="secondary" data-toggle-product="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>'+(p.visible?"Ocultar":"Mostrar")+'</button><button class="danger" data-remove-product="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Quitar</button></div></td></tr>';}).join("")+
+'</tbody></table></div>'+(s.sharedDraft.products.length?"":'<div class="empty">Todavía no tienes productos en el borrador.</div>')+'</section>'+banner();
 }
 function promotions(){
 return head("Promociones","Administra banners y campañas sencillas, sin modificar otras páginas.",'<button class="primary" data-modal="promo" '+(!canEdit()?"disabled":"")+'>+ Nueva promoción</button>')+
-'<div class="grid cards">'+(site().draft.promos.length?site().draft.promos.map(function(p){return '<article class="card"><div class="eyebrow">PROMOCIÓN</div><h2 style="margin-top:12px">'+esc(p.title)+'</h2>'+tag(p.active?"Activa":"Pausada")+
+'<div class="grid cards">'+(site().sharedDraft.promos.length?site().sharedDraft.promos.map(function(p){return '<article class="card"><div class="eyebrow">PROMOCIÓN</div><h2 style="margin-top:12px">'+esc(p.title)+'</h2>'+tag(p.active?"Activa":"Pausada")+
 '<div class="sectionactions"><button class="secondary" data-toggle-promo="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>'+(p.active?"Pausar":"Activar")+'</button><button class="danger" data-remove-promo="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Quitar</button></div></article>';}).join(""):'<div class="card empty">Aún no has creado promociones de demostración.</div>')+'</div>'+banner();
 }
 function preview(){
 var s=site();var published=Boolean(s.published);var viewing=previewMode==="published"&&published;var data=viewing?s.published:s.draft;
 return head("Vista previa de mi página","Compara el borrador con la última versión publicada de manera simulada.",'<div class="row"><button class="secondary" data-preview="draft">Borrador</button><button class="secondary" data-preview="published" '+(!published?"disabled":"")+'>Publicada (demo)</button></div>')+
-'<div class="grid split"><section class="card"><h2>'+(viewing?"Última publicación simulada":"Borrador actual")+'</h2>'+previewCard(data,viewing?"Publicación simulada":"Borrador")+'</section>'+
+'<div class="grid split"><section class="card"><h2>'+(viewing?"Última publicación simulada":"Borrador actual")+'</h2>'+previewCard(data,viewing?"Publicación simulada":"Borrador",viewing?sharedData(true):sharedData(false))+'</section>'+
 '<section class="card"><h2>Control editorial</h2><div class="tiles" style="grid-template-columns:1fr"><div class="tile"><b>Revisión de borrador: '+s.draftRevision+'</b><small>Los cambios solo viven durante esta sesión.</small></div>'+
 '<div class="tile"><b>Publicaciones simuladas: '+s.history.length+'</b><small>Publicar aquí no modifica páginas reales, DNS ni hosting.</small></div><div class="tile"><b>Permiso actual: '+esc(activeRole)+'</b><small>La verificación de permisos real llegará con la autenticación y la base de datos.</small></div></div>'+
 '<div class="sectionactions"><button class="primary" data-publish="yes" '+(!canPublish()?"disabled":"")+'>Simular publicación</button></div></section></div>'+banner();
@@ -391,6 +397,26 @@ function bindVisual(){
 }
 
 
+
+function identity(){
+ var s=site(),g=s.sharedDraft.brand;
+ return head("Mi negocio","Nombre, color y contacto que se comparten en todas las páginas del sitio.")+
+ '<div class="grid split"><section class="card"><h2>Identidad del negocio</h2><form id="brandForm" class="formgrid">'+
+ '<label class="field full">Nombre comercial<input name="business" maxlength="90" required value="'+esc(s.name)+'" '+(!canEdit()?"disabled":"")+'></label>'+
+ '<label class="field">Color de marca<input name="color" type="color" value="'+esc(g.color)+'" '+(!canEdit()?"disabled":"")+'></label>'+
+ '<label class="field">Contacto público<input name="phone" maxlength="80" value="'+esc(g.phone||"")+'" '+(!canEdit()?"disabled":"")+'></label>'+
+ '<div class="sectionactions full"><button class="primary" type="submit" '+(!canEdit()?"disabled":"")+'>Guardar identidad</button></div></form></section>'+
+ '<section class="card"><h2>Vista de la marca</h2>'+previewCard(s.draft,"Borrador")+'</section></div>'+banner();
+}
+function bindIdentity(){
+ var form=$("brandForm");if(!form)return;
+ form.onsubmit=function(e){e.preventDefault();if(!canEdit())return;
+ var d=new FormData(form),name=String(d.get("business")||"").trim(),color=String(d.get("color")||""),phone=String(d.get("phone")||"").trim();
+ if(name.length<2||name.length>90||phone.length>80||!/^#[0-9a-fA-F]{6}$/.test(color)){notice("Revisa los datos del negocio.");return;}
+ site().name=name;site().sharedDraft.brand={color:color,phone:phone};bumpShared();notice("Identidad actualizada para todo el sitio.");
+ };
+}
+
 function managePages(){
  var s=site(),limit=(PLAN_RULES[s.plan]||PLAN_RULES.Start).pages;
  return head("Mis páginas","Cada página tiene su propio borrador, editor y versiones. Selecciona una página para trabajar en ella.",
@@ -420,8 +446,7 @@ function addPage(name,templateId){
  var s=site(),limit=(PLAN_RULES[s.plan]||PLAN_RULES.Start).pages,slug=slugify(name);
  if(s.pages.length>=limit){notice("Límite provisional del plan alcanzado.");return;}
  if(name.length<2||name.length>85||slug.length<2||s.pages.some(function(p){return p.slug===slug;})){notice("El nombre o dirección de esta página no es válido o ya existe.");return;}
- var d=deepCopy(s.pages[0].draft);
- d.title=name;d.description="Presenta la información de esta página.";d.cta="Conoce más";d.blocks=[];d.products=[];d.promos=[];
+ var d={title:name,description:"Presenta la información de esta página.",cta:"Conoce más",blocks:[]};
  var tpl=getPageTemplate(templateId);if(tpl)d=templateDraft(tpl,d);
  var id="page-"+Date.now()+"-"+Math.floor(Math.random()*100000);
  s.pages.push({id:id,name:name,slug:slug,draft:d,published:null,history:[],draftRevision:1});
@@ -469,25 +494,26 @@ function bindPageManager(){
 
 function render(){
 navDraw();
-var pages={inicio:intro,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,vista:preview,historial:history,dominio:domain,soporte:support};
+var pages={inicio:intro,identidad:identity,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,vista:preview,historial:history,dominio:domain,soporte:support};
 $("content").innerHTML='<div class="card" style="margin-bottom:20px"><div class="row" style="justify-content:space-between;align-items:end"><div><div class="eyebrow">SESIÓN DE PRUEBA</div><p style="margin:5px 0 0;color:var(--muted)">Alterna negocios y roles ficticios para revisar el diseño. Esta selección NO es autenticación.</p></div><div class="row">'+dropdown()+'</div></div></div>'+pages[tab]();
 $("orgSwitch").onchange=function(){activeOrg=this.value;previewMode="draft";render();};
 $("roleSwitch").onchange=function(){activeRole=this.value;render();};
 if(tab==="visual")bindVisual();
+if(tab==="identidad")bindIdentity();
 if(tab==="paginas"||tab==="plantillas")bindPageManager();
 $("pageSwitch").onchange=function(){activePageByOrg[activeOrg]=this.value;previewMode="draft";render();};
 $("content").querySelectorAll("[data-go]").forEach(function(b){b.onclick=function(){tab=b.dataset.go;render();};});
 $("content").querySelectorAll("[data-modal]").forEach(function(b){b.onclick=function(){if(!canEdit())return;showModal(b.dataset.modal);};});
 $("content").querySelectorAll("[data-preview]").forEach(function(b){b.onclick=function(){previewMode=b.dataset.preview;render();};});
-$("content").querySelectorAll("[data-toggle-product]").forEach(function(b){b.onclick=function(){if(!canEdit())return;var p=site().draft.products.find(function(x){return x.id===b.dataset.toggleProduct;});if(p){p.visible=!p.visible;bump();}};});
-$("content").querySelectorAll("[data-remove-product]").forEach(function(b){b.onclick=function(){if(!canEdit())return;site().draft.products=site().draft.products.filter(function(x){return x.id!==b.dataset.removeProduct;});bump();};});
-$("content").querySelectorAll("[data-toggle-promo]").forEach(function(b){b.onclick=function(){if(!canEdit())return;var p=site().draft.promos.find(function(x){return x.id===b.dataset.togglePromo;});if(p){p.active=!p.active;bump();}};});
-$("content").querySelectorAll("[data-remove-promo]").forEach(function(b){b.onclick=function(){if(!canEdit())return;site().draft.promos=site().draft.promos.filter(function(x){return x.id!==b.dataset.removePromo;});bump();};});
-$("content").querySelectorAll("[data-publish]").forEach(function(b){b.onclick=function(){if(!canPublish()){notice("Rol sin permiso para simular publicación.");return;}var s=site();var n=s.history.length+1;var snapshot=deepCopy(s.draft);s.published=snapshot;s.history.push({n:n,rev:s.draftRevision,at:new Date().toLocaleString("es-EC"),data:snapshot});previewMode="published";render();notice("Publicación simulada guardada en memoria. No se modificó ningún sitio real.");};});
+$("content").querySelectorAll("[data-toggle-product]").forEach(function(b){b.onclick=function(){if(!canEdit())return;var p=site().sharedDraft.products.find(function(x){return x.id===b.dataset.toggleProduct;});if(p){p.visible=!p.visible;bumpShared();}};});
+$("content").querySelectorAll("[data-remove-product]").forEach(function(b){b.onclick=function(){if(!canEdit())return;site().sharedDraft.products=site().sharedDraft.products.filter(function(x){return x.id!==b.dataset.removeProduct;});bumpShared();};});
+$("content").querySelectorAll("[data-toggle-promo]").forEach(function(b){b.onclick=function(){if(!canEdit())return;var p=site().sharedDraft.promos.find(function(x){return x.id===b.dataset.togglePromo;});if(p){p.active=!p.active;bumpShared();}};});
+$("content").querySelectorAll("[data-remove-promo]").forEach(function(b){b.onclick=function(){if(!canEdit())return;site().sharedDraft.promos=site().sharedDraft.promos.filter(function(x){return x.id!==b.dataset.removePromo;});bumpShared();};});
+$("content").querySelectorAll("[data-publish]").forEach(function(b){b.onclick=function(){if(!canPublish()){notice("Rol sin permiso para simular publicación.");return;}var s=site();var n=s.history.length+1;var snapshot=deepCopy(s.draft);s.published=snapshot;s.sharedPublished=deepCopy(s.sharedDraft);s.sharedHistory.push({rev:s.sharedRevision,at:new Date().toLocaleString("es-EC"),data:deepCopy(s.sharedPublished)});s.history.push({n:n,rev:s.draftRevision,sharedRev:s.sharedRevision,at:new Date().toLocaleString("es-EC"),data:snapshot});previewMode="published";render();notice("Publicación simulada guardada en memoria. No se modificó ningún sitio real.");};});
 $("content").querySelectorAll("[data-restore]").forEach(function(b){b.onclick=function(){if(!canEdit())return;var v=site().history.find(function(x){return String(x.n)===b.dataset.restore;});if(v){site().draft=deepCopy(v.data);bump();notice("Versión restaurada únicamente al borrador de la demo.");}};});
-var edit=$("editForm");if(edit)edit.onsubmit=function(e){e.preventDefault();if(!canEdit())return;var d=new FormData(edit),t=site().draft;var title=String(d.get("title")||"").trim(),description=String(d.get("description")||"").trim(),cta=String(d.get("cta")||"").trim(),color=String(d.get("color")||"");
-if(title.length<3||title.length>100||description.length<3||description.length>300||cta.length<2||cta.length>45||!/^#[0-9a-fA-F]{6}$/.test(color)){notice("Revisa la longitud de los textos y el color.");return;}
-t.title=title;t.description=description;t.cta=cta;t.color=color;t.phone=String(d.get("phone")||"").trim().slice(0,80);bump();notice("Borrador actualizado en la demostración.");};
+var edit=$("editForm");if(edit)edit.onsubmit=function(e){e.preventDefault();if(!canEdit())return;var d=new FormData(edit),t=site().draft;var title=String(d.get("title")||"").trim(),description=String(d.get("description")||"").trim(),cta=String(d.get("cta")||"").trim();
+if(title.length<3||title.length>100||description.length<3||description.length>300||cta.length<2||cta.length>45){notice("Revisa la longitud de los textos y el color.");return;}
+t.title=title;t.description=description;t.cta=cta;bump();notice("Borrador actualizado en la demostración.");};
 }
 function bump(){site().draftRevision++;render();}
 function showModal(kind){
@@ -502,9 +528,9 @@ var kind=e.currentTarget.dataset.kind,d=new FormData(e.currentTarget),name=Strin
 if(kind==="page"){var template=e.currentTarget.dataset.template;$("dialog").close();addPage(name,template);return;}
 if(name.length<2){notice("Ingresa un nombre válido.");return;}
 var id="demo-"+String(Date.now())+"-"+String(Math.floor(Math.random()*100000));
-if(kind==="product"){var amount=Number(d.get("price"));if(!Number.isFinite(amount)||amount<0||amount>100000||Math.round(amount*100)/100!==amount){notice("Ingresa un precio válido con máximo dos decimales.");return;}site().draft.products.push({id:id,name:name,price:amount,visible:d.get("visible")==="yes"});}
-else{site().draft.promos.push({id:id,title:name,active:d.get("active")==="yes"});}
-$("dialog").close();bump();notice("Registro agregado solo a la demostración.");
+if(kind==="product"){var amount=Number(d.get("price"));if(!Number.isFinite(amount)||amount<0||amount>100000||Math.round(amount*100)/100!==amount){notice("Ingresa un precio válido con máximo dos decimales.");return;}site().sharedDraft.products.push({id:id,name:name,price:amount,visible:d.get("visible")==="yes"});}
+else{site().sharedDraft.promos.push({id:id,title:name,active:d.get("active")==="yes"});}
+$("dialog").close();bumpShared();notice("Registro agregado al negocio de demostración.");
 };
 $("modalClose").onclick=function(){$("dialog").close();};
 $("menuToggle").onclick=function(){$("sidebar").classList.toggle("open");};
