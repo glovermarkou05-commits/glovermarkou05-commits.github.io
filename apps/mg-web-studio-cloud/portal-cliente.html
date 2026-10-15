@@ -73,6 +73,16 @@ footer{padding-top:35px;color:#7794a9;font-size:11px}
 .buildertypes label{font-weight:700;font-size:12px}
 @media(max-width:1200px){.builder{grid-template-columns:1fr}.builderpreview{position:static}}
 @media(max-width:750px){.builder{grid-template-columns:1fr}.buildertypes{grid-template-columns:1fr}}
+
+.pagebox{display:flex;justify-content:space-between;gap:15px;align-items:center;padding:16px;border:1px solid var(--line);border-radius:13px;margin-bottom:10px;flex-wrap:wrap}
+.pagebox.selected{border-color:rgba(81,207,255,.46);background:rgba(81,207,255,.05)}
+.pagebox strong{display:block;font-size:14px}.pagebox small{display:block;font-size:11px;color:var(--muted);word-break:break-all}
+.pagebuttons{display:flex;gap:7px;flex-wrap:wrap}.pagebuttons button{padding:8px 10px;font-size:11px}
+.templategrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.temppreview{border:1px solid rgba(255,255,255,.09);border-radius:13px;background:linear-gradient(130deg,#142c48,#233f69);min-height:102px;padding:16px;margin-bottom:15px}
+.temppreview span{display:block;margin-top:12px;border-radius:5px;width:76%;height:9px;background:#76d2ff}
+.temppreview span+span{width:55%;height:6px;background:#456e95}
+@media(max-width:760px){.templategrid{grid-template-columns:1fr}.pagebox{align-items:flex-start;flex-direction:column}}
 </style>
 </head>
 <body>
@@ -129,7 +139,39 @@ organizations.forEach(function(o){
  [newBlock("text","b-story"),newBlock("cta","b-cta")];
 });
 
-var navItems=[["inicio","▦","Inicio"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
+
+/* Páginas y versiones por empresa, SOLO EN MEMORIA (sin autenticación ni base de datos). */
+var activePageByOrg={};
+var PAGE_TEMPLATES=[
+{id:"presentacion",name:"Presentación",title:"Descubre nuestro negocio",description:"Conoce quiénes somos y qué nos hace diferentes.",cta:"Contáctanos",blocks:["text","services","cta"]},
+{id:"servicios",name:"Servicios",title:"Nuestros servicios",description:"Soluciones para cada necesidad de nuestros clientes.",cta:"Pedir información",blocks:["services","faq","cta"]},
+{id:"portafolio",name:"Portafolio",title:"Trabajos que nos representan",description:"Compartimos nuestras mejores creaciones y proyectos.",cta:"Conversemos",blocks:["gallery","text","cta"]},
+{id:"contacto",name:"Contacto",title:"Estamos para ayudarte",description:"Conversa con nuestro equipo sobre tu próximo proyecto.",cta:"Contáctanos",blocks:["text","faq"]},
+{id:"catalogo",name:"Catálogo",title:"Descubre nuestros productos",description:"Conoce lo que ofrecemos a nuestros clientes.",cta:"Explorar catálogo",blocks:["gallery","text","cta"]}
+];
+organizations.forEach(function(org){
+ var s=org.site,d=s.draft,p=s.published,h=s.history,r=s.draftRevision;
+ s.pages=[{id:"home",name:"Inicio",slug:"",draft:d,published:p,history:h,draftRevision:r}];
+ activePageByOrg[org.id]="home";
+ function current(){return s.pages.find(function(page){return page.id===activePageByOrg[org.id];})||s.pages[0];}
+ ["draft","published","history","draftRevision"].forEach(function(k){
+  Object.defineProperty(s,k,{enumerable:false,get:function(){return current()[k];},set:function(v){current()[k]=v;}});
+ });
+});
+function currentPage(){
+ var o=getOrg();return o.site.pages.find(function(p){return p.id===activePageByOrg[o.id];})||o.site.pages[0];
+}
+function getPageTemplate(id){return PAGE_TEMPLATES.find(function(t){return t.id===id;});}
+function slugify(v){return String(v).normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,64);}
+function templateDraft(t,source){
+ var d=deepCopy(source);
+ d.title=t.title;d.description=t.description;d.cta=t.cta;
+ d.blocks=t.blocks.filter(function(k){return blockAllowed(k,site().plan);}).map(function(k,i){return newBlock(k,"t-"+Date.now()+"-"+i);});
+ return d;
+}
+function pageAddress(page){return site().domain+(page.id==="home"?"":"/"+page.slug);}
+
+var navItems=[["inicio","▦","Inicio"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
 var $=function(id){return document.getElementById(id);};
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function getOrg(){return organizations.find(function(x){return x.id===activeOrg;});}
@@ -139,9 +181,15 @@ function canPublish(){return activeRole==="CLIENT_OWNER"||activeRole==="CLIENT_A
 function money(v){return new Intl.NumberFormat("es-EC",{style:"currency",currency:"USD"}).format(v);}
 function notice(msg){var t=$("toast");t.textContent=msg;t.style.display="block";clearTimeout(notice.timer);notice.timer=setTimeout(function(){t.style.display="none";},4200);}
 function banner(){return '<div class="note warnnote"><strong>SIMULACIÓN:</strong> sin inicio de sesión, sin base de datos y sin publicación real. Las restricciones de rol que se muestran aquí son únicamente visuales. Nunca introduzcas datos personales reales.</div>';}
+
+function pageSelector(){
+ return '<label class="field" style="min-width:160px">Página activa<select id="pageSwitch">'+site().pages.map(function(p){
+ return '<option value="'+esc(p.id)+'" '+(p.id===currentPage().id?"selected":"")+'>'+esc(p.name)+'</option>';
+ }).join("")+'</select></label>';
+}
 function dropdown(){
 return '<label class="field" style="min-width:205px">Negocio de ejemplo<select id="orgSwitch">'+organizations.map(function(o){return '<option value="'+esc(o.id)+'" '+(o.id===activeOrg?"selected":"")+'>'+esc(o.name)+'</option>';}).join("")+'</select></label>'+
-'<label class="field" style="min-width:170px">Vista de rol (simulada)<select id="roleSwitch">'+["CLIENT_OWNER","CLIENT_ADMIN","CLIENT_EDITOR","CLIENT_VIEWER"].map(function(r){return '<option value="'+r+'" '+(r===activeRole?"selected":"")+'>'+r.replace("CLIENT_","")+'</option>';}).join("")+'</select></label>';
+'<label class="field" style="min-width:170px">Vista de rol (simulada)<select id="roleSwitch">'+["CLIENT_OWNER","CLIENT_ADMIN","CLIENT_EDITOR","CLIENT_VIEWER"].map(function(r){return '<option value="'+r+'" '+(r===activeRole?"selected":"")+'>'+r.replace("CLIENT_","")+'</option>';}).join("")+'</select></label>'+pageSelector();
 }
 function head(title,desc,actions){return '<div class="pagehead"><div><div class="eyebrow">'+esc(getOrg().name)+'</div><h1>'+title+'</h1><p>'+desc+'</p></div>'+ (actions||"")+'</div>';}
 function navDraw(){$("nav").innerHTML=navItems.map(function(item){return '<button type="button" data-tab="'+item[0]+'" '+(item[0]===tab?'aria-current="page"':"")+'><span class="ico">'+item[1]+'</span>'+item[2]+'</button>';}).join("");$("nav").querySelectorAll("[data-tab]").forEach(function(el){el.addEventListener("click",function(){tab=el.dataset.tab;$("sidebar").classList.remove("open");render();});});}
@@ -171,7 +219,7 @@ function previewCard(data,label){
 var products=data.products.filter(function(p){return p.visible;});
 var promos=data.promos.filter(function(p){return p.active;});
 var color=/^#[0-9a-fA-F]{6}$/.test(data.color)?data.color:"#186999";
-return '<div class="sitePreview"><div class="previewbar"><span>◉ '+esc(site().domain)+'</span><b>'+esc(label)+'</b></div><div class="previewInner" style="--site-accent:'+color+'">'+
+return '<div class="sitePreview"><div class="previewbar"><span>◉ '+esc(pageAddress(currentPage()))+'</span><b>'+esc(label)+'</b></div><div class="previewInner" style="--site-accent:'+color+'">'+
 '<div class="previewHero"><div class="previewLogo">'+esc(site().name)+'</div><h2>'+esc(data.title)+'</h2><p>'+esc(data.description)+'</p><span class="previewBtn">'+esc(data.cta)+' →</span></div>'+
 '<div class="previewSection"><h3>Productos y servicios</h3><div class="previewProducts">'+(products.length?products.slice(0,4).map(function(p){return '<div class="previewProduct">'+esc(p.name)+'<b>'+money(p.price)+'</b></div>';}).join(""):'<div class="previewProduct">Sin productos visibles.</div>')+'</div>'+
 promos.slice(0,2).map(function(p){return '<div class="previewPromo">✦ '+esc(p.title)+'</div>';}).join("")+'</div>'+publicBlocks(data)+'</div></div>';
@@ -342,13 +390,92 @@ function bindVisual(){
  };});
 }
 
+
+function managePages(){
+ var s=site(),limit=(PLAN_RULES[s.plan]||PLAN_RULES.Start).pages;
+ return head("Mis páginas","Cada página tiene su propio borrador, editor y versiones. Selecciona una página para trabajar en ella.",
+ '<button class="primary" data-new-page="true" '+(!canEdit()||s.pages.length>=limit?"disabled":"")+'>+ Nueva página</button>')+
+ '<div class="grid split"><section class="card"><h2>Listado de páginas · '+s.pages.length+' / '+limit+'</h2>'+
+ s.pages.map(function(p){return '<div class="pagebox '+(p.id===currentPage().id?"selected":"")+'"><div><strong>'+esc(p.name)+' '+(p.id==="home"?"· Inicio":"")+'</strong>'+
+ '<small>'+esc(pageAddress(p))+' · '+p.history.length+' versiones · '+(p.published?"Demo publicada":"Borrador")+'</small></div>'+
+ '<div class="pagebuttons"><button class="secondary" data-choose-page="'+esc(p.id)+'">Seleccionar</button>'+
+ '<button class="secondary" data-rename-page="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Renombrar</button>'+
+ (p.id==="home"?"":'<button class="danger" data-delete-page="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Eliminar</button>')+'</div></div>';}).join("")+
+ '</section><section class="card"><h2>Borrador seleccionado</h2>'+previewCard(s.draft,"Borrador de "+currentPage().name)+
+ '<div class="sectionactions"><button class="secondary" data-go="visual">Editar secciones</button><button class="secondary" data-go="historial">Ver historial</button></div></section></div>'+
+ '<div class="note">Límites de páginas de demostración: Start '+PLAN_RULES.Start.pages+', Crece '+PLAN_RULES.Crece.pages+', Pro '+PLAN_RULES.Pro.pages+'. Son provisionales y no constituyen condiciones comerciales aprobadas.</div>'+banner();
+}
+function manageTemplates(){
+ var s=site(),limit=(PLAN_RULES[s.plan]||PLAN_RULES.Start).pages;
+ return head("Plantillas de páginas","Aplica una estructura al borrador de la página seleccionada o crea una nueva página. No necesitas programar.")+
+ '<div class="templategrid">'+PAGE_TEMPLATES.map(function(t){
+ return '<article class="card"><div class="temppreview"><strong>'+esc(t.name)+'</strong><span></span><span></span></div>'+
+ '<h2>'+esc(t.name)+'</h2><p>Configuración de ejemplo con '+t.blocks.length+' secciones editables.</p>'+
+ '<div class="row"><button class="secondary" data-apply-template="'+t.id+'" '+(!canEdit()?"disabled":"")+'>Aplicar al borrador</button>'+
+ '<button class="primary" data-new-template="'+t.id+'" '+(!canEdit()||s.pages.length>=limit?"disabled":"")+'>Nueva página</button></div></article>';}).join("")+'</div>'+
+ '<div class="note">Antes de reemplazar un borrador se solicitará confirmación. Las versiones publicadas y el historial de otras páginas permanecerán sin cambios. Estas plantillas son maquetas; no son sitios desplegados.</div>'+banner();
+}
+function addPage(name,templateId){
+ if(!canEdit())return;
+ var s=site(),limit=(PLAN_RULES[s.plan]||PLAN_RULES.Start).pages,slug=slugify(name);
+ if(s.pages.length>=limit){notice("Límite provisional del plan alcanzado.");return;}
+ if(name.length<2||name.length>85||slug.length<2||s.pages.some(function(p){return p.slug===slug;})){notice("El nombre o dirección de esta página no es válido o ya existe.");return;}
+ var d=deepCopy(s.pages[0].draft);
+ d.title=name;d.description="Presenta la información de esta página.";d.cta="Conoce más";d.blocks=[];d.products=[];d.promos=[];
+ var tpl=getPageTemplate(templateId);if(tpl)d=templateDraft(tpl,d);
+ var id="page-"+Date.now()+"-"+Math.floor(Math.random()*100000);
+ s.pages.push({id:id,name:name,slug:slug,draft:d,published:null,history:[],draftRevision:1});
+ activePageByOrg[activeOrg]=id;tab="visual";previewMode="draft";render();
+ notice("Nueva página creada en el navegador. No se publicó.");
+}
+function openPageDialog(templateId){
+ var s=site(),limit=(PLAN_RULES[s.plan]||PLAN_RULES.Start).pages;
+ if(!canEdit()||s.pages.length>=limit){notice("No puedes crear más páginas en este plan de demostración.");return;}
+ var t=getPageTemplate(templateId);
+ $("dialogTitle").textContent="Nueva página";
+ $("dialogDescription").textContent="Solo se agregará al negocio ficticio seleccionado. No se guardará en un servidor.";
+ $("modalForm").dataset.kind="page";$("modalForm").dataset.template=templateId||"";
+ $("modalFields").innerHTML='<label class="field full">Nombre de página<input name="name" required maxlength="85" value="'+esc(t?t.name:"")+'" placeholder="Ejemplo: Nosotros"></label>';
+ $("dialog").showModal();
+}
+function bindPageManager(){
+ $("content").querySelectorAll("[data-new-page]").forEach(function(b){b.onclick=function(){openPageDialog("");};});
+ $("content").querySelectorAll("[data-new-template]").forEach(function(b){b.onclick=function(){openPageDialog(b.dataset.newTemplate);};});
+ $("content").querySelectorAll("[data-choose-page]").forEach(function(b){b.onclick=function(){
+  activePageByOrg[activeOrg]=b.dataset.choosePage;tab="visual";previewMode="draft";render();
+ };});
+ $("content").querySelectorAll("[data-delete-page]").forEach(function(b){b.onclick=function(){
+  if(!canEdit())return;var s=site(),p=s.pages.find(function(x){return x.id===b.dataset.deletePage;});
+  if(!p||p.id==="home")return;
+  if(!confirm("¿Eliminar la página de demostración «"+p.name+"» con sus versiones?"))return;
+  s.pages=s.pages.filter(function(x){return x.id!==p.id;});
+  if(activePageByOrg[activeOrg]===p.id)activePageByOrg[activeOrg]="home";
+  render();notice("Página de demostración eliminada.");
+ };});
+ $("content").querySelectorAll("[data-rename-page]").forEach(function(b){b.onclick=function(){
+  if(!canEdit())return;var s=site(),p=s.pages.find(function(x){return x.id===b.dataset.renamePage;});
+  if(!p)return;var name=prompt("Nuevo nombre de la página:",p.name);if(name===null)return;name=name.trim();
+  var slug=slugify(name);
+  if(name.length<2||name.length>85||(p.id!=="home"&&(slug.length<2||s.pages.some(function(x){return x.id!==p.id&&x.slug===slug;})))){notice("Nombre o dirección inválidos.");return;}
+  p.name=name;if(p.id!=="home")p.slug=slug;render();notice("Nombre actualizado en la demostración.");
+ };});
+ $("content").querySelectorAll("[data-apply-template]").forEach(function(b){b.onclick=function(){
+  if(!canEdit())return;var t=getPageTemplate(b.dataset.applyTemplate);
+  if(!t||!confirm("¿Reemplazar el BORRADOR de «"+currentPage().name+"» con la plantilla «"+t.name+"»? El historial anterior seguirá disponible."))return;
+  site().draft=templateDraft(t,site().draft);site().draftRevision++;
+  tab="visual";previewMode="draft";render();notice("Plantilla aplicada al borrador.");
+ };});
+}
+
 function render(){
 navDraw();
-var pages={inicio:intro,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,vista:preview,historial:history,dominio:domain,soporte:support};
+var pages={inicio:intro,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,vista:preview,historial:history,dominio:domain,soporte:support};
 $("content").innerHTML='<div class="card" style="margin-bottom:20px"><div class="row" style="justify-content:space-between;align-items:end"><div><div class="eyebrow">SESIÓN DE PRUEBA</div><p style="margin:5px 0 0;color:var(--muted)">Alterna negocios y roles ficticios para revisar el diseño. Esta selección NO es autenticación.</p></div><div class="row">'+dropdown()+'</div></div></div>'+pages[tab]();
 $("orgSwitch").onchange=function(){activeOrg=this.value;previewMode="draft";render();};
 $("roleSwitch").onchange=function(){activeRole=this.value;render();};
 if(tab==="visual")bindVisual();
+if(tab==="paginas"||tab==="plantillas")bindPageManager();
+$("pageSwitch").onchange=function(){activePageByOrg[activeOrg]=this.value;previewMode="draft";render();};
 $("content").querySelectorAll("[data-go]").forEach(function(b){b.onclick=function(){tab=b.dataset.go;render();};});
 $("content").querySelectorAll("[data-modal]").forEach(function(b){b.onclick=function(){if(!canEdit())return;showModal(b.dataset.modal);};});
 $("content").querySelectorAll("[data-preview]").forEach(function(b){b.onclick=function(){previewMode=b.dataset.preview;render();};});
@@ -372,6 +499,7 @@ $("dialog").showModal();
 $("modalForm").onsubmit=function(e){
 e.preventDefault();if(!canEdit())return;
 var kind=e.currentTarget.dataset.kind,d=new FormData(e.currentTarget),name=String(d.get("name")||"").trim();
+if(kind==="page"){var template=e.currentTarget.dataset.template;$("dialog").close();addPage(name,template);return;}
 if(name.length<2){notice("Ingresa un nombre válido.");return;}
 var id="demo-"+String(Date.now())+"-"+String(Math.floor(Math.random()*100000));
 if(kind==="product"){var amount=Number(d.get("price"));if(!Number.isFinite(amount)||amount<0||amount>100000||Math.round(amount*100)/100!==amount){notice("Ingresa un precio válido con máximo dos decimales.");return;}site().draft.products.push({id:id,name:name,price:amount,visible:d.get("visible")==="yes"});}
