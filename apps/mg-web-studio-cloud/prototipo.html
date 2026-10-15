@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><meta name="theme-color" content="#07111f">
+<title>MG WEB STUDIO CLOUD | Prototipo interno</title>
+<style>
+:root{--bg:#07111f;--side:#0b1b2e;--panel:#10243a;--soft:#142b44;--edge:rgba(255,255,255,.085);--text:#f0f8ff;--muted:#8fa8c0;--cyan:#52d0ff;--violet:#8790ff;--good:#59dcb0;--warn:#ffce80;--r:17px}
+*{box-sizing:border-box}body{margin:0;color:var(--text);font:14px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(ellipse at 100% 0,rgba(68,139,207,.07),transparent 34%),var(--bg)}
+a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+.app{display:grid;grid-template-columns:265px 1fr;min-height:100vh}
+aside{border-right:1px solid var(--edge);background:var(--side);padding:28px 18px;display:flex;flex-direction:column;gap:20px}
+.brand{display:flex;align-items:center;gap:11px;padding:0 11px 14px}.mark{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#07111f;font-weight:1000;border-radius:13px;width:44px;height:44px;display:grid;place-items:center;letter-spacing:-2px}
+.brand b{font-size:13px;line-height:1.15;display:block;letter-spacing:.09em}.brand small{font-size:10px;color:#8da6bf}
+.menu-label{font-size:10px;letter-spacing:.17em;font-weight:800;color:#6f8da6;padding:7px 14px}
+.nav{display:grid;gap:4px}.nav button{display:flex;gap:11px;width:100%;align-items:center;border:1px solid transparent;border-radius:12px;text-align:left;background:transparent;color:#a6bdd0;font-weight:700;padding:10px 13px}.nav button.active{color:#e7f8ff;background:rgba(82,208,255,.105);border-color:rgba(82,208,255,.15)}.nav button:hover{color:#fff;background:rgba(255,255,255,.045)}
+.nav .sym{font-size:17px;width:22px;text-align:center}.sidebar-bottom{margin-top:auto;padding:16px;border:1px solid var(--edge);background:rgba(255,255,255,.025);border-radius:14px}.sidebar-bottom small{color:var(--muted)}.sidebar-bottom b{display:block;margin:3px 0}
+main{min-width:0;padding:24px clamp(19px,3.25vw,50px) 55px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-bottom:21px;border-bottom:1px solid var(--edge)}
+.hint{font-size:11px;letter-spacing:.12em;color:#8fa4b8;font-weight:800}
+.top-right{display:flex;align-items:center;gap:12px}.pill{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border:1px solid rgba(255,207,116,.24);background:rgba(255,207,116,.08);color:#ffe2a8;border-radius:100px;font-size:11px;font-weight:800}
+.avatar{height:38px;width:38px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(120deg,#4bc1ef,#767deb);color:#061421;font-weight:900}
+.view{max-width:1280px;margin:auto;padding-top:36px}.page-head{display:flex;justify-content:space-between;align-items:end;gap:20px;margin-bottom:28px}.eyebrow{font-size:11px;letter-spacing:.16em;color:#87dfff;font-weight:850}.page-head h1{font-size:clamp(27px,3vw,38px);letter-spacing:-.045em;line-height:1.15;margin:6px 0}.page-head p{max-width:650px;color:var(--muted);margin:0}.primary{background:linear-gradient(120deg,var(--cyan),var(--violet));border:0;color:#061421;font-weight:900;padding:12px 17px;border-radius:12px}.secondary{background:rgba(255,255,255,.04);border:1px solid var(--edge);color:#e6f4ff;padding:11px 16px;border-radius:12px;font-weight:750}
+.grid{display:grid;gap:17px}.kpis{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:20px}.card{border:1px solid var(--edge);background:linear-gradient(140deg,rgba(18,42,67,.9),rgba(12,29,48,.93));border-radius:var(--r);padding:20px}
+.metric-label{font-weight:780;color:#8faec4;font-size:12px}.metric-value{font-weight:900;font-size:30px;letter-spacing:-.06em;margin:10px 0 4px}.metric-foot{font-size:11px;color:var(--good)}
+.split{grid-template-columns:minmax(0,1.45fr) minmax(270px,.75fr)}.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:17px}.section-head h2{font-size:17px;margin:0}.small{color:var(--muted);font-size:12px}
+.tablewrap{overflow:auto}.table{border-collapse:collapse;width:100%;min-width:530px}.table th{text-align:left;font-size:11px;font-weight:800;color:#7e98af;border-bottom:1px solid var(--edge);padding:11px}.table td{padding:13px 11px;border-bottom:1px solid rgba(255,255,255,.04);font-size:12px}.status{padding:5px 8px;border-radius:9px;display:inline-block;background:rgba(89,220,176,.09);color:#90efca;font-size:10px;font-weight:850}.status.draft{background:rgba(255,204,123,.08);color:#ffe0a5}.chart{display:flex;align-items:flex-end;height:145px;gap:12px;border-bottom:1px solid var(--edge);margin:12px 0}.chart span{flex:1;border-radius:8px 8px 0 0;background:linear-gradient(0deg,#3369b1,#5acfff);opacity:.85}.legend{display:flex;justify-content:space-between;gap:10px;font-size:11px;color:var(--muted)}.legend b{color:var(--text)}
+.cards{grid-template-columns:repeat(3,minmax(0,1fr))}.site-thumb{height:128px;background:linear-gradient(160deg,#173756,#112139);border:1px solid rgba(255,255,255,.04);border-radius:12px;margin-bottom:16px;padding:15px}.site-line{background:#274b67;height:10px;border-radius:5px;margin-top:10px;width:70%}.site-line.w{width:95%;background:linear-gradient(90deg,#59cfff,#7789ff);height:24px}.site-thumb div:first-child{width:46%;height:5px;background:#7da6c0;border-radius:3px}.site-title{font-size:16px;font-weight:850}.site-meta{color:var(--muted);font-size:11px;margin:4px 0 13px}.site-actions{display:flex;gap:8px;margin-top:15px}.site-actions button{padding:8px 12px;font-size:11px}
+.empty{text-align:center;padding:47px 15px;color:var(--muted)}.empty strong{display:block;color:var(--text);font-size:17px;margin:9px}
+.note{margin-top:21px;padding:13px 15px;border-left:3px solid var(--cyan);color:#9db3c8;background:rgba(82,208,255,.03);font-size:12px}
+.formgrid{display:grid;gap:13px;grid-template-columns:1fr 1fr}.field{display:grid;gap:6px;font-size:12px;color:#bbd0e0;font-weight:700}.field.full{grid-column:1/-1}
+.field input,.field select,.field textarea{width:100%;padding:12px;border-radius:10px;background:#081a2d;border:1px solid rgba(255,255,255,.11);color:#eff9ff}.field textarea{min-height:92px;resize:vertical}
+.dialog{border:1px solid rgba(82,208,255,.23);background:#102339;box-shadow:0 28px 110px rgba(0,0,0,.7);border-radius:20px;color:var(--text);padding:28px;max-width:520px;width:calc(100% - 30px)}
+.dialog::backdrop{background:rgba(0,0,0,.7)}.dialog h2{margin:0 0 7px}.dialog p{color:var(--muted);margin:0 0 20px}.dialog-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.toast{position:fixed;bottom:18px;right:19px;z-index:50;max-width:min(430px,calc(100% - 38px));background:#173957;border:1px solid rgba(82,208,255,.25);border-radius:13px;color:#e9faff;box-shadow:0 20px 45px #020813ad;padding:15px 19px;display:none}
+footer{margin-top:45px;font-size:11px;color:#6888a2}.mobile-toggle{display:none}
+@media(max-width:1150px){.app{grid-template-columns:225px 1fr}.kpis{grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}}
+@media(max-width:740px){.app{grid-template-columns:1fr}aside{position:fixed;inset:0 auto 0 0;width:250px;z-index:30;transform:translateX(-100%);transition:transform .2s}aside.open{transform:translateX(0)}.mobile-toggle{display:inline-block}.page-head{align-items:start;flex-direction:column}.top{gap:9px}.pill{font-size:9px}.cards,.kpis,.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.view{padding-top:23px}main{padding:16px 20px 45px}}
+@media(prefers-reduced-motion:reduce){aside{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+<aside id="sidebar">
+<div class="brand"><div class="mark">MG</div><div><b>MG WEB STUDIO</b><small>CLOUD · PANEL CENTRAL</small></div></div>
+<div class="menu-label">ADMINISTRACIÓN</div>
+<nav class="nav" aria-label="Módulos" id="nav"></nav>
+<div class="sidebar-bottom"><small>Entorno de desarrollo</small><b>Demostración interactiva</b><small>Datos temporales en memoria. Sin usuarios reales ni backend.</small></div>
+</aside>
+<main>
+<header class="top"><div><button class="secondary mobile-toggle" id="toggle" aria-label="Abrir menú">☰</button><div class="hint">MG DIGITAL SOLUTIONS / PLATAFORMA SAAS</div></div><div class="top-right"><span class="pill">● MODO DEMOSTRACIÓN</span><div class="avatar" title="Perfil ficticio">MG</div></div></header>
+<div class="view" id="view"></div>
+<footer>MG Web Studio Cloud · Prototipo de experiencia de usuario · No es un sistema operativo ni contiene autenticación.</footer>
+</main>
+</div>
+<dialog class="dialog" id="dialog"><h2 id="dialogTitle">Nuevo registro</h2><p id="dialogLead">Simulación local.</p><form id="dialogForm"><div class="formgrid" id="fields"></div><div class="dialog-actions"><button type="button" class="secondary" id="cancel">Cancelar</button><button type="submit" class="primary">Crear en demostración</button></div></form></dialog>
+<div class="toast" role="status" id="toast" aria-live="polite"></div>
+<script>
+(function(){
+"use strict";
+const NAV=[["dashboard","▦","Dashboard"],["clientes","♧","Clientes"],["sitios","▣","Páginas web"],["plantillas","▤","Plantillas"],["dominios","◎","Dominios y hosting"],["suscripciones","▥","Suscripciones"],["soporte","◇","Soporte"],["reportes","↗","Reportes"],["ajustes","⚙","Configuración"]];
+const state={section:"dashboard",clients:[{name:"Panadería Horizonte",code:"CLI-001",plan:"Business",status:"Activo"},{name:"Estudio Creativo Norte",code:"CLI-002",plan:"Start",status:"Activo"},{name:"Servicios Costa",code:"CLI-003",plan:"Premium",status:"Propuesta"}],sites:[{title:"Panadería Horizonte",owner:"Panadería Horizonte",type:"Corporativa",status:"Publicado",domain:"horizonte.ejemplo.invalid"},{title:"Estudio Creativo",owner:"Estudio Creativo Norte",type:"Portafolio",status:"Borrador",domain:"sin-dominio"}],tickets:[{title:"Actualizar portada",client:"Panadería Horizonte",status:"Abierto"},{title:"Consultar dominio",client:"Estudio Creativo Norte",status:"En revisión"}],templates:["Emprendedores","Corporativa","Portafolio","Restaurante","Catálogo","Tienda online"]};
+const $=id=>document.getElementById(id);
+const clean=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nav=$("nav"),view=$("view");
+function navDraw(){nav.innerHTML=NAV.map(([id,icon,label])=>'<button type="button" data-page="'+id+'" class="'+(state.section===id?"active":"")+'"><span class="sym">'+icon+'</span>'+label+'</button>').join("");nav.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{state.section=b.dataset.page;$("sidebar").classList.remove("open");render()})}
+function header(title,desc,action,kind){return '<div class="page-head"><div><div class="eyebrow">MG WEB STUDIO CLOUD</div><h1>'+title+'</h1><p>'+desc+'</p></div>'+(action?'<button class="primary" data-create="'+kind+'">'+action+' →</button>':'')+'</div>'}
+function table(headers,rows){return '<div class="tablewrap"><table class="table"><thead><tr>'+headers.map(x=>'<th>'+x+'</th>').join("")+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(c=>'<td>'+c+'</td>').join("")+'</tr>').join("")+'</tbody></table></div>'}
+function status(x){return '<span class="status '+(/borrador|revisión|propuesta/i.test(x)?"draft":"")+'">'+clean(x)+'</span>'}
+const card=(t,v,d)=>'<div class="card"><div class="metric-label">'+t+'</div><div class="metric-value">'+v+'</div><div class="metric-foot">'+d+'</div></div>';
+function dashboard(){
+ const active=state.sites.filter(x=>x.status==="Publicado").length;
+ const content='<div class="grid kpis">'+card("Clientes registrados",state.clients.length,"Ejemplos del prototipo")+card("Sitios en demostración",state.sites.length,"Incluye borradores")+card("Sitios publicados (simulados)",active,"No se publicaron sitios")+card("Tickets en demostración",state.tickets.length,"Sin conexiones externas")+'</div>';
+ const recent='<div class="card"><div class="section-head"><h2>Sitios recientes</h2><span class="small">Vista simulada</span></div>'+table(["PROYECTO","CLIENTE","ESTADO"],state.sites.map(s=>[clean(s.title),clean(s.owner),status(s.status)]))+'</div>';
+ const chart='<div class="card"><div class="section-head"><h2>Vista del crecimiento</h2><span class="small">Valores ilustrativos</span></div><div class="chart" aria-label="Gráfico decorativo de ejemplo">'+[28,40,35,56,50,72,88].map(x=>'<span style="height:'+x+'%"></span>').join("")+'</div><div class="legend"><span>No representa ingresos reales</span><b>Demo</b></div></div>';
+ return header("Resumen general","Administra clientes, páginas, operaciones y servicios desde un solo lugar.", "Crear cliente","client")+content+'<div class="grid split">'+recent+chart+'</div>'+tip("Este panel es un prototipo. La fase de autenticación y datos reales requiere un Supabase independiente, controles por rol y pruebas de seguridad.");
+}
+function tip(t){return '<div class="note">'+t+'</div>'}
+function clients(){return header("Clientes y empresas","Registra empresas, asigna planes y consulta su relación con los sitios administrados.","Nuevo cliente","client")+'<div class="card">'+table(["CLIENTE","CÓDIGO","PLAN","ESTADO"],state.clients.map(c=>[clean(c.name),clean(c.code),clean(c.plan),status(c.status)]))+'</div>'+tip("Los registros creados aquí son temporales y se eliminan al recargar la página.")}
+function sites(){
+return header("Páginas web","Organiza el trabajo editorial, cada dominio y el estado de los proyectos.","Nuevo sitio","site")+'<div class="grid cards">'+state.sites.map(s=>'<article class="card"><div class="site-thumb"><div></div><div class="site-line w"></div><div class="site-line"></div><div class="site-line"></div></div><div class="site-title">'+clean(s.title)+'</div><div class="site-meta">'+clean(s.owner)+' · '+clean(s.domain)+'</div>'+status(s.status)+'<div class="site-actions"><button class="secondary" data-action="inspect" data-site="'+clean(s.title)+'">Ver detalles</button></div></article>').join("")+'</div>'+tip("Crear o inspeccionar un sitio aquí solo cambia la demostración. El editor, despliegue y DNS reales corresponden a fases posteriores.")
+}
+function templates(){return header("Biblioteca de plantillas","Colecciones pensadas para reutilizar estilos y componentes sin mezclar datos de diferentes negocios.")+'<div class="grid cards">'+state.templates.map((s,i)=>'<article class="card"><div class="site-thumb" style="background:linear-gradient(145deg,'+["#123450,#1b3353","#203a58,#09293c","#302b5e,#112c3f"][i%3]+')"><div></div><div class="site-line w"></div><div class="site-line"></div></div><div class="site-title">'+clean(s)+'</div><div class="site-meta">Diseño conceptual · requiere construcción e integración</div><button class="secondary" data-action="template" data-site="'+clean(s)+'">Seleccionar plantilla</button></article>').join("")+'</div>'+tip("Solo la plantilla estática Web Emprendedores creada anteriormente existe en código. Los demás modelos son categorías planificadas.")}
+function generic(title,description,items,notice){return header(title,description)+'<div class="grid cards">'+items.map(([a,b,c])=>'<div class="card"><div class="eyebrow">'+a+'</div><h3 style="margin:10px 0">'+b+'</h3><p class="small">'+c+'</p></div>').join("")+'</div>'+tip(notice)}
+function tickets(){return header("Soporte técnico","Bandeja central para solicitudes de clientes y seguimiento de respuestas.","Nuevo ticket","ticket")+'<div class="card">'+table(["ASUNTO","CLIENTE","ESTADO"],state.tickets.map(t=>[clean(t.title),clean(t.client),status(t.status)]))+'</div>'+tip("Tickets de ejemplo; aún no se envían notificaciones ni se registran en servidor.")}
+function render(){
+ navDraw();
+ const content={
+ dashboard:dashboard,
+ clientes:clients,
+ sitios:sites,
+ plantillas:templates,
+ dominios:()=>generic("Dominios y hosting","Servicios de alojamiento, SSL, DNS, correo y renovaciones.",[["DOMINIOS","Renovaciones","Alertas por vencimiento y titularidad."],["HOSTING","Consumo","Almacenamiento y recursos acordados."],["CORREOS","Buzones empresariales","Cuentas y proveedores por cliente."]],"Gestión real de dominios y alojamiento pendiente de integración con proveedor."),
+ suscripciones:()=>generic("Suscripciones y cobros","Planes, contratos, mensualidades, facturación interna y conciliación.",[["MG START","$29 / mes","Implementación comercial de referencia: $249."],["MG BUSINESS","$49 / mes","Implementación comercial de referencia: $499."],["MG PREMIUM","Desde $99 / mes","Implementación desde $999; según alcance."]],"Precios comerciales propuestos. No hay contratos, facturas emitidas ni pagos reales en este prototipo."),
+ soporte:tickets,
+ reportes:()=>generic("Reportes y analítica","Indicadores de clientes, sitios y desempeño comercial.",[["CLIENTES","Retención","Estado de altas y renovaciones."],["OPERACIÓN","Visitas y solicitudes","Actividad por sitio y canal."],["FINANZAS","Ingresos recurrentes","Margen, facturación y cobranza."]],"Los indicadores reales estarán disponibles cuando existan fuentes y permisos configurados."),
+ ajustes:()=>generic("Configuración y seguridad","Usuarios, roles, protección de datos y proveedores.",[["AUTENTICACIÓN","MFA y acceso","Será obligatorio para privilegios administrativos."],["PERMISOS","Roles por organización","Acceso limitado a cada empresa y sus sitios."],["AUDITORÍA","Acciones registradas","Publicaciones, cambios de permisos y operaciones sensibles."]],"No existe una sesión autenticada en este prototipo. No introducir datos reales.")
+ };
+ view.innerHTML=content[state.section]();
+ view.querySelectorAll("[data-create]").forEach(b=>b.onclick=()=>newRecord(b.dataset.create));
+ view.querySelectorAll("[data-action]").forEach(b=>b.onclick=()=>{toast("Simulación: "+(b.dataset.action==="template"?"plantilla seleccionada":"detalle solicitado")+" · "+b.dataset.site+". Próxima fase: integración segura.")});
+}
+function toast(s){const t=$("toast");t.textContent=s;t.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display="none",4600)}
+function newRecord(kind){
+const title={client:"Nuevo cliente",site:"Nueva página",ticket:"Nuevo ticket"}[kind];
+$("dialogTitle").textContent=title;
+$("dialogLead").textContent="Este registro se agregará únicamente a la demostración del navegador.";
+const defs={client:[["nombre","Nombre comercial","text"],["plan","Plan","select"]],site:[["nombre","Nombre del sitio","text"],["cliente","Cliente","selectclient"]],ticket:[["nombre","Asunto del ticket","text"],["cliente","Cliente","selectclient"]]}[kind];
+$("fields").innerHTML=defs.map(([key,label,type])=>'<label class="field">'+label+(type==="select"?'<select name="'+key+'"><option>Start</option><option>Business</option><option>Premium</option></select>':type==="selectclient"?'<select name="'+key+'">'+state.clients.map(x=>'<option>'+clean(x.name)+'</option>').join("")+'</select>':'<input name="'+key+'" required maxlength="80" placeholder="'+label+'">')+'</label>').join("");
+$("dialog").dataset.kind=kind;$("dialog").showModal();
+}
+$("dialogForm").addEventListener("submit",function(e){
+ e.preventDefault();const kind=$("dialog").dataset.kind;
+ const v=new FormData(e.target),name=String(v.get("nombre")||"").trim();
+ if(!name)return;
+ if(kind==="client")state.clients.unshift({name,code:"DEMO-"+String(state.clients.length+1).padStart(3,"0"),plan:String(v.get("plan")),status:"Propuesta"});
+ if(kind==="site")state.sites.unshift({title:name,owner:String(v.get("cliente")),type:"Corporativa",status:"Borrador",domain:"sin-dominio"});
+ if(kind==="ticket")state.tickets.unshift({title:name,client:String(v.get("cliente")),status:"Abierto"});
+ $("dialog").close();render();toast("Registro agregado a la demostración. No se ha guardado en ninguna base de datos.");
+});
+$("cancel").onclick=()=>$("dialog").close();
+$("toggle").onclick=()=>$("sidebar").classList.toggle("open");
+render();
+})();
+</script>
+</body></html>
