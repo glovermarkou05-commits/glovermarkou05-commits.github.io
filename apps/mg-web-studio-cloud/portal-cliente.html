@@ -83,6 +83,11 @@ footer{padding-top:35px;color:#7794a9;font-size:11px}
 .temppreview span{display:block;margin-top:12px;border-radius:5px;width:76%;height:9px;background:#76d2ff}
 .temppreview span+span{width:55%;height:6px;background:#456e95}
 @media(max-width:760px){.templategrid{grid-template-columns:1fr}.pagebox{align-items:flex-start;flex-direction:column}}
+
+.releaseItem{display:flex;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:13px;padding:15px;margin-top:11px;align-items:center;flex-wrap:wrap}
+.releaseItem.selected{border-color:rgba(81,207,255,.42);background:rgba(81,207,255,.045)}
+.releaseItem strong{display:block;font-size:13px}.releaseItem small{display:block;color:var(--muted);margin:4px 0 8px}
+.releaseItem button{font-size:11px;padding:8px 12px}
 </style>
 </head>
 <body>
@@ -152,7 +157,7 @@ var PAGE_TEMPLATES=[
 organizations.forEach(function(org){
  var s=org.site,d=s.draft,p=s.published,h=s.history,r=s.draftRevision;
  s.sharedDraft={brand:{color:d.color,phone:d.phone},products:deepCopy(d.products),promos:deepCopy(d.promos)};
- s.sharedPublished=null;s.sharedRevision=1;s.sharedHistory=[];
+ s.sharedPublished=null;s.sharedRevision=1;s.sharedHistory=[];s.releases=[];s.activeReleaseNumber=null;
  delete d.color;delete d.phone;delete d.products;delete d.promos;
  s.pages=[{id:"home",name:"Inicio",slug:"",draft:d,published:p,history:h,draftRevision:r}];
  activePageByOrg[org.id]="home";
@@ -176,7 +181,7 @@ function templateDraft(t,source){
 }
 function pageAddress(page){return site().domain+(page.id==="home"?"":"/"+page.slug);}
 
-var navItems=[["inicio","▦","Inicio"],["identidad","◉","Mi negocio"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
+var navItems=[["inicio","▦","Inicio"],["identidad","◉","Mi negocio"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["publicaciones","⇄","Publicaciones"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
 var $=function(id){return document.getElementById(id);};
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function getOrg(){return organizations.find(function(x){return x.id===activeOrg;});}
@@ -220,13 +225,15 @@ function publicBlocks(data){
  }).join("");
 }
 
-function previewCard(data,label,commonData){
+function previewCard(data,label,commonData,meta){
 var common=commonData||site().sharedDraft;
 var products=common.products.filter(function(p){return p.visible;});
 var promos=common.promos.filter(function(p){return p.active;});
 var color=/^#[0-9a-fA-F]{6}$/.test(common.brand.color)?common.brand.color:"#186999";
-return '<div class="sitePreview"><div class="previewbar"><span>◉ '+esc(pageAddress(currentPage()))+'</span><b>'+esc(label)+'</b></div><div class="previewInner" style="--site-accent:'+color+'">'+
-'<div class="previewHero"><div class="previewLogo">'+esc(site().name)+'</div><h2>'+esc(data.title)+'</h2><p>'+esc(data.description)+'</p><span class="previewBtn">'+esc(data.cta)+' →</span></div>'+
+var address=meta?meta.domain+(meta.page.id==="home"?"":"/"+meta.page.slug):pageAddress(currentPage());
+var businessName=meta?meta.siteName:site().name;
+return '<div class="sitePreview"><div class="previewbar"><span>◉ '+esc(address)+'</span><b>'+esc(label)+'</b></div><div class="previewInner" style="--site-accent:'+color+'">'+
+'<div class="previewHero"><div class="previewLogo">'+esc(businessName)+'</div><h2>'+esc(data.title)+'</h2><p>'+esc(data.description)+'</p><span class="previewBtn">'+esc(data.cta)+' →</span></div>'+
 '<div class="previewSection"><h3>Productos y servicios</h3><div class="previewProducts">'+(products.length?products.slice(0,4).map(function(p){return '<div class="previewProduct">'+esc(p.name)+'<b>'+money(p.price)+'</b></div>';}).join(""):'<div class="previewProduct">Sin productos visibles.</div>')+'</div>'+
 promos.slice(0,2).map(function(p){return '<div class="previewPromo">✦ '+esc(p.title)+'</div>';}).join("")+'</div>'+publicBlocks(data)+'</div></div>';
 }
@@ -237,7 +244,7 @@ return head("Bienvenido a tu espacio","Administra tu página web de forma sencil
 '<div class="card kpi"><span>Plan asignado (demo)</span><strong>'+esc(s.plan)+'</strong><div class="hint">Servicio de muestra</div></div>'+
 '<div class="card kpi"><span>Productos del negocio</span><strong>'+shared.products.length+'</strong><div class="hint">Catálogo del negocio</div></div>'+
 '<div class="card kpi"><span>Promociones activas</span><strong>'+shared.promos.filter(function(x){return x.active;}).length+'</strong><div class="hint">Borrador editable</div></div>'+
-'<div class="card kpi"><span>Versiones publicadas</span><strong>'+s.history.length+'</strong><div class="hint">Simulación sin despliegue</div></div></div>'+
+'<div class="card kpi"><span>Versiones del sitio</span><strong>'+s.releases.length+'</strong><div class="hint">Simulación sin despliegue</div></div></div>'+
 '<div class="grid split"><section class="card"><h2>Tu página web</h2>'+previewCard(draft,"Vista de borrador")+'<div class="sectionactions"><button class="secondary" data-go="vista">Revisar vista previa</button></div></section>'+
 '<section class="card"><h2>Tu lista de trabajo</h2><div class="tiles" style="grid-template-columns:1fr">'+
 '<div class="tile"><b>1. Personaliza tu portada</b><small>Cambia el título, la descripción y el botón principal.</small></div>'+
@@ -268,13 +275,115 @@ return head("Promociones","Administra banners y campañas sencillas, sin modific
 '<div class="grid cards">'+(site().sharedDraft.promos.length?site().sharedDraft.promos.map(function(p){return '<article class="card"><div class="eyebrow">PROMOCIÓN</div><h2 style="margin-top:12px">'+esc(p.title)+'</h2>'+tag(p.active?"Activa":"Pausada")+
 '<div class="sectionactions"><button class="secondary" data-toggle-promo="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>'+(p.active?"Pausar":"Activar")+'</button><button class="danger" data-remove-promo="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Quitar</button></div></article>';}).join(""):'<div class="card empty">Aún no has creado promociones de demostración.</div>')+'</div>'+banner();
 }
+
+/* PUBLICACIÓN CENTRALIZADA — SIMULACIÓN EXCLUSIVAMENTE LOCAL.
+   Una entrega incluye instantáneas de TODAS las páginas y los datos compartidos.
+   No ejecutar esta lógica directamente en producción: requiere API transaccional,
+   roles y RLS verificables, claves de idempotencia, backups y validación de dominio. */
+function activeRelease(){
+ var s=site();return s.releases.find(function(r){return r.number===s.activeReleaseNumber;})||null;
+}
+function publishedPage(pageId){
+ var r=activeRelease();return r&&r.pages.find(function(p){return p.id===pageId;})||null;
+}
+function publicationCheck(){
+ var s=site(),limit=PLAN_RULES[s.plan]||PLAN_RULES.Start,seen={};
+ if(!s.pages.some(function(p){return p.id==="home";}))return "Falta la página de inicio.";
+ if(!s.pages.length||s.pages.length>limit.pages)return "El número de páginas supera el límite de demostración.";
+ if(!s.sharedDraft||!s.sharedDraft.brand||!Array.isArray(s.sharedDraft.products)||!Array.isArray(s.sharedDraft.promos))return "Faltan datos generales del sitio.";
+ for(var i=0;i<s.pages.length;i++){
+  var p=s.pages[i],slug=p.slug||"";
+  if(!p.id||!p.draft||!String(p.draft.title||"").trim())return "Hay una página sin contenido válido.";
+  if(seen[slug])return "Existen direcciones de página duplicadas.";
+  seen[slug]=true;
+  if(!Array.isArray(p.draft.blocks)||p.draft.blocks.length>limit.sections)return "Una página supera el límite de secciones.";
+  for(var j=0;j<p.draft.blocks.length;j++){
+   if(!BLOCKS[p.draft.blocks[j].type]||!blockAllowed(p.draft.blocks[j].type,s.plan))return "Se detectó una sección no permitida en este plan.";
+  }
+ }
+ return null;
+}
+function captureCurrentSite(){
+ var s=site();
+ return {
+  siteName:s.name,domain:s.domain,shared:deepCopy(s.sharedDraft),
+  pages:s.pages.map(function(p){return {id:p.id,name:p.name,slug:p.slug,revision:p.draftRevision,draft:deepCopy(p.draft)};})
+ };
+}
+function appendSiteRelease(snapshot,restoredFrom){
+ var s=site(),n=s.releases.length+1;
+ var candidate=deepCopy(snapshot);
+ var release={number:n,at:new Date().toLocaleString("es-EC"),actor:activeRole,
+  origin:restoredFrom||null,siteName:candidate.siteName,domain:candidate.domain,
+  shared:candidate.shared,pages:candidate.pages};
+ // La publicación se registra como UNA sola unidad; solo entonces cambia el puntero activo.
+ s.releases.push(release);
+ s.activeReleaseNumber=n;
+ s.sharedPublished=deepCopy(release.shared);
+ s.sharedHistory.push({rev:s.sharedRevision,at:release.at,siteRelease:n,data:deepCopy(release.shared)});
+ s.pages.forEach(function(p){
+  var shot=release.pages.find(function(q){return q.id===p.id;});
+  p.published=shot?deepCopy(shot.draft):null;
+  if(shot){p.history.push({n:n,rev:shot.revision,siteRelease:n,at:release.at,data:deepCopy(shot.draft)});}
+ });
+ return n;
+}
+function publishFullSite(){
+ if(!canPublish()){notice("El rol de demostración no permite publicar.");return false;}
+ var invalid=publicationCheck();if(invalid){notice(invalid);return false;}
+ var snapshot=captureCurrentSite();
+ var n=appendSiteRelease(snapshot,null);
+ previewMode="published";render();
+ notice("Sitio completo publicado en DEMO — versión "+n+". No se modificó ninguna web real.");
+ return true;
+}
+function rollbackSiteRelease(number){
+ if(!canPublish()){notice("El rol de demostración no permite recuperar publicaciones.");return false;}
+ var s=site(),old=s.releases.find(function(r){return r.number===Number(number);});
+ if(!old){notice("No se encontró esa versión.");return false;}
+ if(!confirm("¿Recuperar la versión "+old.number+" como NUEVA publicación de demostración? Se conservarán los borradores actuales."))return false;
+ var n=appendSiteRelease({siteName:old.siteName,domain:old.domain,shared:deepCopy(old.shared),pages:deepCopy(old.pages)},old.number);
+ previewMode="published";render();
+ notice("Versión "+old.number+" recuperada como publicación "+n+". Los borradores no se modificaron.");
+ return true;
+}
+function sitePublications(){
+ var s=site(),active=activeRelease(),listed=s.releases.slice().reverse();
+ var rows=listed.map(function(r){return '<article class="releaseItem '+(active&&r.number===active.number?"selected":"")+'">'+
+ '<div><strong>Versión '+r.number+(r.origin?" · recuperada de #"+r.origin:"")+'</strong>'+
+ '<small>'+esc(r.at)+' · '+r.pages.length+' páginas · '+r.shared.products.length+' productos · '+r.shared.promos.length+' promociones</small>'+
+ (active&&r.number===active.number?'<span class="tag">Activa en demo</span>':"")+'</div>'+
+ '<div class="row"><button class="secondary" data-inspect-release="'+r.number+'">Inspeccionar</button>'+
+ '<button class="secondary" data-rollback-release="'+r.number+'" '+(!canPublish()||active&&r.number===active.number?"disabled":"")+'>Recuperar versión</button></div></article>';}).join("");
+ return head("Publicación centralizada","Publica todas tus páginas y datos compartidos como una única versión. Revisa, compara y recupera versiones completas.",
+ '<button class="primary" data-publish-site="true" '+(!canPublish()?"disabled":"")+'>Publicar sitio completo</button>')+
+ '<div class="grid split"><section class="card"><h2>Historial del sitio</h2>'+
+ (listed.length?rows:'<p class="empty">Todavía no hay publicaciones. Completa el sitio y simula la primera publicación.</p>')+'</section>'+
+ '<section class="card"><h2>Estado de la publicación</h2>'+
+ (active?'<div class="tile"><b>Versión activa #'+active.number+'</b><small>'+esc(active.at)+' · '+active.pages.length+' páginas publicadas simultáneamente</small></div>':
+ '<div class="tile"><b>Sin publicación activa</b><small>Las páginas solo existen como borradores de demostración.</small></div>')+
+ '<div class="tiles" style="margin-top:12px;grid-template-columns:1fr">'+
+ '<div class="tile"><b>'+s.pages.length+' páginas en borrador</b><small>En la próxima publicación se incluirán todas las páginas del sitio.</small></div>'+
+ '<div class="tile"><b>'+s.sharedDraft.products.length+' productos y '+s.sharedDraft.promos.length+' promociones</b><small>Se guardan en una sola instantánea para el sitio.</small></div>'+
+ '<div class="tile"><b>Restauración sin pérdida de borradores</b><small>Recuperar una versión publicada crea un nuevo registro de publicación; no elimina trabajo en progreso.</small></div></div></section></div>'+
+ '<div class="note warnnote">ESTO ES UNA DEMOSTRACIÓN EN MEMORIA: publicar no activa un dominio ni envía datos a servidores. Las versiones desaparecen cuando se recarga el navegador.</div>'+banner();
+}
+function releaseInspector(number){
+ var r=site().releases.find(function(x){return x.number===Number(number);});
+ if(!r)return;
+ var info="Versión "+r.number+" | "+r.pages.length+" página(s) | "+
+ r.shared.products.length+" producto(s) | "+r.shared.promos.length+" promoción(es)\n"+
+ r.pages.map(function(p){return "• "+p.name+" (/"+p.slug+") — "+p.draft.title;}).join("\n");
+ alert(info);
+}
+
 function preview(){
-var s=site();var published=Boolean(s.published);var viewing=previewMode==="published"&&published;var data=viewing?s.published:s.draft;
+var s=site(),pub=publishedPage(currentPage().id);var published=Boolean(pub);var viewing=previewMode==="published"&&published;var data=viewing?pub.draft:s.draft;
 return head("Vista previa de mi página","Compara el borrador con la última versión publicada de manera simulada.",'<div class="row"><button class="secondary" data-preview="draft">Borrador</button><button class="secondary" data-preview="published" '+(!published?"disabled":"")+'>Publicada (demo)</button></div>')+
-'<div class="grid split"><section class="card"><h2>'+(viewing?"Última publicación simulada":"Borrador actual")+'</h2>'+previewCard(data,viewing?"Publicación simulada":"Borrador",viewing?sharedData(true):sharedData(false))+'</section>'+
+'<div class="grid split"><section class="card"><h2>'+(viewing?"Última publicación simulada":"Borrador actual")+'</h2>'+previewCard(data,viewing?"Publicación simulada":"Borrador",viewing?activeRelease().shared:s.sharedDraft,viewing?{siteName:activeRelease().siteName,domain:activeRelease().domain,page:pub}:null)+'</section>'+
 '<section class="card"><h2>Control editorial</h2><div class="tiles" style="grid-template-columns:1fr"><div class="tile"><b>Revisión de borrador: '+s.draftRevision+'</b><small>Los cambios solo viven durante esta sesión.</small></div>'+
-'<div class="tile"><b>Publicaciones simuladas: '+s.history.length+'</b><small>Publicar aquí no modifica páginas reales, DNS ni hosting.</small></div><div class="tile"><b>Permiso actual: '+esc(activeRole)+'</b><small>La verificación de permisos real llegará con la autenticación y la base de datos.</small></div></div>'+
-'<div class="sectionactions"><button class="primary" data-publish="yes" '+(!canPublish()?"disabled":"")+'>Simular publicación</button></div></section></div>'+banner();
+'<div class="tile"><b>Versiones completas del sitio: '+s.releases.length+'</b><small>Publicar incluye todas las páginas y datos compartidos, nunca una sola página.</small></div><div class="tile"><b>Permiso actual: '+esc(activeRole)+'</b><small>La verificación de permisos real llegará con la autenticación y la base de datos.</small></div></div>'+
+'<div class="sectionactions"><button class="primary" data-publish="yes" '+(!canPublish()?"disabled":"")+'>Publicar todo el sitio (demo)</button><button class="secondary" data-go="publicaciones">Historial del sitio</button></div></section></div>'+banner();
 }
 function history(){
 var s=site();
@@ -423,7 +532,7 @@ function managePages(){
  '<button class="primary" data-new-page="true" '+(!canEdit()||s.pages.length>=limit?"disabled":"")+'>+ Nueva página</button>')+
  '<div class="grid split"><section class="card"><h2>Listado de páginas · '+s.pages.length+' / '+limit+'</h2>'+
  s.pages.map(function(p){return '<div class="pagebox '+(p.id===currentPage().id?"selected":"")+'"><div><strong>'+esc(p.name)+' '+(p.id==="home"?"· Inicio":"")+'</strong>'+
- '<small>'+esc(pageAddress(p))+' · '+p.history.length+' versiones · '+(p.published?"Demo publicada":"Borrador")+'</small></div>'+
+ '<small>'+esc(pageAddress(p))+' · '+p.history.length+' revisiones de publicación · '+(publishedPage(p.id)?"Demo publicada":"Borrador")+'</small></div>'+
  '<div class="pagebuttons"><button class="secondary" data-choose-page="'+esc(p.id)+'">Seleccionar</button>'+
  '<button class="secondary" data-rename-page="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Renombrar</button>'+
  (p.id==="home"?"":'<button class="danger" data-delete-page="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Eliminar</button>')+'</div></div>';}).join("")+
@@ -494,7 +603,7 @@ function bindPageManager(){
 
 function render(){
 navDraw();
-var pages={inicio:intro,identidad:identity,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,vista:preview,historial:history,dominio:domain,soporte:support};
+var pages={inicio:intro,identidad:identity,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,vista:preview,publicaciones:sitePublications,historial:history,dominio:domain,soporte:support};
 $("content").innerHTML='<div class="card" style="margin-bottom:20px"><div class="row" style="justify-content:space-between;align-items:end"><div><div class="eyebrow">SESIÓN DE PRUEBA</div><p style="margin:5px 0 0;color:var(--muted)">Alterna negocios y roles ficticios para revisar el diseño. Esta selección NO es autenticación.</p></div><div class="row">'+dropdown()+'</div></div></div>'+pages[tab]();
 $("orgSwitch").onchange=function(){activeOrg=this.value;previewMode="draft";render();};
 $("roleSwitch").onchange=function(){activeRole=this.value;render();};
@@ -509,7 +618,9 @@ $("content").querySelectorAll("[data-toggle-product]").forEach(function(b){b.onc
 $("content").querySelectorAll("[data-remove-product]").forEach(function(b){b.onclick=function(){if(!canEdit())return;site().sharedDraft.products=site().sharedDraft.products.filter(function(x){return x.id!==b.dataset.removeProduct;});bumpShared();};});
 $("content").querySelectorAll("[data-toggle-promo]").forEach(function(b){b.onclick=function(){if(!canEdit())return;var p=site().sharedDraft.promos.find(function(x){return x.id===b.dataset.togglePromo;});if(p){p.active=!p.active;bumpShared();}};});
 $("content").querySelectorAll("[data-remove-promo]").forEach(function(b){b.onclick=function(){if(!canEdit())return;site().sharedDraft.promos=site().sharedDraft.promos.filter(function(x){return x.id!==b.dataset.removePromo;});bumpShared();};});
-$("content").querySelectorAll("[data-publish]").forEach(function(b){b.onclick=function(){if(!canPublish()){notice("Rol sin permiso para simular publicación.");return;}var s=site();var n=s.history.length+1;var snapshot=deepCopy(s.draft);s.published=snapshot;s.sharedPublished=deepCopy(s.sharedDraft);s.sharedHistory.push({rev:s.sharedRevision,at:new Date().toLocaleString("es-EC"),data:deepCopy(s.sharedPublished)});s.history.push({n:n,rev:s.draftRevision,sharedRev:s.sharedRevision,at:new Date().toLocaleString("es-EC"),data:snapshot});previewMode="published";render();notice("Publicación simulada guardada en memoria. No se modificó ningún sitio real.");};});
+$("content").querySelectorAll("[data-publish],[data-publish-site]").forEach(function(b){b.onclick=function(){publishFullSite();};});
+$("content").querySelectorAll("[data-rollback-release]").forEach(function(b){b.onclick=function(){rollbackSiteRelease(b.dataset.rollbackRelease);};});
+$("content").querySelectorAll("[data-inspect-release]").forEach(function(b){b.onclick=function(){releaseInspector(b.dataset.inspectRelease);};});
 $("content").querySelectorAll("[data-restore]").forEach(function(b){b.onclick=function(){if(!canEdit())return;var v=site().history.find(function(x){return String(x.n)===b.dataset.restore;});if(v){site().draft=deepCopy(v.data);bump();notice("Versión restaurada únicamente al borrador de la demo.");}};});
 var edit=$("editForm");if(edit)edit.onsubmit=function(e){e.preventDefault();if(!canEdit())return;var d=new FormData(edit),t=site().draft;var title=String(d.get("title")||"").trim(),description=String(d.get("description")||"").trim(),cta=String(d.get("cta")||"").trim();
 if(title.length<3||title.length>100||description.length<3||description.length>300||cta.length<2||cta.length>45){notice("Revisa la longitud de los textos y el color.");return;}
