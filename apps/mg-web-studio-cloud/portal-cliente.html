@@ -102,6 +102,14 @@ footer{padding-top:35px;color:#7794a9;font-size:11px}
 .previewProductPhoto{width:100%;height:76px;object-fit:cover;border-radius:8px;margin-bottom:8px}
 .previewProduct small{display:block;color:#57748b;margin-top:3px}
 .catalogEditPreview{display:block;width:100px;height:86px;object-fit:cover;border-radius:10px}
+
+.mediaGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:16px}
+.mediaItem img{width:100%;height:140px;object-fit:cover;border-radius:11px;margin-bottom:11px}
+.mediaItem h3{margin:0 0 8px;word-break:break-word}
+.previewBanner{width:100%;height:83px;object-fit:cover;border-radius:8px;margin-bottom:11px}
+.previewLogoImg{display:inline-block;width:33px;height:33px;object-fit:contain;vertical-align:middle;margin-right:8px}
+@media(max-width:1060px){.mediaGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:680px){.mediaGrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -170,7 +178,7 @@ var PAGE_TEMPLATES=[
 ];
 organizations.forEach(function(org){
  var s=org.site,d=s.draft,p=s.published,h=s.history,r=s.draftRevision;
- s.sharedDraft={brand:{color:d.color,phone:d.phone},products:deepCopy(d.products),promos:deepCopy(d.promos)};
+ s.sharedDraft={brand:{color:d.color,phone:d.phone,logoAssetId:"",bannerAssetId:""},products:deepCopy(d.products),promos:deepCopy(d.promos),media:[]};
  
 // Campos comerciales nuevos con valores de ejemplo; cada negocio retiene su propio catálogo.
  s.sharedDraft.products.forEach(function(p){
@@ -206,7 +214,7 @@ function templateDraft(t,source){
 }
 function pageAddress(page){return site().domain+(page.id==="home"?"":"/"+page.slug);}
 
-var navItems=[["inicio","▦","Inicio"],["identidad","◉","Mi negocio"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["revision","✓","Revisión previa"],["publicaciones","⇄","Publicaciones"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
+var navItems=[["inicio","▦","Inicio"],["identidad","◉","Mi negocio"],["medios","▧","Biblioteca multimedia"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["revision","✓","Revisión previa"],["publicaciones","⇄","Publicaciones"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
 var $=function(id){return document.getElementById(id);};
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function getOrg(){return organizations.find(function(x){return x.id===activeOrg;});}
@@ -233,15 +241,89 @@ function tag(s){return '<span class="tag '+(s==="Borrador"?"warn":"")+'">'+esc(s
 function validImageSource(src){
  return typeof src==="string"&&/^data:image\/(?:png|jpeg|webp);base64,[a-zA-Z0-9+/=]+$/.test(src);
 }
-function publicBlocks(data){
+
+/* Biblioteca por negocio, solo en memoria. Límites provisionales no aprobados. */
+var MEDIA_LIMIT=20,MEDIA_BYTES=12*1024*1024;
+var MEDIA_KINDS={photo:"Fotografía",logo:"Logotipo",banner:"Banner",other:"General"};
+function mediaItems(shared){return shared&&Array.isArray(shared.media)?shared.media:[];}
+function mediaById(id,shared){return mediaItems(shared||site().sharedDraft).find(function(m){return m.id===id;})||null;}
+function mediaURL(id,shared){var m=mediaById(id,shared);return m&&validImageSource(m.src)?m.src:"";}
+function mediaTotal(shared){return mediaItems(shared).reduce(function(n,m){return n+m.bytes;},0);}
+function mediaUses(id){
+ var s=site(),d=s.sharedDraft,uses=[];
+ if(d.brand.logoAssetId===id)uses.push("Logotipo");
+ if(d.brand.bannerAssetId===id)uses.push("Banner");
+ d.products.forEach(function(p){if(p.photoAssetId===id)uses.push("Producto "+p.name);});
+ s.pages.forEach(function(pg){(pg.draft.blocks||[]).forEach(function(b){
+  if(b.imageAssetId===id||(b.galleryAssetIds||[]).includes(id))uses.push("Página "+pg.name);
+ });});
+ return uses;
+}
+function addMediaAsset(src,name,bytes,kind,alt){
+ if(!canEdit())return {error:"Sin permiso de edición."};
+ if(!validImageSource(src)||!Number.isFinite(bytes)||bytes<=0||bytes>1024*1024)return {error:"JPG, PNG o WebP de hasta 1 MB."};
+ var lib=site().sharedDraft.media,existing=lib.find(function(m){return m.src===src;});
+ if(existing)return {asset:existing,duplicate:true};
+ if(lib.length>=MEDIA_LIMIT||mediaTotal(site().sharedDraft)+bytes>MEDIA_BYTES)return {error:"Capacidad provisional agotada (20 imágenes o 12 MB)."};
+ var a={id:"asset-"+Date.now()+"-"+Math.floor(Math.random()*1000000),name:String(name||"Imagen").slice(0,90),
+ bytes:bytes,kind:MEDIA_KINDS[kind]?kind:"other",alt:String(alt||"").slice(0,140),src:src};
+ lib.push(a);site().sharedRevision++;return {asset:a,duplicate:false};
+}
+function deleteMediaAsset(id){
+ if(!canEdit())return false;
+ if(mediaUses(id).length){notice("No se puede eliminar: el archivo está en uso por "+mediaUses(id)[0]+".");return false;}
+ var lib=site().sharedDraft.media;
+ if(!lib.some(function(m){return m.id===id;}))return false;
+ site().sharedDraft.media=lib.filter(function(m){return m.id!==id;});bumpShared();return true;
+}
+function mediaOptions(selected){
+ return '<option value="">Sin imagen</option>'+mediaItems(site().sharedDraft).map(function(m){
+  return '<option value="'+esc(m.id)+'" '+(selected===m.id?"selected":"")+'>'+esc(m.name)+'</option>';
+ }).join("");
+}
+function mediaLibrary(){
+ var lib=mediaItems(site().sharedDraft);
+ return head("Biblioteca multimedia","Almacena temporalmente una imagen y reutilízala en páginas, productos, logotipos y banners.")+
+ '<section class="card"><h2>Agregar recurso</h2><form id="mediaForm" class="formgrid">'+
+ '<label class="field">Tipo<select name="kind"><option value="photo">Fotografía</option><option value="logo">Logotipo</option><option value="banner">Banner</option><option value="other">Imagen general</option></select></label>'+
+ '<label class="field">Archivo JPG, PNG o WebP<input type="file" name="file" accept="image/jpeg,image/png,image/webp" required '+(!canEdit()?"disabled":"")+'></label>'+
+ '<label class="field full">Descripción alternativa<input name="alt" maxlength="140" placeholder="Describe lo que aparece en la imagen"></label>'+
+ '<div class="sectionactions full"><button class="primary" type="submit" '+(!canEdit()?"disabled":"")+'>Agregar a biblioteca</button></div></form>'+
+ '<div class="hint">'+lib.length+' / 20 imágenes · '+(mediaTotal(site().sharedDraft)/1024/1024).toFixed(2)+' MB de 12 MB · límites provisionales</div></section>'+
+ '<div class="mediaGrid">'+(lib.length?lib.map(function(m){var uses=mediaUses(m.id);return '<article class="card mediaItem"><img src="'+m.src+'" alt="'+esc(m.alt||m.name)+'"><h3>'+esc(m.name)+'</h3>'+
+ '<div class="hint">'+esc(MEDIA_KINDS[m.kind])+' · '+(m.bytes/1024).toFixed(0)+' KB</div><div class="hint"> '+(uses.length?"Usada en: "+esc(uses.join(", ")):"Sin utilizar")+'</div>'+
+ '<div class="sectionactions"><button class="danger" data-delete-asset="'+esc(m.id)+'" '+(!canEdit()||uses.length?"disabled":"")+'>Eliminar</button></div></article>';}).join(""):
+ '<div class="card empty">Aún no hay imágenes en esta biblioteca.</div>')+'</div>'+
+ '<div class="note">No se guarda en la nube. Los archivos desaparecen al recargar; una imagen utilizada por productos o páginas no puede eliminarse desde la biblioteca hasta liberar sus referencias.</div>'+banner();
+}
+function bindMediaLibrary(){
+ var form=$("mediaForm");
+ if(form)form.onsubmit=function(e){
+  e.preventDefault();if(!canEdit())return;
+  var origin=activeOrg,d=new FormData(form),file=form.elements.namedItem("file")?.files?.[0];
+  if(!file){notice("Selecciona una imagen.");return;}
+  readVisualImage(file).then(function(src){
+   if(activeOrg!==origin||!canEdit()){notice("El negocio cambió durante la carga.");return;}
+   var r=addMediaAsset(src,file.name,file.size,String(d.get("kind")||"photo"),String(d.get("alt")||""));
+   if(r.error){notice(r.error);return;}render();notice(r.duplicate?"Imagen ya existente.":"Imagen agregada al negocio.");
+  }).catch(function(err){notice(err.message);});
+ };
+ $("content").querySelectorAll("[data-delete-asset]").forEach(function(b){b.onclick=function(){
+  if(canEdit()&&confirm("¿Eliminar esta imagen de la biblioteca de demostración?"))deleteMediaAsset(b.dataset.deleteAsset);
+ };});
+}
+
+function publicBlocks(data,shared){
  return (data.blocks||[]).filter(function(b){return b.visible&&BLOCKS[b.type];}).map(function(b){
  var type=b.type, h='<h3>'+esc(b.title)+'</h3>',body='<p>'+esc(b.body)+'</p>';
  if(type==="image"){
-   var image=validImageSource(b.image)?'<img src="'+b.image+'" alt="'+esc(b.alt||b.title)+'">':'<div class="mockImage">Imagen pendiente</div>';
+   var src=mediaURL(b.imageAssetId,shared)||b.image;
+   var image=validImageSource(src)?'<img src="'+src+'" alt="'+esc(b.alt||b.title)+'">':'<div class="mockImage">Imagen pendiente</div>';
    return '<section class="publicBlock">'+h+image+body+'</section>';
  }
  if(type==="gallery"){
-   var arr=(b.images||[]).filter(validImageSource).slice(0,4);
+   var arr=(b.galleryAssetIds||[]).map(function(id){return mediaURL(id,shared);}).filter(validImageSource).slice(0,4);
+   if(!arr.length)arr=(b.images||[]).filter(validImageSource).slice(0,4);
    return '<section class="publicBlock">'+h+'<div class="blockGallery">'+(arr.length?arr.map(function(src){return '<img src="'+src+'" alt="'+esc(b.alt||b.title)+'">';}).join(""):'<div class="mockImage">Agrega imágenes a tu galería</div>')+'</div>'+body+'</section>';
  }
  if(type==="cta")return '<section class="publicBlock">'+h+body+'<span class="mockCTA">Contactar →</span></section>';
@@ -284,6 +366,7 @@ function validateProduct(entry){
  if(!Number.isFinite(price)||price<0||price>100000||Math.abs(Math.round(price*100)-price*100)>0.00001)return "Precio inválido: USD con máximo dos decimales.";
  if(!Object.prototype.hasOwnProperty.call(AVAILABILITY,entry.availability))return "Selecciona la disponibilidad del producto.";
  if(entry.photo&&!validImageSource(entry.photo))return "La imagen del producto no es válida.";
+ if(entry.photoAssetId&&!mediaById(entry.photoAssetId))return "La imagen elegida no existe en la biblioteca.";
  return null;
 }
 function validatePromotion(p){
@@ -303,7 +386,7 @@ function saveProductRecord(obj,recordId){
  var normalized={id:recordId||"demo-"+Date.now()+"-"+Math.floor(Math.random()*100000),
  name:String(obj.name).trim(),category:String(obj.category).trim(),
  description:String(obj.description||"").trim(),price:Number(obj.price),
- availability:obj.availability,visible:!!obj.visible,photo:obj.photo||""};
+ availability:obj.availability,visible:!!obj.visible,photo:obj.photo||"",photoAssetId:obj.photoAssetId||""};
  if(existing)Object.assign(existing,normalized);
  else site().sharedDraft.products.push(normalized);
  bumpShared();return true;
@@ -328,10 +411,11 @@ var promos=common.promos.filter(function(p){return promoVisible(p);});
 var color=/^#[0-9a-fA-F]{6}$/.test(common.brand.color)?common.brand.color:"#186999";
 var address=meta?meta.domain+(meta.page.id==="home"?"":"/"+meta.page.slug):pageAddress(currentPage());
 var businessName=meta?meta.siteName:site().name;
+var logo=mediaURL(common.brand.logoAssetId,common),banner=mediaURL(common.brand.bannerAssetId,common);
 return '<div class="sitePreview"><div class="previewbar"><span>◉ '+esc(address)+'</span><b>'+esc(label)+'</b></div><div class="previewInner" style="--site-accent:'+color+'">'+
-'<div class="previewHero"><div class="previewLogo">'+esc(businessName)+'</div><h2>'+esc(data.title)+'</h2><p>'+esc(data.description)+'</p><span class="previewBtn">'+esc(data.cta)+' →</span></div>'+
-'<div class="previewSection"><h3>Productos y servicios</h3><div class="previewProducts">'+(products.length?products.slice(0,4).map(function(p){return '<div class="previewProduct">'+(p.photo&&validImageSource(p.photo)?'<img class="previewProductPhoto" src="'+p.photo+'" alt="'+esc(p.name)+'">':"")+'<span class="catalogCategory">'+esc(p.category||"Otros")+'</span><div>'+esc(p.name)+'</div><b>'+money(p.price)+'</b><small>'+esc(AVAILABILITY[p.availability]||"Disponible")+'</small></div>';}).join(""):'<div class="previewProduct">Sin productos visibles.</div>')+'</div>'+
-promos.slice(0,2).map(function(p){return '<div class="previewPromo">✦ '+esc(p.title)+'</div>';}).join("")+'</div>'+publicBlocks(data)+'</div></div>';
+'<div class="previewHero">'+(banner?'<img class="previewBanner" src="'+banner+'" alt="Banner">':'')+'<div class="previewLogo">'+(logo?'<img class="previewLogoImg" src="'+logo+'" alt="Logotipo">':'')+esc(businessName)+'</div><h2>'+esc(data.title)+'</h2><p>'+esc(data.description)+'</p><span class="previewBtn">'+esc(data.cta)+' →</span></div>'+
+'<div class="previewSection"><h3>Productos y servicios</h3><div class="previewProducts">'+(products.length?products.slice(0,4).map(function(p){return '<div class="previewProduct">'+((mediaURL(p.photoAssetId,common)||p.photo)&&validImageSource(mediaURL(p.photoAssetId,common)||p.photo)?'<img class="previewProductPhoto" src="'+(mediaURL(p.photoAssetId,common)||p.photo)+'" alt="'+esc(p.name)+'">':"")+'<span class="catalogCategory">'+esc(p.category||"Otros")+'</span><div>'+esc(p.name)+'</div><b>'+money(p.price)+'</b><small>'+esc(AVAILABILITY[p.availability]||"Disponible")+'</small></div>';}).join(""):'<div class="previewProduct">Sin productos visibles.</div>')+'</div>'+
+promos.slice(0,2).map(function(p){return '<div class="previewPromo">✦ '+esc(p.title)+'</div>';}).join("")+'</div>'+publicBlocks(data,common)+'</div></div>';
 }
 function intro(){
 var s=site(),draft=s.draft,shared=s.sharedDraft;
@@ -369,7 +453,7 @@ return head("Mi catálogo","Agrega fotos, clasifica productos y controla su disp
 categories.map(function(c){return '<option value="'+esc(c)+'" '+(c===category?"selected":"")+'>'+esc(c)+'</option>';}).join("")+'</select></label>'+
 '<span class="tag">'+filtered.length+' productos visibles en el filtro</span></div>'+
 '<div class="tableScroll"><table class="table"><thead><tr><th>FOTO / PRODUCTO</th><th>CATEGORÍA</th><th>PRECIO USD</th><th>DISPONIBILIDAD</th><th>PUBLICACIÓN</th><th>ACCIONES</th></tr></thead><tbody>'+
-filtered.map(function(p){return '<tr><td><div class="row">'+(p.photo&&validImageSource(p.photo)?'<img class="catalogThumb" src="'+p.photo+'" alt="'+esc(p.name)+'">':'<div class="catalogPlaceholder">Sin foto</div>')+
+filtered.map(function(p){return '<tr><td><div class="row">'+((mediaURL(p.photoAssetId)||p.photo)&&validImageSource(mediaURL(p.photoAssetId)||p.photo)?'<img class="catalogThumb" src="'+(mediaURL(p.photoAssetId)||p.photo)+'" alt="'+esc(p.name)+'">':'<div class="catalogPlaceholder">Sin foto</div>')+
 '<div><strong>'+esc(p.name)+'</strong><small class="catalogDescription">'+esc(p.description||"Sin descripción")+'</small></div></div></td>'+
 '<td>'+esc(p.category||"Otros")+'</td><td>'+money(p.price)+'</td><td>'+esc(AVAILABILITY[p.availability]||"Disponible")+'</td>'+
 '<td>'+tag(p.visible?"Visible":"Oculto")+'</td><td><div class="row"><button class="secondary" data-edit-product="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Editar</button>'+
@@ -814,12 +898,13 @@ function bindPageManager(){
 
 function render(){
 navDraw();
-var pages={inicio:intro,identidad:identity,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,vista:preview,revision:preflightPanel,publicaciones:sitePublications,historial:history,dominio:domain,soporte:support};
+var pages={inicio:intro,identidad:identity,medios:mediaLibrary,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,vista:preview,revision:preflightPanel,publicaciones:sitePublications,historial:history,dominio:domain,soporte:support};
 $("content").innerHTML='<div class="card" style="margin-bottom:20px"><div class="row" style="justify-content:space-between;align-items:end"><div><div class="eyebrow">SESIÓN DE PRUEBA</div><p style="margin:5px 0 0;color:var(--muted)">Alterna negocios y roles ficticios para revisar el diseño. Esta selección NO es autenticación.</p></div><div class="row">'+dropdown()+'</div></div></div>'+pages[tab]();
 $("orgSwitch").onchange=function(){activeOrg=this.value;previewMode="draft";render();};
 $("roleSwitch").onchange=function(){activeRole=this.value;render();};
 if(tab==="visual")bindVisual();
 if(tab==="identidad")bindIdentity();
+if(tab==="medios")bindMediaLibrary();
 if(tab==="catalogo"){var cf=$("categoryFilter");if(cf)cf.onchange=function(){selectedCategoryByOrg[activeOrg]=this.value;render();};}
 if(tab==="paginas"||tab==="plantillas")bindPageManager();
 $("pageSwitch").onchange=function(){activePageByOrg[activeOrg]=this.value;previewMode="draft";render();};
