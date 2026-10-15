@@ -44,6 +44,35 @@ footer{padding-top:35px;color:#7794a9;font-size:11px}
 @media(max-width:1120px){.app{grid-template-columns:210px minmax(0,1fr)}.kpis{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}}
 @media(max-width:750px){.app{grid-template-columns:1fr}.sidebar{position:fixed;z-index:50;inset:0 auto 0 0;width:255px;transform:translateX(-100%);transition:transform .22s}.sidebar.open{transform:translateX(0)}.menuToggle{display:inline-block;margin-bottom:4px}.top{flex-wrap:wrap}.kpis,.cards,.formgrid,.tiles{grid-template-columns:1fr}.full{grid-column:auto}.pagehead{align-items:start;flex-direction:column}.content{padding-top:23px}.previewProducts{grid-template-columns:1fr}}
 @media(prefers-reduced-motion:reduce){.sidebar{transition:none}}
+
+/* Editor visual: estilos aislados, diseño adaptable y controles por teclado */
+.builder{display:grid;grid-template-columns:minmax(340px,1fr) minmax(340px,.93fr);gap:16px;align-items:start}
+.builderlist{display:grid;gap:11px}.builderblock{border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.022);padding:15px}
+.builderblock.inactive{opacity:.68}.buildertop{display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:12px}
+.buildertop h3{margin:1px 0 2px}.buildernumber{color:#78a8c4;font-size:11px;letter-spacing:.11em;font-weight:900}
+.builderactions{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.builderactions button{padding:6px 9px;font-size:11px}
+.builderfields{display:grid;gap:10px}.builderfields textarea{min-height:75px}
+.builderpreview{position:sticky;top:18px;min-width:0}.builderpreview .sitePreview{max-height:680px;overflow-y:auto}
+.builderrule{margin-bottom:15px;color:#abc3d5;font-size:12px}
+.builderrule strong{color:#e8f7ff}
+.buildertypetip{color:#9ab5c9;font-size:11px}
+.buildermedia{border:1px dashed rgba(81,207,255,.27);border-radius:12px;padding:12px;margin-top:9px;background:rgba(81,207,255,.035)}
+.buildermedia input{width:100%;font-size:12px}
+.builderthumbs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.builderthumbs img{width:65px;height:58px;object-fit:cover;border-radius:8px;border:1px solid var(--line)}
+.publicBlock{padding:22px 23px;border-top:1px solid #e6ecf3;color:#253c52}
+.publicBlock h3{font-size:17px;font-weight:900;margin:0 0 8px}
+.publicBlock p{color:#476175;font-size:12px;white-space:pre-wrap;margin:0}
+.publicBlock img{max-width:100%;max-height:220px;border-radius:10px;object-fit:cover}
+.publicBlock .mockImage{min-height:95px;display:grid;place-items:center;background:#e8eef5;border:1px dashed #b3c9dc;border-radius:10px;color:#678199;font-size:12px}
+.publicBlock .blockGallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.publicBlock .blockGallery img{width:100%;height:105px;object-fit:cover}
+.publicBlock .mockCTA{display:inline-block;margin-top:10px;padding:9px 13px;border-radius:8px;background:var(--site-accent);color:#fff;font-size:11px;font-weight:750}
+.publicBlock.quote{border-left:3px solid var(--site-accent);font-style:italic}
+.buildertypes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:12px}
+.buildertypes label{font-weight:700;font-size:12px}
+@media(max-width:1200px){.builder{grid-template-columns:1fr}.builderpreview{position:static}}
+@media(max-width:750px){.builder{grid-template-columns:1fr}.buildertypes{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -68,12 +97,39 @@ footer{padding-top:35px;color:#7794a9;font-size:11px}
 (function(){
 "use strict";
 var seed=[
-{id:"o-a",name:"Café Horizonte (ejemplo)",site:{name:"Café Horizonte",slug:"cafe-horizonte",plan:"Business",domain:"cafe-horizonte.ejemplo.invalid",draft:{title:"Un café para compartir buenos momentos",description:"Disfruta café de especialidad, postres y un ambiente acogedor.",cta:"Conoce nuestro menú",color:"#186999",phone:"Teléfono por configurar",products:[{id:"p1",name:"Café americano",price:2.5,visible:true},{id:"p2",name:"Capuchino",price:3.5,visible:true}],promos:[{id:"pr1",title:"Combina café y postre",active:true}]},published:null,history:[],draftRevision:1}},
+{id:"o-a",name:"Café Horizonte (ejemplo)",site:{name:"Café Horizonte",slug:"cafe-horizonte",plan:"Crece",domain:"cafe-horizonte.ejemplo.invalid",draft:{title:"Un café para compartir buenos momentos",description:"Disfruta café de especialidad, postres y un ambiente acogedor.",cta:"Conoce nuestro menú",color:"#186999",phone:"Teléfono por configurar",products:[{id:"p1",name:"Café americano",price:2.5,visible:true},{id:"p2",name:"Capuchino",price:3.5,visible:true}],promos:[{id:"pr1",title:"Combina café y postre",active:true}]},published:null,history:[],draftRevision:1}},
 {id:"o-b",name:"Papelería Nube (ejemplo)",site:{name:"Papelería Nube",slug:"papeleria-nube",plan:"Start",domain:"papeleria-nube.ejemplo.invalid",draft:{title:"Ideas, color y materiales para crear",description:"Encuentra artículos escolares, papelería y materiales artísticos.",cta:"Explorar catálogo",color:"#744db6",phone:"Contacto por configurar",products:[{id:"p1",name:"Cuaderno universitario",price:2.75,visible:true},{id:"p2",name:"Set de marcadores",price:5.95,visible:true}],promos:[]},published:null,history:[],draftRevision:1}}
 ];
 function deepCopy(x){return JSON.parse(JSON.stringify(x));}
 var organizations=deepCopy(seed),activeOrg="o-a",activeRole="CLIENT_OWNER",tab="inicio",previewMode="draft",viewPublication=false;
-var navItems=[["inicio","▦","Inicio"],["contenido","✎","Editar página"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
+
+/* Límites aprobados MG Web Emprende. Son controles DEMO, no sustituyen backend/RLS. */
+var PLAN_RULES={Start:{sections:5,pages:1},Crece:{sections:8,pages:3},Pro:{sections:12,pages:5}};
+var BLOCKS={
+ text:{name:"Texto y descripción",tier:"Start",defaultTitle:"Nuestra historia",defaultBody:"Escribe aquí una presentación de tu negocio."},
+ image:{name:"Imagen destacada",tier:"Start",defaultTitle:"Mira nuestro trabajo",defaultBody:"Una imagen cuenta mucho de nuestro negocio."},
+ gallery:{name:"Galería de imágenes",tier:"Start",defaultTitle:"Galería",defaultBody:"Algunos momentos y creaciones."},
+ services:{name:"Servicios",tier:"Start",defaultTitle:"Lo que ofrecemos",defaultBody:"Presenta tus servicios en esta sección."},
+ faq:{name:"Preguntas frecuentes",tier:"Start",defaultTitle:"Preguntas frecuentes",defaultBody:"Pregunta: ¿Cómo podemos ayudarte? Respuesta: Escríbenos."},
+ cta:{name:"Llamado a la acción",tier:"Start",defaultTitle:"Hablemos de tu proyecto",defaultBody:"Contáctanos para conocer más detalles."},
+ quote:{name:"Testimonio",tier:"Crece",defaultTitle:"Lo que dicen nuestros clientes",defaultBody:"Agrega una opinión real, autorizada y verificable."},
+ feature:{name:"Beneficios destacados",tier:"Pro",defaultTitle:"¿Por qué elegirnos?",defaultBody:"Calidad, acompañamiento y atención."}
+};
+function blockAllowed(type,plan){
+ var t=BLOCKS[type];if(!t)return false;
+ return {Start:0,Crece:1,Pro:2}[plan]>={Start:0,Crece:1,Pro:2}[t.tier];
+}
+function newBlock(type,id){
+ var b=BLOCKS[type];return {id:id,type:type,title:b.defaultTitle,body:b.defaultBody,visible:true,image:"",images:[],alt:""};
+}
+organizations.forEach(function(o){
+ var d=o.site.draft;
+ d.blocks=o.id==="o-a"?
+ [newBlock("text","a-story"),newBlock("services","a-services")]:
+ [newBlock("text","b-story"),newBlock("cta","b-cta")];
+});
+
+var navItems=[["inicio","▦","Inicio"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
 var $=function(id){return document.getElementById(id);};
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function getOrg(){return organizations.find(function(x){return x.id===activeOrg;});}
@@ -90,6 +146,27 @@ return '<label class="field" style="min-width:205px">Negocio de ejemplo<select i
 function head(title,desc,actions){return '<div class="pagehead"><div><div class="eyebrow">'+esc(getOrg().name)+'</div><h1>'+title+'</h1><p>'+desc+'</p></div>'+ (actions||"")+'</div>';}
 function navDraw(){$("nav").innerHTML=navItems.map(function(item){return '<button type="button" data-tab="'+item[0]+'" '+(item[0]===tab?'aria-current="page"':"")+'><span class="ico">'+item[1]+'</span>'+item[2]+'</button>';}).join("");$("nav").querySelectorAll("[data-tab]").forEach(function(el){el.addEventListener("click",function(){tab=el.dataset.tab;$("sidebar").classList.remove("open");render();});});}
 function tag(s){return '<span class="tag '+(s==="Borrador"?"warn":"")+'">'+esc(s)+'</span>';}
+
+function validImageSource(src){
+ return typeof src==="string"&&/^data:image\/(?:png|jpeg|webp);base64,[a-zA-Z0-9+/=]+$/.test(src);
+}
+function publicBlocks(data){
+ return (data.blocks||[]).filter(function(b){return b.visible&&BLOCKS[b.type];}).map(function(b){
+ var type=b.type, h='<h3>'+esc(b.title)+'</h3>',body='<p>'+esc(b.body)+'</p>';
+ if(type==="image"){
+   var image=validImageSource(b.image)?'<img src="'+b.image+'" alt="'+esc(b.alt||b.title)+'">':'<div class="mockImage">Imagen pendiente</div>';
+   return '<section class="publicBlock">'+h+image+body+'</section>';
+ }
+ if(type==="gallery"){
+   var arr=(b.images||[]).filter(validImageSource).slice(0,4);
+   return '<section class="publicBlock">'+h+'<div class="blockGallery">'+(arr.length?arr.map(function(src){return '<img src="'+src+'" alt="'+esc(b.alt||b.title)+'">';}).join(""):'<div class="mockImage">Agrega imágenes a tu galería</div>')+'</div>'+body+'</section>';
+ }
+ if(type==="cta")return '<section class="publicBlock">'+h+body+'<span class="mockCTA">Contactar →</span></section>';
+ if(type==="quote")return '<section class="publicBlock quote">'+h+body+'</section>';
+ return '<section class="publicBlock">'+h+body+'</section>';
+ }).join("");
+}
+
 function previewCard(data,label){
 var products=data.products.filter(function(p){return p.visible;});
 var promos=data.promos.filter(function(p){return p.active;});
@@ -97,7 +174,7 @@ var color=/^#[0-9a-fA-F]{6}$/.test(data.color)?data.color:"#186999";
 return '<div class="sitePreview"><div class="previewbar"><span>◉ '+esc(site().domain)+'</span><b>'+esc(label)+'</b></div><div class="previewInner" style="--site-accent:'+color+'">'+
 '<div class="previewHero"><div class="previewLogo">'+esc(site().name)+'</div><h2>'+esc(data.title)+'</h2><p>'+esc(data.description)+'</p><span class="previewBtn">'+esc(data.cta)+' →</span></div>'+
 '<div class="previewSection"><h3>Productos y servicios</h3><div class="previewProducts">'+(products.length?products.slice(0,4).map(function(p){return '<div class="previewProduct">'+esc(p.name)+'<b>'+money(p.price)+'</b></div>';}).join(""):'<div class="previewProduct">Sin productos visibles.</div>')+'</div>'+
-promos.slice(0,2).map(function(p){return '<div class="previewPromo">✦ '+esc(p.title)+'</div>';}).join("")+'</div></div></div>';
+promos.slice(0,2).map(function(p){return '<div class="previewPromo">✦ '+esc(p.title)+'</div>';}).join("")+'</div>'+publicBlocks(data)+'</div></div>';
 }
 function intro(){
 var s=site(),draft=s.draft;
@@ -161,12 +238,117 @@ function support(){
 return head("Ayuda y soporte","Una guía inicial para autogestionar tu página. El sistema real de tickets se incorporará más adelante.")+
 '<div class="grid cards"><div class="card"><h2>¿Cómo actualizo mi página?</h2><p>Entra a «Editar página», actualiza los campos y guarda el borrador. Luego revisa «Vista previa».</p></div><div class="card"><h2>¿Cómo cambio un precio?</h2><p>En esta demostración puedes quitar el producto y agregarlo con un precio nuevo. La edición completa llegará con el CMS real.</p></div><div class="card"><h2>¿Cómo publico?</h2><p>En «Vista previa», el propietario o administrador puede simular la publicación. No se realizan despliegues externos.</p></div><div class="card"><h2>¿Cómo solicito soporte?</h2><p>En producción podrás abrir tickets, adjuntar archivos y consultar el seguimiento dentro de tu cuenta.</p></div></div>'+banner();
 }
+
+function visualBuilder(){
+ var s=site(), d=s.draft,plan=PLAN_RULES[s.plan]?s.plan:"Start",max=PLAN_RULES[plan].sections,blocks=d.blocks||[];
+ var count=blocks.length, remaining=Math.max(0,max-count);
+ var pick='<option value="">Elige un tipo de sección</option>'+
+ Object.keys(BLOCKS).filter(function(k){return blockAllowed(k,plan);}).map(function(k){return '<option value="'+k+'">'+esc(BLOCKS[k].name)+'</option>';}).join("");
+ var controls='<div class="row"><label class="field">Agregar sección<select id="blockType">'+pick+'</select></label>'+
+ '<button class="primary" data-add-block="true" '+(!canEdit()||remaining===0?'disabled':'')+'>+ Agregar sección</button></div>';
+ var elems=blocks.map(function(b,i){
+ var t=BLOCKS[b.type]||BLOCKS.text;
+ var disabled=!canEdit()?"disabled":"";
+ var imageInput=b.type==="image"||b.type==="gallery"?
+ '<div class="buildermedia"><label class="field">Subir '+(b.type==="gallery"?"hasta 4 imágenes":"una imagen")+' (JPG, PNG, WebP, hasta 1 MB c/u)'+
+ '<input type="file" accept="image/jpeg,image/png,image/webp" data-media="'+esc(b.id)+'" '+(b.type==="gallery"?"multiple":"")+disabled+'></label>'+
+ '<div class="builderthumbs">'+(b.type==="image"&&validImageSource(b.image)?'<img src="'+b.image+'" alt="Imagen cargada">':"")+
+ (b.type==="gallery"?(b.images||[]).filter(validImageSource).slice(0,4).map(function(src){return '<img src="'+src+'" alt="Imagen de galería">';}).join(""):"")+'</div></div>':"";
+ return '<article class="builderblock '+(!b.visible?"inactive":"")+'"><div class="buildertop"><div><div class="buildernumber">SECCIÓN '+(i+1)+' / '+max+'</div><h3>'+esc(t.name)+'</h3><span class="buildertypetip">'+(b.visible?"Visible en la página":"Oculta en la página")+'</span></div>'+
+ '<div class="builderactions"><button class="secondary" data-move-block="'+esc(b.id)+'" data-dir="-1" '+(i===0||!canEdit()?"disabled":"")+' aria-label="Subir sección '+(i+1)+'">↑</button>'+
+ '<button class="secondary" data-move-block="'+esc(b.id)+'" data-dir="1" '+(i===blocks.length-1||!canEdit()?"disabled":"")+' aria-label="Bajar sección '+(i+1)+'">↓</button>'+
+ '<button class="secondary" data-toggle-block="'+esc(b.id)+'" '+disabled+'>'+(b.visible?"Ocultar":"Mostrar")+'</button>'+
+ '<button class="danger" data-remove-block="'+esc(b.id)+'" '+disabled+'>Quitar</button></div></div>'+
+ '<form data-block-form="'+esc(b.id)+'" class="builderfields">'+
+ '<label class="field">Título<input name="title" required maxlength="95" value="'+esc(b.title)+'" '+disabled+'></label>'+
+ '<label class="field">Descripción<textarea name="body" maxlength="800" '+disabled+'>'+esc(b.body)+'</textarea></label>'+
+ (b.type==="image"||b.type==="gallery"?'<label class="field">Texto alternativo de las imágenes<input name="alt" maxlength="140" value="'+esc(b.alt||"")+'" '+disabled+'></label>':"")+
+ imageInput+'<div class="sectionactions"><button type="submit" class="secondary" '+disabled+'>Guardar cambios</button></div></form></article>';
+ }).join("");
+ return head("Editor visual","Agrega, edita, oculta y reordena secciones sin programar. Cada plan tiene un límite establecido.")+
+ '<div class="card" style="margin-bottom:16px"><div class="builderrule"><strong>Plan MG '+esc(plan)+'</strong> · '+count+' de '+max+' secciones · '+remaining+' disponibles · hasta '+PLAN_RULES[plan].pages+' página(s). Los bloques avanzados dependen del plan.</div>'+controls+'</div>'+
+ '<div class="builder"><div class="builderlist">'+(elems||'<div class="card empty">Todavía no tienes secciones. Agrega una para comenzar.</div>')+'</div>'+
+ '<div class="builderpreview card"><div class="row" style="justify-content:space-between;margin-bottom:12px"><h2 style="margin:0">Vista previa en vivo</h2>'+tag("Borrador")+'</div>'+
+ '<div id="visualPreview">'+previewCard(d,"Borrador")+'</div></div></div>'+banner();
+}
+function findBlock(id){return (site().draft.blocks||[]).find(function(b){return b.id===id;});}
+function redrawPreview(){
+ var preview=$("visualPreview");if(preview)preview.innerHTML=previewCard(site().draft,"Borrador");
+}
+function readVisualImage(file){
+ return new Promise(function(resolve,reject){
+  if(!file||!["image/jpeg","image/png","image/webp"].includes(file.type)||file.size>1024*1024||file.size===0){reject(new Error("Archivo inválido: elige JPG, PNG o WebP de hasta 1 MB."));return;}
+  var reader=new FileReader();
+  reader.onload=function(){var src=reader.result;if(!validImageSource(src)){reject(new Error("Formato de imagen no válido."));return;}resolve(src);};
+  reader.onerror=function(){reject(new Error("Error al cargar la imagen."));};
+  reader.readAsDataURL(file);
+ });
+}
+function bindVisual(){
+ var add=$("content").querySelector("[data-add-block]");
+ if(add)add.onclick=function(){
+  if(!canEdit())return;
+  var plan=PLAN_RULES[site().plan]?site().plan:"Start", type=$("blockType").value;
+  if(!BLOCKS[type]||!blockAllowed(type,plan)){notice("Selecciona un tipo permitido por tu plan.");return;}
+  if(site().draft.blocks.length>=PLAN_RULES[plan].sections){notice("Has alcanzado el máximo de secciones de este plan.");return;}
+  var id="section-"+Date.now()+"-"+Math.floor(Math.random()*100000);
+  site().draft.blocks.push(newBlock(type,id));bump();notice("Sección agregada al borrador.");
+ };
+ $("content").querySelectorAll("[data-move-block]").forEach(function(el){el.onclick=function(){
+  if(!canEdit())return;var list=site().draft.blocks,at=list.findIndex(function(b){return b.id===el.dataset.moveBlock;}),dest=at+Number(el.dataset.dir);
+  if(at<0||dest<0||dest>=list.length)return;
+  list.splice(dest,0,list.splice(at,1)[0]);bump();
+ };});
+ $("content").querySelectorAll("[data-toggle-block]").forEach(function(el){el.onclick=function(){
+  if(!canEdit())return;var b=findBlock(el.dataset.toggleBlock);if(b){b.visible=!b.visible;bump();}
+ };});
+ $("content").querySelectorAll("[data-remove-block]").forEach(function(el){el.onclick=function(){
+  if(!canEdit())return;var id=el.dataset.removeBlock;
+  site().draft.blocks=site().draft.blocks.filter(function(b){return b.id!==id;});
+  bump();notice("Sección retirada del borrador.");
+ };});
+ $("content").querySelectorAll("[data-block-form]").forEach(function(form){
+  var bId=form.dataset.blockForm;
+  form.oninput=function(){
+   if(!canEdit())return;
+   var b=findBlock(bId);if(!b)return;
+   var d=new FormData(form);
+   b.title=String(d.get("title")||"").slice(0,95);
+   b.body=String(d.get("body")||"").slice(0,800);
+   if(d.has("alt"))b.alt=String(d.get("alt")||"").slice(0,140);
+   redrawPreview();
+  };
+  form.onsubmit=function(e){
+   e.preventDefault();if(!canEdit())return;
+   var b=findBlock(bId);if(!b)return;
+   if(!String(b.title).trim()){notice("Ingresa un título para guardar.");return;}
+   bump();notice("Cambios guardados en el borrador de demostración.");
+  };
+ });
+ $("content").querySelectorAll("[data-media]").forEach(function(el){el.onchange=function(){
+  if(!canEdit())return;
+  var orgId=activeOrg,id=el.dataset.media,b=findBlock(id);if(!b)return;
+  var fs=Array.from(el.files||[]);
+  if(!fs.length)return;
+  if(b.type==="image"&&fs.length!==1){notice("Selecciona una sola imagen.");return;}
+  if(b.type==="gallery"&&fs.length>4){notice("Selecciona hasta cuatro imágenes.");return;}
+  Promise.all(fs.map(readVisualImage)).then(function(srcs){
+   if(activeOrg!==orgId||!canEdit()){notice("La sesión de demostración cambió. Vuelve a seleccionar las imágenes.");return;}
+   var target=findBlock(id);if(!target)return;
+   if(target.type==="image")target.image=srcs[0];
+   if(target.type==="gallery")target.images=srcs;
+   bump();notice("Imagen cargada solo en la memoria de la demostración.");
+  }).catch(function(e){notice(e.message);});
+ };});
+}
+
 function render(){
 navDraw();
-var pages={inicio:intro,contenido:editor,catalogo:catalog,promociones:promotions,vista:preview,historial:history,dominio:domain,soporte:support};
+var pages={inicio:intro,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,vista:preview,historial:history,dominio:domain,soporte:support};
 $("content").innerHTML='<div class="card" style="margin-bottom:20px"><div class="row" style="justify-content:space-between;align-items:end"><div><div class="eyebrow">SESIÓN DE PRUEBA</div><p style="margin:5px 0 0;color:var(--muted)">Alterna negocios y roles ficticios para revisar el diseño. Esta selección NO es autenticación.</p></div><div class="row">'+dropdown()+'</div></div></div>'+pages[tab]();
 $("orgSwitch").onchange=function(){activeOrg=this.value;previewMode="draft";render();};
 $("roleSwitch").onchange=function(){activeRole=this.value;render();};
+if(tab==="visual")bindVisual();
 $("content").querySelectorAll("[data-go]").forEach(function(b){b.onclick=function(){tab=b.dataset.go;render();};});
 $("content").querySelectorAll("[data-modal]").forEach(function(b){b.onclick=function(){if(!canEdit())return;showModal(b.dataset.modal);};});
 $("content").querySelectorAll("[data-preview]").forEach(function(b){b.onclick=function(){previewMode=b.dataset.preview;render();};});
