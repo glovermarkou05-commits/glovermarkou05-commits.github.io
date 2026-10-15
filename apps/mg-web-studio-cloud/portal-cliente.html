@@ -710,6 +710,7 @@ function visualBuilder(){
  var imageInput=b.type==="image"||b.type==="gallery"?
  '<div class="buildermedia"><label class="field">Subir '+(b.type==="gallery"?"hasta 4 imágenes":"una imagen")+' (JPG, PNG, WebP, hasta 1 MB c/u)'+
  '<input type="file" accept="image/jpeg,image/png,image/webp" data-media="'+esc(b.id)+'" '+(b.type==="gallery"?"multiple":"")+disabled+'></label>'+
+ '<label class="field">Elegir imagen existente<select data-block-asset="'+esc(b.id)+'" '+disabled+'>'+mediaOptions(b.imageAssetId)+'</select></label>'+
  '<div class="builderthumbs">'+(b.type==="image"&&validImageSource(b.image)?'<img src="'+b.image+'" alt="Imagen cargada">':"")+
  (b.type==="gallery"?(b.images||[]).filter(validImageSource).slice(0,4).map(function(src){return '<img src="'+src+'" alt="Imagen de galería">';}).join(""):"")+'</div></div>':"";
  return '<article class="builderblock '+(!b.visible?"inactive":"")+'"><div class="buildertop"><div><div class="buildernumber">SECCIÓN '+(i+1)+' / '+max+'</div><h3>'+esc(t.name)+'</h3><span class="buildertypetip">'+(b.visible?"Visible en la página":"Oculta en la página")+'</span></div>'+
@@ -743,6 +744,12 @@ function readVisualImage(file){
  });
 }
 function bindVisual(){
+ $("content").querySelectorAll("[data-block-asset]").forEach(function(el){
+  el.onchange=function(){if(!canEdit())return;var b=findBlock(el.dataset.blockAsset);if(!b)return;
+   b.imageAssetId=el.value;b.image="";b.images=[];b.galleryAssetIds=b.type==="gallery"?(el.value?[el.value]:[]):[];
+   bump();notice("Imagen de biblioteca asignada.");
+  };
+ });
  var add=$("content").querySelector("[data-add-block]");
  if(add)add.onclick=function(){
   if(!canEdit())return;
@@ -809,6 +816,8 @@ function identity(){
  '<label class="field full">Nombre comercial<input name="business" maxlength="90" required value="'+esc(s.name)+'" '+(!canEdit()?"disabled":"")+'></label>'+
  '<label class="field">Color de marca<input name="color" type="color" value="'+esc(g.color)+'" '+(!canEdit()?"disabled":"")+'></label>'+
  '<label class="field">Contacto público<input name="phone" maxlength="80" value="'+esc(g.phone||"")+'" '+(!canEdit()?"disabled":"")+'></label>'+
+ '<label class="field">Logotipo de la biblioteca<select name="logoAssetId" '+(!canEdit()?"disabled":"")+'>'+mediaOptions(g.logoAssetId)+'</select></label>'+
+ '<label class="field">Banner de la biblioteca<select name="bannerAssetId" '+(!canEdit()?"disabled":"")+'>'+mediaOptions(g.bannerAssetId)+'</select></label>'+
  '<div class="sectionactions full"><button class="primary" type="submit" '+(!canEdit()?"disabled":"")+'>Guardar identidad</button></div></form></section>'+
  '<section class="card"><h2>Vista de la marca</h2>'+previewCard(s.draft,"Borrador")+'</section></div>'+banner();
 }
@@ -817,7 +826,7 @@ function bindIdentity(){
  form.onsubmit=function(e){e.preventDefault();if(!canEdit())return;
  var d=new FormData(form),name=String(d.get("business")||"").trim(),color=String(d.get("color")||""),phone=String(d.get("phone")||"").trim();
  if(name.length<2||name.length>90||phone.length>80||!/^#[0-9a-fA-F]{6}$/.test(color)){notice("Revisa los datos del negocio.");return;}
- site().name=name;site().sharedDraft.brand={color:color,phone:phone};bumpShared();notice("Identidad actualizada para todo el sitio.");
+ site().name=name;site().sharedDraft.brand={color:color,phone:phone,logoAssetId:String(d.get("logoAssetId")||""),bannerAssetId:String(d.get("bannerAssetId")||"")};bumpShared();notice("Identidad actualizada para todo el sitio.");
  };
 }
 
@@ -946,7 +955,8 @@ function showModal(kind,recordId){
   '<label class="field full">Descripción<textarea name="description" maxlength="500">'+esc(p.description||"")+'</textarea></label>'+
   '<label class="field">Disponibilidad<select name="availability">'+Object.keys(AVAILABILITY).map(function(k){return '<option value="'+k+'" '+((p.availability||"available")===k?"selected":"")+'>'+esc(AVAILABILITY[k])+'</option>';}).join("")+'</select></label>'+
   '<label class="field">Mostrar en la web<select name="visible"><option value="yes" '+(p.visible!==false?"selected":"")+'>Visible</option><option value="no" '+(p.visible===false?"selected":"")+'>Oculto</option></select></label>'+
-  '<label class="field full">Fotografía (JPG, PNG, WebP; máximo 1 MB)<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"></label>'+
+  '<label class="field full">Imagen de biblioteca<select name="photoAssetId">'+mediaOptions(p.photoAssetId)+'</select></label>'+
+ '<label class="field full">Subir fotografía directa (JPG, PNG, WebP; máximo 1 MB)<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"></label>'+
   (p.photo&&validImageSource(p.photo)?'<div class="full"><img class="catalogEditPreview" src="'+p.photo+'" alt="Fotografía actual"><label class="field"><span><input type="checkbox" name="removePhoto" value="yes"> Quitar foto</span></label></div>':'');
  }else{
   $("modalFields").innerHTML=
@@ -972,11 +982,11 @@ $("modalForm").onsubmit=function(e){
   var data={name:name,category:String(d.get("category")||"").trim(),
    description:String(d.get("description")||"").trim(),price:Number(d.get("price")),
    availability:String(d.get("availability")||"available"),visible:d.get("visible")==="yes",
-   photo:(existing&&existing.photo)||""};
-  if(d.get("removePhoto")==="yes")data.photo="";
+   photo:(existing&&existing.photo)||"",photoAssetId:String(d.get("photoAssetId")||"")};
+  if(d.get("removePhoto")==="yes"){data.photo="";data.photoAssetId="";}
   var finish=function(){if(activeOrg!==originOrg){notice("La selección de negocio cambió; no se guardó nada.");return;}
    if(saveProductRecord(data,recordId)){$("dialog").close();notice("Producto guardado únicamente en la demostración.");}};
-  if(file){readVisualImage(file).then(function(src){data.photo=src;finish();}).catch(function(err){notice(err.message);});}
+  if(file){readVisualImage(file).then(function(src){data.photo=src;data.photoAssetId="";finish();}).catch(function(err){notice(err.message);});}
   else finish();
   return;
  }
