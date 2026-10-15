@@ -272,7 +272,7 @@ function promoStatus(p,today){
  if(p.endsAt&&now>p.endsAt)return "Vencida";
  return "Vigente";
 }
-function promoVisible(p,today){return promoStatus(p,today)==="Vigente";}
+function promoVisible(p){return promoStatus(p)==="Vigente";}
 function productCategoryList(){
  return Array.from(new Set(site().sharedDraft.products.map(function(p){return String(p.category||"Otros").trim();}))).sort();
 }
