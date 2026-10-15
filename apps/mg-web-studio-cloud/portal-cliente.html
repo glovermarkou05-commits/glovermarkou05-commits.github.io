@@ -88,6 +88,12 @@ footer{padding-top:35px;color:#7794a9;font-size:11px}
 .releaseItem.selected{border-color:rgba(81,207,255,.42);background:rgba(81,207,255,.045)}
 .releaseItem strong{display:block;font-size:13px}.releaseItem small{display:block;color:var(--muted);margin:4px 0 8px}
 .releaseItem button{font-size:11px;padding:8px 12px}
+
+.qualityItem{display:flex;align-items:center;justify-content:space-between;gap:13px;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:10px;flex-wrap:wrap}
+.qualityItem strong{display:block;font-size:12px}.qualityItem small{display:block;color:var(--muted);font-size:10px;margin-top:5px}
+.qualityItem button{font-size:11px;padding:8px 10px}
+.qualityItem.critical{border-color:rgba(255,120,120,.29);background:rgba(255,110,110,.045)}
+.qualityItem.caution{border-color:rgba(255,205,140,.24);background:rgba(255,205,140,.03)}
 </style>
 </head>
 <body>
@@ -181,7 +187,7 @@ function templateDraft(t,source){
 }
 function pageAddress(page){return site().domain+(page.id==="home"?"":"/"+page.slug);}
 
-var navItems=[["inicio","▦","Inicio"],["identidad","◉","Mi negocio"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["publicaciones","⇄","Publicaciones"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
+var navItems=[["inicio","▦","Inicio"],["identidad","◉","Mi negocio"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["revision","✓","Revisión previa"],["publicaciones","⇄","Publicaciones"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
 var $=function(id){return document.getElementById(id);};
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function getOrg(){return organizations.find(function(x){return x.id===activeOrg;});}
@@ -286,22 +292,102 @@ function activeRelease(){
 function publishedPage(pageId){
  var r=activeRelease();return r&&r.pages.find(function(p){return p.id===pageId;})||null;
 }
-function publicationCheck(){
- var s=site(),limit=PLAN_RULES[s.plan]||PLAN_RULES.Start,seen={};
- if(!s.pages.some(function(p){return p.id==="home";}))return "Falta la página de inicio.";
- if(!s.pages.length||s.pages.length>limit.pages)return "El número de páginas supera el límite de demostración.";
- if(!s.sharedDraft||!s.sharedDraft.brand||!Array.isArray(s.sharedDraft.products)||!Array.isArray(s.sharedDraft.promos))return "Faltan datos generales del sitio.";
- for(var i=0;i<s.pages.length;i++){
-  var p=s.pages[i],slug=p.slug||"";
-  if(!p.id||!p.draft||!String(p.draft.title||"").trim())return "Hay una página sin contenido válido.";
-  if(seen[slug])return "Existen direcciones de página duplicadas.";
-  seen[slug]=true;
-  if(!Array.isArray(p.draft.blocks)||p.draft.blocks.length>limit.sections)return "Una página supera el límite de secciones.";
-  for(var j=0;j<p.draft.blocks.length;j++){
-   if(!BLOCKS[p.draft.blocks[j].type]||!blockAllowed(p.draft.blocks[j].type,s.plan))return "Se detectó una sección no permitida en este plan.";
-  }
+
+/* Verificación editorial de DEMOSTRACIÓN. Nunca sustituye validación en backend. */
+function checkBeforePublish(){
+ var s=site(),data=s.sharedDraft,rule=PLAN_RULES[s.plan]||PLAN_RULES.Start;
+ var findings=[];
+ function issue(level,code,message,section){findings.push({level:level,code:code,message:message,section:section});}
+ if(!Array.isArray(s.pages)||!s.pages.length){issue("error","NO_PAGES","El sitio debe tener al menos la página Inicio.","paginas");}
+ else {
+  if(s.pages.length>rule.pages)issue("error","PLAN_PAGE_LIMIT","El sitio supera la cantidad de páginas de demostración permitidas.","paginas");
+  if(s.pages.filter(function(pg){return pg.id==="home";}).length!==1)issue("error","HOME_REQUIRED","Debe existir una única página Inicio.","paginas");
  }
- return null;
+ if(!String(s.name||"").trim()||String(s.name||"").trim().length<2)issue("error","BRAND_NAME","Completa el nombre comercial del sitio.","identidad");
+ if(!data||!data.brand||!/^#[0-9a-fA-F]{6}$/.test(data.brand.color||""))issue("error","BRAND_COLOR","Configura un color de marca válido.","identidad");
+ if(!data||!Array.isArray(data.products)||!Array.isArray(data.promos)){
+  issue("error","SHARED_MISSING","Faltan catálogo o promociones compartidos.","catalogo");
+ } else {
+  data.products.forEach(function(product,i){
+   if(!String(product.name||"").trim()||String(product.name||"").trim().length<2)
+    issue("error","PRODUCT_NAME","Producto "+(i+1)+": nombre no válido.","catalogo");
+   var price=Number(product.price);
+   if(!Number.isFinite(price)||price<0||price>100000||Math.abs(Math.round(price*100)-price*100)>0.00001)
+    issue("error","PRODUCT_PRICE","Producto "+(i+1)+": revisa el precio (USD con máximo dos decimales).","catalogo");
+  });
+  data.promos.forEach(function(promo,i){
+   if(String(promo.title||"").trim().length<2)
+    issue("error","PROMO_NAME","Promoción "+(i+1)+": falta un título válido.","promociones");
+  });
+ }
+ var slugs=new Set();
+ (s.pages||[]).forEach(function(pg,i){
+  var label=String(pg.name||"Página "+(i+1)),d=pg.draft||{};
+  var slug=String(pg.slug||"");
+  if(slugs.has(slug))issue("error","DUPLICATE_SLUG",label+": existe otra página con la misma dirección.","paginas");
+  slugs.add(slug);
+  if(pg.id==="home"&&slug!=="")issue("error","HOME_SLUG","La página Inicio debe utilizar la ruta principal.","paginas");
+  if(pg.id!=="home"&&!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug))
+   issue("error","INVALID_SLUG",label+": la dirección de la página no es válida.","paginas");
+  if(String(d.title||"").trim().length<3||String(d.title||"").length>100)
+   issue("error","PAGE_TITLE",label+": título principal requerido, entre 3 y 100 caracteres.","contenido");
+  if(String(d.description||"").trim().length<12||String(d.description||"").length>300)
+   issue("error","PAGE_DESCRIPTION",label+": descripción de al menos 12 caracteres.","contenido");
+  if(String(d.cta||"").trim().length<2||String(d.cta||"").length>45)
+   issue("error","PAGE_CTA",label+": texto del botón principal incompleto.","contenido");
+  if(!Array.isArray(d.blocks)){issue("error","BLOCKS_MISSING",label+": la estructura de secciones no es válida.","visual");return;}
+  if(d.blocks.length>rule.sections)issue("error","SECTION_LIMIT",label+": supera el máximo provisional de secciones.","visual");
+  d.blocks.forEach(function(b,j){
+   if(!BLOCKS[b.type]||!blockAllowed(b.type,s.plan))
+    issue("error","BLOCK_NOT_ALLOWED",label+": sección "+(j+1)+" no permitida.","visual");
+   if(!b.visible)return;
+   if(String(b.title||"").trim().length<2)
+    issue("error","BLOCK_TITLE",label+": una sección visible no tiene título.","visual");
+   if(b.type==="image"){
+    if(!validImageSource(b.image))issue("warning","IMAGE_MISSING",label+": sección de imagen sin archivo cargado.","visual");
+    else if(!String(b.alt||"").trim())issue("warning","IMAGE_ALT",label+": agrega texto alternativo descriptivo a la imagen.","visual");
+   }
+   if(b.type==="gallery"){
+    var files=Array.isArray(b.images)?b.images:[];
+    if(!files.length||!files.some(validImageSource))issue("warning","GALLERY_EMPTY",label+": la galería aún no tiene imágenes.","visual");
+    else if(!String(b.alt||"").trim())issue("warning","GALLERY_ALT",label+": agrega texto alternativo a la galería.","visual");
+   }
+  });
+ });
+ if(!data||!data.brand||!String(data.brand.phone||"").trim()||/por configurar/i.test(data.brand.phone))
+  issue("warning","CONTACT_PENDING","Completa el teléfono o contacto público del negocio.","identidad");
+ // .invalid es reservado para ejemplos y jamás significa dominio, DNS o TLS operativo.
+ if(/\.invalid(?:$|\/)/i.test(String(s.domain||"")))
+  issue("warning","DEMO_DOMAIN","Dominio ficticio .invalid: no existe DNS ni certificado SSL configurado. Esta simulación no lo verifica.","dominio");
+ else issue("warning","DNS_UNVERIFIED","El DNS, titularidad del dominio y SSL NO se han verificado; se requiere comprobación real antes de publicar.","dominio");
+ issue("warning","CTA_NO_URL","Los botones del diseño son elementos visuales de demostración, no enlaces funcionales.","contenido");
+ return {errors:findings.filter(function(x){return x.level==="error";}),
+  warnings:findings.filter(function(x){return x.level==="warning";}),all:findings,
+  ready:!findings.some(function(x){return x.level==="error";})};
+}
+function preflightPanel(){
+ var report=checkBeforePublish();
+ function list(items,label,style){
+  return '<section class="card"><h2>'+label+' ('+items.length+')</h2>'+
+  (items.length?items.map(function(i){return '<div class="qualityItem '+style+'"><div><strong>'+esc(i.message)+'</strong><small>Código '+esc(i.code)+'</small></div>'+
+  '<button class="secondary" data-go="'+esc(i.section)+'">Abrir módulo</button></div>';}).join(""):
+  '<div class="empty">No se encontraron problemas de esta categoría.</div>')+'</section>';
+ }
+ return head("Revisión antes de publicar","Comprueba el contenido de todas las páginas del sitio. Los errores bloquean la publicación simulada; las advertencias requieren revisión.")+
+ '<div class="grid cards" style="margin-bottom:18px">'+
+ '<div class="card kpi"><span>Estado editorial</span><strong>'+(report.ready?"Listo":"Revisar")+'</strong><div class="hint">'+(report.ready?"Sin errores bloqueantes":"Existen problemas por corregir")+'</div></div>'+
+ '<div class="card kpi"><span>Errores que bloquean</span><strong>'+report.errors.length+'</strong><div class="hint">Corregir antes de publicar</div></div>'+
+ '<div class="card kpi"><span>Advertencias</span><strong>'+report.warnings.length+'</strong><div class="hint">Incluye dominio y enlaces demo</div></div>'+
+ '<div class="card kpi"><span>Páginas revisadas</span><strong>'+site().pages.length+'</strong><div class="hint">Todas las páginas del negocio</div></div></div>'+
+ '<div class="grid split">'+list(report.errors,"Errores obligatorios","critical")+
+ list(report.warnings,"Advertencias editoriales","caution")+'</div>'+
+ '<div class="sectionactions"><button class="secondary" data-go="publicaciones">Historial de publicaciones</button>'+
+ '<button class="primary" data-publish-site="true" '+(!canPublish()||!report.ready?"disabled":"")+'>Publicar sitio (solo demo)</button></div>'+
+ '<div class="note warnnote">Que la revisión editorial indique «Listo» NO significa que un dominio real, DNS, SSL, proveedor de hosting, autenticación o seguridad hayan sido verificados. Solo se habilita la publicación simulada.</div>'+banner();
+}
+function publicationCheck(){
+ var report=checkBeforePublish();
+ return report.errors.length ? report.errors[0].message : null;
 }
 function captureCurrentSite(){
  var s=site();
@@ -356,7 +442,7 @@ function sitePublications(){
  '<div class="row"><button class="secondary" data-inspect-release="'+r.number+'">Inspeccionar</button>'+
  '<button class="secondary" data-rollback-release="'+r.number+'" '+(!canPublish()||active&&r.number===active.number?"disabled":"")+'>Recuperar versión</button></div></article>';}).join("");
  return head("Publicación centralizada","Publica todas tus páginas y datos compartidos como una única versión. Revisa, compara y recupera versiones completas.",
- '<button class="primary" data-publish-site="true" '+(!canPublish()?"disabled":"")+'>Publicar sitio completo</button>')+
+ '<div class="row"><button class="secondary" data-go="revision">Revisión previa</button><button class="primary" data-publish-site="true" '+(!canPublish()||!checkBeforePublish().ready?"disabled":"")+'>Publicar sitio completo</button></div>')+
  '<div class="grid split"><section class="card"><h2>Historial del sitio</h2>'+
  (listed.length?rows:'<p class="empty">Todavía no hay publicaciones. Completa el sitio y simula la primera publicación.</p>')+'</section>'+
  '<section class="card"><h2>Estado de la publicación</h2>'+
@@ -383,7 +469,7 @@ return head("Vista previa de mi página","Compara el borrador con la última ver
 '<div class="grid split"><section class="card"><h2>'+(viewing?"Última publicación simulada":"Borrador actual")+'</h2>'+previewCard(data,viewing?"Publicación simulada":"Borrador",viewing?activeRelease().shared:s.sharedDraft,viewing?{siteName:activeRelease().siteName,domain:activeRelease().domain,page:pub}:null)+'</section>'+
 '<section class="card"><h2>Control editorial</h2><div class="tiles" style="grid-template-columns:1fr"><div class="tile"><b>Revisión de borrador: '+s.draftRevision+'</b><small>Los cambios solo viven durante esta sesión.</small></div>'+
 '<div class="tile"><b>Versiones completas del sitio: '+s.releases.length+'</b><small>Publicar incluye todas las páginas y datos compartidos, nunca una sola página.</small></div><div class="tile"><b>Permiso actual: '+esc(activeRole)+'</b><small>La verificación de permisos real llegará con la autenticación y la base de datos.</small></div></div>'+
-'<div class="sectionactions"><button class="primary" data-publish="yes" '+(!canPublish()?"disabled":"")+'>Publicar todo el sitio (demo)</button><button class="secondary" data-go="publicaciones">Historial del sitio</button></div></section></div>'+banner();
+'<div class="sectionactions"><button class="primary" data-publish="yes" '+(!canPublish()||!checkBeforePublish().ready?"disabled":"")+'>Publicar todo el sitio (demo)</button><button class="secondary" data-go="revision">Revisión previa</button><button class="secondary" data-go="publicaciones">Historial del sitio</button></div></section></div>'+banner();
 }
 function history(){
 var s=site();
@@ -392,10 +478,19 @@ return head("Historial de versiones","Cada publicación simulada genera una copi
 (s.history.length?s.history.slice().reverse().map(function(v){return '<div class="historyItem"><div class="row" style="justify-content:space-between"><div><b>Publicación '+v.n+'</b><div class="hint">Revisión '+v.rev+' · '+esc(v.at)+'</div></div><button class="secondary" data-restore="'+v.n+'" '+(!canEdit()?"disabled":"")+'>Recuperar como borrador</button></div></div>';}).join(""):'<div class="empty">Todavía no hay publicaciones simuladas.</div>')+'</section>'+banner();
 }
 function domain(){
-var s=site();
-return head("Dominio y plan","Consulta la configuración de ejemplo. La administración real de DNS, facturación y correo se habilitará posteriormente.")+
-'<div class="grid cards"><article class="card"><h2>Dominio de ejemplo</h2><div class="tile"><b>'+esc(s.domain)+'</b><small>No es una dirección publicada. El sufijo .invalid evita usar un sitio real.</small></div><p style="margin-top:18px">Para conectar dominios reales será necesario verificar su titularidad y configurar el certificado SSL.</p></article>'+
-'<article class="card"><h2>Plan actual (demo)</h2><div class="tile"><b>MG '+esc(s.plan)+'</b><small>Precio, capacidades y condiciones comerciales pendientes de aprobación final.</small></div><p style="margin-top:18px">No existen cobros, renovaciones ni suscripciones activas en esta pantalla.</p></article></div>'+banner();
+ var s=site(),isDemo=/\.invalid$/i.test(s.domain);
+ return head("Dominio, hosting y SSL","Estado de demostración y pasos técnicos necesarios para activar un dominio real. No hay conexiones con proveedores.")+
+ '<div class="grid cards"><article class="card"><h2>Dominio asignado (ficticio)</h2>'+
+ '<div class="tile"><b>'+esc(s.domain)+'</b><small>'+(isDemo?"Extensión .invalid reservada para ejemplos.":"La titularidad y los registros DNS no se han comprobado.")+'</small></div>'+
+ '<div class="qualityItem caution"><div><strong>Verificación de propiedad: pendiente</strong><small>No se consultan DNS ni registradores.</small></div></div>'+
+ '<div class="qualityItem caution"><div><strong>DNS: no comprobado</strong><small>Sin consultas ni cambios en registros A, CNAME o TXT.</small></div></div>'+
+ '<div class="qualityItem caution"><div><strong>SSL/TLS: no comprobado</strong><small>No se han expedido ni validado certificados.</small></div></div></article>'+
+ '<article class="card"><h2>Plan y activación futura</h2><div class="tile"><b>MG '+esc(s.plan)+'</b><small>Suscripción solo visual; precios y límites pendientes de aprobación comercial.</small></div>'+
+ '<div class="tile" style="margin-top:12px"><b>1. Confirmar titular del dominio</b><small>Se requerirá autorización expresa del propietario.</small></div>'+
+ '<div class="tile" style="margin-top:12px"><b>2. Vincular DNS y SSL</b><small>Mediante proveedor compatible, cuando se contrate y habilite.</small></div>'+
+ '<div class="tile" style="margin-top:12px"><b>3. Habilitar publicación real</b><small>Solo tras validar hosting, seguridad, SSL, rutas, rollback y dominio.</small></div>'+
+ '<div class="sectionactions"><button class="secondary" data-go="revision">Consultar revisión editorial</button></div></article></div>'+
+ '<div class="note warnnote">«Publicar» dentro de esta demostración NO activa un dominio, ni lo verifica, ni permite navegar a un sitio real.</div>'+banner();
 }
 function support(){
 return head("Ayuda y soporte","Una guía inicial para autogestionar tu página. El sistema real de tickets se incorporará más adelante.")+
@@ -603,7 +698,7 @@ function bindPageManager(){
 
 function render(){
 navDraw();
-var pages={inicio:intro,identidad:identity,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,vista:preview,publicaciones:sitePublications,historial:history,dominio:domain,soporte:support};
+var pages={inicio:intro,identidad:identity,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,vista:preview,revision:preflightPanel,publicaciones:sitePublications,historial:history,dominio:domain,soporte:support};
 $("content").innerHTML='<div class="card" style="margin-bottom:20px"><div class="row" style="justify-content:space-between;align-items:end"><div><div class="eyebrow">SESIÓN DE PRUEBA</div><p style="margin:5px 0 0;color:var(--muted)">Alterna negocios y roles ficticios para revisar el diseño. Esta selección NO es autenticación.</p></div><div class="row">'+dropdown()+'</div></div></div>'+pages[tab]();
 $("orgSwitch").onchange=function(){activeOrg=this.value;previewMode="draft";render();};
 $("roleSwitch").onchange=function(){activeRole=this.value;render();};
