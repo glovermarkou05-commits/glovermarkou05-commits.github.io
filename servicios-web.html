@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#06101c">
+  <meta name="description" content="MG Digital Solutions: páginas web, tiendas online, dominios, hosting, correo empresarial, mantenimiento y soporte. Soluciones digitales de principio a fin.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Servicios Web & Cloud | MG Digital Solutions">
+  <meta property="og:description" content="Diseñamos, publicamos y acompañamos tu negocio en internet. Conoce nuestros planes web y solicita una cotización.">
+  <title>Servicios web, hosting y soporte | MG Digital Solutions</title>
+  <style>
+    :root{color-scheme:dark;--bg:#06101c;--ink:#edf8ff;--muted:#9bb0c5;--sub:#718aa1;--panel:#0d2035;--line:rgba(255,255,255,.1);--accent:#48c8ff;--indigo:#7082ff;--mint:#5ce6b5;--max:1200px}
+    *,*:before,*:after{box-sizing:border-box}
+    html{scroll-behavior:smooth;scroll-padding-top:93px}
+    body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(circle at 85% 5%,rgba(112,130,255,.13),transparent 26%),radial-gradient(circle at 8% 5%,rgba(72,200,255,.15),transparent 28%),#06101c;color:var(--ink);line-height:1.6}
+    body:before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(rgba(255,255,255,.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.015) 1px,transparent 1px);background-size:44px 44px}
+    a{color:inherit;text-decoration:none}
+    button,input,select,textarea{font:inherit}
+    button,a,input,select,textarea{outline-offset:3px}
+    a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--accent)}
+    .wrap{width:min(calc(100% - 36px),var(--max));margin-inline:auto}
+    .nav{position:sticky;top:0;z-index:20;background:rgba(6,16,28,.92);backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+    .navin{display:flex;align-items:center;justify-content:space-between;gap:18px;min-height:78px}
+    .brand{display:flex;align-items:center;gap:12px;font-size:.84rem;letter-spacing:.1em;font-weight:950;line-height:1.1;white-space:nowrap}
+    .logo{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(130deg,var(--accent),var(--indigo));color:#071321;letter-spacing:-.12em;font-size:1.2rem;padding-right:4px}
+    .brand small{display:block;color:#98b1c6;font-size:.58rem;letter-spacing:.3em;margin-top:6px}
+    .links{display:flex;align-items:center;gap:21px;color:#b5c8d9;font-weight:650;font-size:.81rem}
+    .links a:hover{color:white}
+    .navtoggle{display:none;cursor:pointer;background:#0c243e;border:1px solid var(--line);color:#fff;border-radius:12px;padding:9px 13px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);border-radius:13px;font-weight:800;font-size:.9rem;padding:12px 18px;background:rgba(255,255,255,.025);color:white;cursor:pointer;transition:transform .18s ease,border-color .18s ease}
+    .btn:hover{transform:translateY(-2px);border-color:rgba(72,200,255,.5)}
+    .btn-primary{color:#051422;background:linear-gradient(135deg,var(--accent),var(--indigo));border:0}
+    .eyebrow{font-size:.71rem;text-transform:uppercase;font-weight:850;letter-spacing:.17em;color:#85dfff}
+    .hero{padding:92px 0 62px}
+    .hero-layout{display:grid;grid-template-columns:1.08fr .92fr;align-items:center;gap:56px}
+    h1,h2,h3,p{margin-top:0}h1,h2{letter-spacing:-.05em;line-height:1.08}
+    h1{font-size:clamp(2.6rem,6vw,5.15rem);margin:19px 0 24px}h2{font-size:clamp(2rem,4.2vw,3.45rem);margin:12px 0 18px}h3{font-size:1.13rem}
+    .grad{background:linear-gradient(90deg,#fff,#a7ebff 55%,#9faaff);background-clip:text;-webkit-background-clip:text;color:transparent}
+    .lead{font-size:1.06rem;max-width:610px;color:var(--muted)}
+    .actions{display:flex;gap:11px;flex-wrap:wrap;margin-top:28px}
+    .notes{display:flex;gap:18px;flex-wrap:wrap;color:#9bb3c8;font-size:.78rem;margin-top:27px}
+    .notes span:before{content:"✓";color:var(--mint);margin-right:7px}
+    .visual{padding:22px;background:linear-gradient(150deg,rgba(16,43,71,.9),rgba(8,23,41,.95));border:1px solid rgba(72,200,255,.17);box-shadow:0 25px 80px rgba(0,0,0,.25);border-radius:30px}
+    .visual .dots{display:flex;gap:7px;margin-bottom:24px}.dots i{height:9px;width:9px;background:#35526d;border-radius:100%}
+    .window-head{display:flex;justify-content:space-between;gap:12px;color:#7697b1;font-size:.67rem;margin-bottom:14px;text-transform:uppercase;letter-spacing:.12em}
+    .window-title{font-size:1.5rem;font-weight:900;line-height:1.1;margin-bottom:20px}
+    .stat-row{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .stat{padding:15px;background:#102d49;border:1px solid rgba(255,255,255,.06);border-radius:14px;min-height:112px}
+    .stat b{display:block;font-size:.85rem;margin:6px 0}.stat small{font-size:.7rem;color:#87a4b9}
+    .stat .bubble{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;color:#8de3ff;background:#143956}
+    .flow{display:flex;align-items:center;justify-content:space-between;margin-top:15px;border:1px solid rgba(92,230,181,.15);background:rgba(92,230,181,.04);border-radius:12px;padding:12px;gap:8px;color:#aee6d6;font-size:.68rem}
+    section{padding:74px 0}
+    .section-lead{max-width:730px;color:var(--muted)}
+    .grid{display:grid;gap:15px}
+    .services{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:33px}
+    .card{position:relative;border:1px solid var(--line);border-radius:23px;padding:25px;background:linear-gradient(180deg,rgba(17,42,69,.8),rgba(10,26,45,.85))}
+    .card p{color:var(--muted);font-size:.88rem;margin-bottom:0}
+    .glyph{font-size:1.45rem;display:grid;place-items:center;width:47px;height:47px;border:1px solid rgba(72,200,255,.16);background:rgba(72,200,255,.065);border-radius:14px;margin-bottom:19px}
+    .band{border-block:1px solid var(--line);background:rgba(255,255,255,.018)}
+    .plans{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:38px}
+    .plan{display:flex;flex-direction:column}
+    .plan.featured{border-color:rgba(72,200,255,.4);box-shadow:0 0 0 1px rgba(72,200,255,.08),0 24px 70px rgba(0,0,0,.2)}
+    .highlight{display:inline-flex;align-self:flex-start;color:#06101c;font-size:.65rem;text-transform:uppercase;letter-spacing:.13em;font-weight:900;background:linear-gradient(120deg,#65d9ff,#a4b1ff);border-radius:999px;padding:4px 9px;margin-bottom:18px}
+    .plan-name{font-size:.73rem;font-weight:900;color:#8ee6ff;letter-spacing:.12em}
+    .price{font-size:2.25rem;font-weight:950;line-height:1.1;margin:10px 0 4px}
+    .monthly{font-weight:850;font-size:1.2rem;margin-top:15px}
+    .monthly small{font-weight:400;font-size:.8rem;color:var(--muted)}
+    .per{color:var(--sub);font-size:.75rem}
+    .plan ul{padding:0;list-style:none;display:grid;gap:10px;margin:25px 0}
+    .plan li{font-size:.82rem;color:#b8ccdd;line-height:1.5}.plan li:before{content:"✓";color:var(--mint);margin-right:9px}
+    .plan .btn{margin-top:auto}
+    .legalnote{font-size:.74rem;color:#86a0b5;margin-top:18px;max-width:1040px}
+    .steps{grid-template-columns:repeat(4,minmax(0,1fr));margin-top:35px}
+    .stepnum{color:#8bdcff;font-size:.74rem;font-weight:900;letter-spacing:.14em;margin-bottom:13px}
+    .step p{color:var(--muted);font-size:.83rem}
+    .two{display:grid;grid-template-columns:.85fr 1.15fr;gap:34px;align-items:start}
+    .faq{display:grid;gap:11px}
+    details{border:1px solid var(--line);background:rgba(255,255,255,.025);border-radius:14px;padding:17px 19px}
+    summary{cursor:pointer;font-weight:760}details p{color:var(--muted);font-size:.84rem;margin:13px 0 0}
+    .contactbox{border:1px solid rgba(72,200,255,.19);background:linear-gradient(130deg,#102a45,#081b30);border-radius:29px;padding:32px}
+    .form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    label{display:grid;gap:6px;font-size:.75rem;font-weight:700;color:#c0d6e7}
+    label.full{grid-column:1/-1}
+    input,select,textarea{width:100%;background:#071b2f;color:var(--ink);border:1px solid rgba(255,255,255,.13);border-radius:11px;padding:12px}
+    textarea{min-height:110px;resize:vertical}
+    .form .btn{grid-column:1/-1}
+    .form small,.formstatus{grid-column:1/-1;color:#92aabe;font-size:.72rem}
+    .formstatus{min-height:1em;color:#a7ead4}
+    footer{border-top:1px solid var(--line);padding:34px 0 55px;color:#859eb4;font-size:.78rem}
+    .footer-inner{display:flex;justify-content:space-between;gap:22px;flex-wrap:wrap}
+    .footerlinks{display:flex;gap:16px;flex-wrap:wrap}
+    @media(max-width:980px){.hero-layout,.two{grid-template-columns:1fr}.services{grid-template-columns:repeat(2,minmax(0,1fr))}.steps{grid-template-columns:repeat(2,minmax(0,1fr))}.visual{max-width:650px}.links{gap:10px}}
+    @media(max-width:720px){.navin{min-height:68px}.navtoggle{display:block}.links{display:none;position:absolute;left:16px;right:16px;top:72px;background:#091e32;border:1px solid var(--line);border-radius:16px;flex-direction:column;align-items:stretch;padding:15px;gap:0}.links.open{display:flex}.links a{padding:10px}.navin>.btn{display:none}.hero{padding-top:58px}.services,.plans,.steps,.stat-row,.form{grid-template-columns:1fr}label.full,.form .btn,.form small,.formstatus{grid-column:auto}.plan.featured{box-shadow:none}section{padding:58px 0}h1{font-size:2.9rem}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn{transition:none}}
+  </style>
+</head>
+<body>
+  <a href="#contenido" style="position:absolute;left:-10000px;top:auto" onfocus="this.style.left='12px'" onblur="this.style.left='-10000px'">Saltar al contenido</a>
+  <header class="nav">
+    <div class="wrap navin">
+      <a class="brand" href="index.html" aria-label="MG Digital Solutions, ir al inicio"><span class="logo" aria-hidden="true">MG</span><span>MG DIGITAL<small>SOLUTIONS</small></span></a>
+      <nav id="enlaces" class="links" aria-label="Navegación de servicios">
+        <a href="#servicios">Servicios</a><a href="#planes">Planes web</a><a href="#metodo">Cómo trabajamos</a><a href="#preguntas">Preguntas</a><a href="ventry.html">Ventry</a><a href="mg-club-plus.html">MG CLUB+</a>
+      </nav>
+      <a href="#contacto" class="btn btn-primary">Solicitar cotización →</a>
+      <button class="navtoggle" id="menu" type="button" aria-controls="enlaces" aria-expanded="false">☰ <span class="sr-only">Menú</span></button>
+    </div>
+  </header>
+  <main id="contenido">
+    <section class="hero">
+      <div class="wrap hero-layout">
+        <div>
+          <span class="eyebrow">MG DIGITAL SOLUTIONS · WEB & CLOUD</span>
+          <h1>Tu negocio en internet. <span class="grad">De principio a fin.</span></h1>
+          <p class="lead">Creamos tu página web, configuramos dominio y alojamiento, activamos tu correo empresarial y te acompañamos con mantenimiento, seguridad y soporte. Una solución completa, con un solo equipo responsable.</p>
+          <div class="actions"><a class="btn btn-primary" href="#planes">Conocer planes →</a><a class="btn" href="#contacto">Cotizar mi proyecto</a></div>
+          <div class="notes"><span>Diseño adaptable</span><span>Acompañamiento técnico</span><span>Planes claros</span></div>
+        </div>
+        <div class="visual" aria-label="Representación de servicios digitales">
+          <div class="dots" aria-hidden="true"><i></i><i></i><i></i></div>
+          <div class="window-head"><span>MG WEB STUDIO</span><span>Solución integral</span></div>
+          <div class="window-title">Tu presencia digital,<br>bien administrada.</div>
+          <div class="stat-row">
+            <div class="stat"><span class="bubble">▣</span><b>Diseño web</b><small>Identidad y experiencia móvil</small></div>
+            <div class="stat"><span class="bubble">◎</span><b>Dominio + hosting</b><small>Configuración y publicación</small></div>
+            <div class="stat"><span class="bubble">✉</span><b>Correo de empresa</b><small>Comunicación profesional</small></div>
+            <div class="stat"><span class="bubble">◇</span><b>Soporte continuo</b><small>Seguridad y actualizaciones</small></div>
+          </div>
+          <div class="flow"><span>Diseño → Publicación → Mantenimiento</span><b>✓</b></div>
+        </div>
+      </div>
+    </section>
+    <section class="band" id="servicios">
+      <div class="wrap">
+        <span class="eyebrow">Todo en un solo lugar</span>
+        <h2>Servicios para construir y mantener tu presencia digital.</h2>
+        <p class="section-lead">Un sitio web es el principio. Nos encargamos del servicio técnico necesario para que funcione y pueda crecer contigo.</p>
+        <div class="grid services">
+          <article class="card"><span class="glyph" aria-hidden="true">▣</span><h3>Diseño y desarrollo web</h3><p>Sitios corporativos, portafolios, landing pages y páginas adaptadas a celulares.</p></article>
+          <article class="card"><span class="glyph" aria-hidden="true">▤</span><h3>Tiendas online</h3><p>Catálogos, pedidos y opciones de integración de pagos según el alcance acordado.</p></article>
+          <article class="card"><span class="glyph" aria-hidden="true">◎</span><h3>Dominio y hosting</h3><p>Registro y configuración de dominios, alojamiento, DNS y certificados SSL.</p></article>
+          <article class="card"><span class="glyph" aria-hidden="true">✉</span><h3>Correo empresarial</h3><p>Cuentas de correo con el dominio de tu negocio y configuración inicial.</p></article>
+          <article class="card"><span class="glyph" aria-hidden="true">◇</span><h3>Mantenimiento y seguridad</h3><p>Actualizaciones, supervisión, respaldos y asistencia según el plan.</p></article>
+          <article class="card"><span class="glyph" aria-hidden="true">↗</span><h3>SEO, analítica y crecimiento</h3><p>Buenas prácticas de buscadores, estadísticas e ideas para mejorar conversiones.</p></article>
+        </div>
+      </div>
+    </section>
+    <section id="planes">
+      <div class="wrap">
+        <span class="eyebrow">Soluciones comerciales</span>
+        <h2>Elige el punto de partida para tu negocio.</h2>
+        <p class="section-lead">La implementación cubre la creación inicial. La mensualidad corresponde a la administración y el mantenimiento del servicio contratado.</p>
+        <div class="grid plans">
+          <article class="card plan">
+            <div class="plan-name">MG START</div><h3>Tu primer sitio profesional</h3>
+            <div class="price">$249</div><div class="per">Implementación sugerida</div>
+            <div class="monthly">$29 <small>/mes</small></div>
+            <ul><li>Hasta 3 páginas o secciones</li><li>Diseño adaptable a celular</li><li>Formulario de contacto</li><li>Dominio estándar y hosting administrados</li><li>SSL y una cuenta de correo</li><li>Soporte y mantenimiento básico</li></ul>
+            <a class="btn" href="#contacto" data-plan="MG Start">Cotizar MG Start →</a>
+          </article>
+          <article class="card plan featured">
+            <span class="highlight">Recomendado</span><div class="plan-name">MG BUSINESS</div><h3>Una web para hacer negocios</h3>
+            <div class="price">$499</div><div class="per">Implementación sugerida</div>
+            <div class="monthly">$49 <small>/mes</small></div>
+            <ul><li>Hasta 8 páginas o secciones</li><li>Diseño corporativo personalizado</li><li>Formularios comerciales</li><li>Dominio y hosting administrados</li><li>SSL y una cuenta de correo</li><li>SEO inicial, analítica y soporte prioritario</li></ul>
+            <a class="btn btn-primary" href="#contacto" data-plan="MG Business">Cotizar MG Business →</a>
+          </article>
+          <article class="card plan">
+            <div class="plan-name">MG PREMIUM</div><h3>Crece con funciones a medida</h3>
+            <div class="price">Desde $999</div><div class="per">Implementación sujeta a cotización</div>
+            <div class="monthly">Desde $99 <small>/mes</small></div>
+            <ul><li>Ecommerce o desarrollo personalizado</li><li>Catálogo y módulos según proyecto</li><li>Integraciones cotizadas por separado</li><li>Hosting y correo según necesidad</li><li>Seguridad y respaldo acordados</li><li>Soporte y mantenimiento personalizados</li></ul>
+            <a class="btn" href="#contacto" data-plan="MG Premium">Solicitar propuesta →</a>
+          </article>
+        </div>
+        <p class="legalnote">Precios referenciales en USD, no constituyen oferta contractual definitiva. Impuestos, alcance, costo del dominio estándar, recursos de hosting, cuentas de correo, horarios de soporte, límite de cambios y renovaciones se precisan en la cotización y contrato. Funciones de terceros, licencias, pasarelas y consumos adicionales pueden tener costos independientes.</p>
+      </div>
+    </section>
+    <section class="band" id="metodo">
+      <div class="wrap">
+        <span class="eyebrow">Cómo trabajamos</span><h2>Un proceso claro desde la idea hasta el soporte.</h2>
+        <div class="grid steps">
+          <div class="card step"><div class="stepnum">01 / DESCUBRIR</div><h3>Escuchamos tu negocio</h3><p>Definimos objetivos, público, contenido y alcance real.</p></div>
+          <div class="card step"><div class="stepnum">02 / DISEÑAR</div><h3>Preparamos tu propuesta</h3><p>Organizamos estructura, diseño, servicios y costos.</p></div>
+          <div class="card step"><div class="stepnum">03 / PUBLICAR</div><h3>Configuramos tu sitio</h3><p>Validamos versión móvil, dominio, enlaces y formularios.</p></div>
+          <div class="card step"><div class="stepnum">04 / ACOMPAÑAR</div><h3>Mantenemos tu servicio</h3><p>Atendemos cambios, renovaciones y soporte contratado.</p></div>
+        </div>
+      </div>
+    </section>
+    <section id="preguntas">
+      <div class="wrap two">
+        <div><span class="eyebrow">Preguntas frecuentes</span><h2>Tu servicio web sin complicaciones.</h2><p class="section-lead">Cada proyecto se cotiza de acuerdo con los recursos y funcionalidades que realmente necesita.</p></div>
+        <div class="faq">
+          <details><summary>¿El dominio queda a mi nombre?</summary><p>Sí. Los dominios deben registrarse a nombre del cliente o entidad titular, con MG Digital Solutions como administrador autorizado cuando corresponda.</p></details>
+          <details><summary>¿Qué cubre la mensualidad?</summary><p>Administración, alojamiento y soporte dentro del plan contratado. Los límites de uso, cambios, correo, respaldos y tiempos de atención se especifican por escrito.</p></details>
+          <details><summary>¿Puedo solicitar una tienda online?</summary><p>Sí. Se evalúan catálogo, pedidos, inventario y pagos. Las integraciones y las tarifas de terceros se cotizan según el proyecto.</p></details>
+          <details><summary>¿Puedo conservar mi dominio actual?</summary><p>Generalmente sí. Revisamos titularidad, acceso DNS y compatibilidad antes de migrar o conectar servicios.</p></details>
+          <details><summary>¿Qué pasa si dejo de contratar el mantenimiento?</summary><p>El contrato definirá entrega de activos, titularidad del dominio, acceso, exportaciones y cierre del servicio para evitar interrupciones inesperadas.</p></details>
+        </div>
+      </div>
+    </section>
+    <section id="contacto" class="band">
+      <div class="wrap contactbox two">
+        <div><span class="eyebrow">Hablemos de tu proyecto</span><h2>¿Listo para crear tu próxima página?</h2><p class="section-lead">Cuéntanos qué necesitas. Prepararemos una recomendación comercial ajustada a tu negocio.</p><p class="legalnote">Este formulario prepara un mensaje de WhatsApp; no lo guarda ni lo envía automáticamente. Para completar la solicitud, revisa el mensaje y pulsa «Enviar» en WhatsApp.</p></div>
+        <form id="cotizar" class="form">
+          <label>Nombre y apellido <input name="nombre" required maxlength="100" autocomplete="name" placeholder="Tu nombre"></label>
+          <label>Empresa o negocio <input name="empresa" maxlength="100" autocomplete="organization" placeholder="Nombre comercial"></label>
+          <label>Correo electrónico <input name="email" type="email" maxlength="180" autocomplete="email" placeholder="nombre@empresa.com"></label>
+          <label>Plan de interés <select name="plan" id="plan"><option>Asesoría / No estoy seguro</option><option>MG Start</option><option>MG Business</option><option>MG Premium</option><option>Servicios de hosting y dominio</option><option>Correo empresarial</option><option>Mantenimiento y soporte</option></select></label>
+          <label class="full">Cuéntanos qué necesitas <textarea name="mensaje" maxlength="1200" placeholder="Quiero una página para..."></textarea></label>
+          <button class="btn btn-primary" type="submit">Preparar mensaje en WhatsApp →</button>
+          <small>No se realiza ningún cobro ni contratación desde este formulario.</small>
+          <div id="formstatus" class="formstatus" role="status" aria-live="polite"></div>
+        </form>
+      </div>
+    </section>
+  </main>
+  <footer><div class="wrap footer-inner"><div>© <span id="year">2026</span> MG Digital Solutions · Web & Cloud Services</div><div class="footerlinks"><a href="index.html">Inicio</a><a href="ventry.html">Ventry Commercial</a><a href="mg-club-plus.html">MG CLUB+</a><a href="#contacto">Contacto</a></div></div></footer>
+  <script>
+    (function(){
+      "use strict";
+      var nav=document.getElementById("enlaces"),menu=document.getElementById("menu");
+      menu.addEventListener("click",function(){var open=nav.classList.toggle("open");menu.setAttribute("aria-expanded",String(open));});
+      nav.querySelectorAll("a").forEach(function(a){a.addEventListener("click",function(){nav.classList.remove("open");menu.setAttribute("aria-expanded","false");});});
+      document.querySelectorAll("[data-plan]").forEach(function(a){a.addEventListener("click",function(){document.getElementById("plan").value=a.getAttribute("data-plan");});});
+      document.getElementById("year").textContent=String(new Date().getFullYear());
+      document.getElementById("cotizar").addEventListener("submit",function(e){
+        e.preventDefault();
+        if(!e.currentTarget.reportValidity())return;
+        var d=new FormData(e.currentTarget);
+        var message=["Hola, quiero una cotización de MG Digital Solutions.",
+          "Nombre: "+(d.get("nombre")||""),
+          "Empresa: "+(d.get("empresa")||"No indicada"),
+          "Correo: "+(d.get("email")||"No indicado"),
+          "Servicio: "+(d.get("plan")||"Por definir"),
+          "Necesidad: "+(d.get("mensaje")||"Por definir")].join("\n");
+        var url="https://wa.me/593962257679?text="+encodeURIComponent(message);
+        document.getElementById("formstatus").textContent="Revisa WhatsApp y pulsa Enviar para completar tu solicitud.";
+        var opened=window.open(url,"_blank","noopener,noreferrer");
+        if(!opened){window.location.href=url;}
+      });
+    }());
+  </script>
+</body>
+</html>
