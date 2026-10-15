@@ -94,6 +94,14 @@ footer{padding-top:35px;color:#7794a9;font-size:11px}
 .qualityItem button{font-size:11px;padding:8px 10px}
 .qualityItem.critical{border-color:rgba(255,120,120,.29);background:rgba(255,110,110,.045)}
 .qualityItem.caution{border-color:rgba(255,205,140,.24);background:rgba(255,205,140,.03)}
+
+.catalogThumb{width:54px;height:54px;object-fit:cover;border-radius:10px;flex:0 0 auto;border:1px solid var(--line)}
+.catalogPlaceholder{width:54px;height:54px;flex:0 0 auto;border:1px dashed var(--line);display:grid;place-items:center;border-radius:10px;font-size:9px;color:var(--muted)}
+.catalogDescription{display:block;color:var(--muted);font-size:10px;max-width:175px;white-space:normal;margin-top:3px}
+.catalogCategory{display:block;text-transform:uppercase;letter-spacing:.06em;font-size:9px;color:#6d94ae}
+.previewProductPhoto{width:100%;height:76px;object-fit:cover;border-radius:8px;margin-bottom:8px}
+.previewProduct small{display:block;color:#57748b;margin-top:3px}
+.catalogEditPreview{display:block;width:100px;height:86px;object-fit:cover;border-radius:10px}
 </style>
 </head>
 <body>
@@ -122,7 +130,7 @@ var seed=[
 {id:"o-b",name:"Papelería Nube (ejemplo)",site:{name:"Papelería Nube",slug:"papeleria-nube",plan:"Start",domain:"papeleria-nube.ejemplo.invalid",draft:{title:"Ideas, color y materiales para crear",description:"Encuentra artículos escolares, papelería y materiales artísticos.",cta:"Explorar catálogo",color:"#744db6",phone:"Contacto por configurar",products:[{id:"p1",name:"Cuaderno universitario",price:2.75,visible:true},{id:"p2",name:"Set de marcadores",price:5.95,visible:true}],promos:[]},published:null,history:[],draftRevision:1}}
 ];
 function deepCopy(x){return JSON.parse(JSON.stringify(x));}
-var organizations=deepCopy(seed),activeOrg="o-a",activeRole="CLIENT_OWNER",tab="inicio",previewMode="draft",viewPublication=false;
+var organizations=deepCopy(seed),activeOrg="o-a",activeRole="CLIENT_OWNER",tab="inicio",previewMode="draft",viewPublication=false,selectedCategoryByOrg={};
 
 /* Límites de ejemplo NO APROBADOS; pendientes de definición comercial. Controles DEMO, no reemplazan backend/RLS. */
 var PLAN_RULES={Start:{sections:5,pages:1},Crece:{sections:8,pages:3},Pro:{sections:12,pages:5}};
@@ -163,6 +171,17 @@ var PAGE_TEMPLATES=[
 organizations.forEach(function(org){
  var s=org.site,d=s.draft,p=s.published,h=s.history,r=s.draftRevision;
  s.sharedDraft={brand:{color:d.color,phone:d.phone},products:deepCopy(d.products),promos:deepCopy(d.promos)};
+ 
+// Campos comerciales nuevos con valores de ejemplo; cada negocio retiene su propio catálogo.
+ s.sharedDraft.products.forEach(function(p){
+  p.category=p.category|| (org.id==="o-a"?"Bebidas":"Papelería");
+  p.description=p.description||"";
+  p.availability=p.availability||"available";
+  p.photo=p.photo||"";
+ });
+ s.sharedDraft.promos.forEach(function(p){
+  p.description=p.description||"";p.startsAt=p.startsAt||"";p.endsAt=p.endsAt||"";
+ });
  s.sharedPublished=null;s.sharedRevision=1;s.sharedHistory=[];s.releases=[];s.activeReleaseNumber=null;
  delete d.color;delete d.phone;delete d.products;delete d.promos;
  s.pages=[{id:"home",name:"Inicio",slug:"",draft:d,published:p,history:h,draftRevision:r}];
@@ -231,16 +250,87 @@ function publicBlocks(data){
  }).join("");
 }
 
+
+/* Valores comerciales del sitio; las promociones se evalúan por fecha del navegador.
+   En producción el servidor decidirá los períodos según zona horaria del contrato. */
+var AVAILABILITY={available:"Disponible",out_of_stock:"Agotado",coming_soon:"Próximamente"};
+function localISODate(){
+ var d=new Date(),pad=function(x){return String(x).padStart(2,"0");};
+ return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+}
+function validDateOnly(s){
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(s||"")))return false;
+ var n=new Date(s+"T12:00:00");
+ return Number.isFinite(n.getTime())&&n.getFullYear()===Number(s.slice(0,4))&&n.getMonth()+1===Number(s.slice(5,7))&&n.getDate()===Number(s.slice(8,10));
+}
+function promoStatus(p,today){
+ if(!p.active)return "Pausada";
+ if(p.startsAt&&p.endsAt&&p.startsAt>p.endsAt)return "Fechas incorrectas";
+ if(p.startsAt&&!validDateOnly(p.startsAt)||p.endsAt&&!validDateOnly(p.endsAt))return "Fechas incorrectas";
+ var now=today||localISODate();
+ if(p.startsAt&&now<p.startsAt)return "Programada";
+ if(p.endsAt&&now>p.endsAt)return "Vencida";
+ return "Vigente";
+}
+function promoVisible(p,today){return promoStatus(p,today)==="Vigente";}
+function productCategoryList(){
+ return Array.from(new Set(site().sharedDraft.products.map(function(p){return String(p.category||"Otros").trim();}))).sort();
+}
+function validateProduct(entry){
+ var name=String(entry.name||"").trim(),cat=String(entry.category||"").trim(),price=Number(entry.price);
+ if(name.length<2||name.length>90)return "Escribe un nombre entre 2 y 90 caracteres.";
+ if(cat.length<2||cat.length>60)return "La categoría debe tener entre 2 y 60 caracteres.";
+ if(String(entry.description||"").length>500)return "La descripción supera el límite de 500 caracteres.";
+ if(!Number.isFinite(price)||price<0||price>100000||Math.abs(Math.round(price*100)-price*100)>0.00001)return "Precio inválido: USD con máximo dos decimales.";
+ if(!Object.prototype.hasOwnProperty.call(AVAILABILITY,entry.availability))return "Selecciona la disponibilidad del producto.";
+ if(entry.photo&&!validImageSource(entry.photo))return "La imagen del producto no es válida.";
+ return null;
+}
+function validatePromotion(p){
+ var title=String(p.title||"").trim();
+ if(title.length<2||title.length>100)return "Escribe un título entre 2 y 100 caracteres.";
+ if(String(p.description||"").length>350)return "La descripción supera 350 caracteres.";
+ if(p.startsAt&&!validDateOnly(p.startsAt))return "Fecha de inicio inválida.";
+ if(p.endsAt&&!validDateOnly(p.endsAt))return "Fecha de finalización inválida.";
+ if(p.startsAt&&p.endsAt&&p.startsAt>p.endsAt)return "La fecha final debe ser igual o posterior al inicio.";
+ return null;
+}
+function saveProductRecord(obj,recordId){
+ if(!canEdit())return false;
+ var error=validateProduct(obj);if(error){notice(error);return false;}
+ var existing=site().sharedDraft.products.find(function(p){return p.id===recordId;});
+ if(recordId&&!existing){notice("El producto seleccionado ya no existe.");return false;}
+ var normalized={id:recordId||"demo-"+Date.now()+"-"+Math.floor(Math.random()*100000),
+ name:String(obj.name).trim(),category:String(obj.category).trim(),
+ description:String(obj.description||"").trim(),price:Number(obj.price),
+ availability:obj.availability,visible:!!obj.visible,photo:obj.photo||""};
+ if(existing)Object.assign(existing,normalized);
+ else site().sharedDraft.products.push(normalized);
+ bumpShared();return true;
+}
+function savePromotionRecord(obj,recordId){
+ if(!canEdit())return false;
+ var error=validatePromotion(obj);if(error){notice(error);return false;}
+ var existing=site().sharedDraft.promos.find(function(p){return p.id===recordId;});
+ if(recordId&&!existing){notice("La promoción seleccionada ya no existe.");return false;}
+ var normalized={id:recordId||"promo-"+Date.now()+"-"+Math.floor(Math.random()*100000),
+ title:String(obj.title).trim(),description:String(obj.description||"").trim(),
+ active:!!obj.active,startsAt:obj.startsAt||"",endsAt:obj.endsAt||""};
+ if(existing)Object.assign(existing,normalized);
+ else site().sharedDraft.promos.push(normalized);
+ bumpShared();return true;
+}
+
 function previewCard(data,label,commonData,meta){
 var common=commonData||site().sharedDraft;
 var products=common.products.filter(function(p){return p.visible;});
-var promos=common.promos.filter(function(p){return p.active;});
+var promos=common.promos.filter(function(p){return promoVisible(p);});
 var color=/^#[0-9a-fA-F]{6}$/.test(common.brand.color)?common.brand.color:"#186999";
 var address=meta?meta.domain+(meta.page.id==="home"?"":"/"+meta.page.slug):pageAddress(currentPage());
 var businessName=meta?meta.siteName:site().name;
 return '<div class="sitePreview"><div class="previewbar"><span>◉ '+esc(address)+'</span><b>'+esc(label)+'</b></div><div class="previewInner" style="--site-accent:'+color+'">'+
 '<div class="previewHero"><div class="previewLogo">'+esc(businessName)+'</div><h2>'+esc(data.title)+'</h2><p>'+esc(data.description)+'</p><span class="previewBtn">'+esc(data.cta)+' →</span></div>'+
-'<div class="previewSection"><h3>Productos y servicios</h3><div class="previewProducts">'+(products.length?products.slice(0,4).map(function(p){return '<div class="previewProduct">'+esc(p.name)+'<b>'+money(p.price)+'</b></div>';}).join(""):'<div class="previewProduct">Sin productos visibles.</div>')+'</div>'+
+'<div class="previewSection"><h3>Productos y servicios</h3><div class="previewProducts">'+(products.length?products.slice(0,4).map(function(p){return '<div class="previewProduct">'+(p.photo&&validImageSource(p.photo)?'<img class="previewProductPhoto" src="'+p.photo+'" alt="'+esc(p.name)+'">':"")+'<span class="catalogCategory">'+esc(p.category||"Otros")+'</span><div>'+esc(p.name)+'</div><b>'+money(p.price)+'</b><small>'+esc(AVAILABILITY[p.availability]||"Disponible")+'</small></div>';}).join(""):'<div class="previewProduct">Sin productos visibles.</div>')+'</div>'+
 promos.slice(0,2).map(function(p){return '<div class="previewPromo">✦ '+esc(p.title)+'</div>';}).join("")+'</div>'+publicBlocks(data)+'</div></div>';
 }
 function intro(){
@@ -249,7 +339,7 @@ return head("Bienvenido a tu espacio","Administra tu página web de forma sencil
 '<div class="grid kpis">'+
 '<div class="card kpi"><span>Plan asignado (demo)</span><strong>'+esc(s.plan)+'</strong><div class="hint">Servicio de muestra</div></div>'+
 '<div class="card kpi"><span>Productos del negocio</span><strong>'+shared.products.length+'</strong><div class="hint">Catálogo del negocio</div></div>'+
-'<div class="card kpi"><span>Promociones activas</span><strong>'+shared.promos.filter(function(x){return x.active;}).length+'</strong><div class="hint">Borrador editable</div></div>'+
+'<div class="card kpi"><span>Promociones vigentes</span><strong>'+shared.promos.filter(promoVisible).length+'</strong><div class="hint">Borrador editable</div></div>'+
 '<div class="card kpi"><span>Versiones del sitio</span><strong>'+s.releases.length+'</strong><div class="hint">Simulación sin despliegue</div></div></div>'+
 '<div class="grid split"><section class="card"><h2>Tu página web</h2>'+previewCard(draft,"Vista de borrador")+'<div class="sectionactions"><button class="secondary" data-go="vista">Revisar vista previa</button></div></section>'+
 '<section class="card"><h2>Tu lista de trabajo</h2><div class="tiles" style="grid-template-columns:1fr">'+
@@ -271,15 +361,38 @@ return head("Editar mi página","Personaliza el contenido principal. Guarda borr
 '<section class="card"><h2>Vista de tu diseño</h2>'+previewCard(d,"Vista de borrador")+'</section></div>'+banner();
 }
 function catalog(){
-var s=site();return head("Mi catálogo","Administra productos compartidos entre todas las páginas de este negocio.",'<button class="primary" data-modal="product" '+(!canEdit()?"disabled":"")+'>+ Agregar producto</button>')+
-'<section class="card"><div class="tableScroll"><table class="table"><thead><tr><th>PRODUCTO</th><th>PRECIO USD</th><th>VISIBILIDAD</th><th>ACCIÓN</th></tr></thead><tbody>'+
-s.sharedDraft.products.map(function(p){return '<tr><td>'+esc(p.name)+'</td><td>'+money(p.price)+'</td><td>'+tag(p.visible?"Visible":"Oculto")+'</td><td><div class="row"><button class="secondary" data-toggle-product="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>'+(p.visible?"Ocultar":"Mostrar")+'</button><button class="danger" data-remove-product="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Quitar</button></div></td></tr>';}).join("")+
-'</tbody></table></div>'+(s.sharedDraft.products.length?"":'<div class="empty">Todavía no tienes productos en el borrador.</div>')+'</section>'+banner();
+var s=site(),items=s.sharedDraft.products,category=selectedCategoryByOrg[activeOrg]||"Todas",categories=productCategoryList();
+var filtered=category==="Todas"?items:items.filter(function(p){return p.category===category;});
+return head("Mi catálogo","Agrega fotos, clasifica productos y controla su disponibilidad. El catálogo pertenece a todo el sitio.",
+ '<button class="primary" data-modal="product" '+(!canEdit()?"disabled":"")+'>+ Agregar producto</button>')+
+'<section class="card"><div class="row" style="justify-content:space-between;margin-bottom:15px"><label class="field" style="min-width:220px">Filtrar categoría<select id="categoryFilter"><option value="Todas">Todas las categorías</option>'+
+categories.map(function(c){return '<option value="'+esc(c)+'" '+(c===category?"selected":"")+'>'+esc(c)+'</option>';}).join("")+'</select></label>'+
+'<span class="tag">'+filtered.length+' productos visibles en el filtro</span></div>'+
+'<div class="tableScroll"><table class="table"><thead><tr><th>FOTO / PRODUCTO</th><th>CATEGORÍA</th><th>PRECIO USD</th><th>DISPONIBILIDAD</th><th>PUBLICACIÓN</th><th>ACCIONES</th></tr></thead><tbody>'+
+filtered.map(function(p){return '<tr><td><div class="row">'+(p.photo&&validImageSource(p.photo)?'<img class="catalogThumb" src="'+p.photo+'" alt="'+esc(p.name)+'">':'<div class="catalogPlaceholder">Sin foto</div>')+
+'<div><strong>'+esc(p.name)+'</strong><small class="catalogDescription">'+esc(p.description||"Sin descripción")+'</small></div></div></td>'+
+'<td>'+esc(p.category||"Otros")+'</td><td>'+money(p.price)+'</td><td>'+esc(AVAILABILITY[p.availability]||"Disponible")+'</td>'+
+'<td>'+tag(p.visible?"Visible":"Oculto")+'</td><td><div class="row"><button class="secondary" data-edit-product="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Editar</button>'+
+'<button class="secondary" data-toggle-product="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>'+(p.visible?"Ocultar":"Mostrar")+'</button>'+
+'<button class="danger" data-remove-product="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Quitar</button></div></td></tr>';}).join("")+
+'</tbody></table></div>'+(filtered.length?"":'<div class="empty">No hay productos en esta categoría.</div>')+'</section>'+
+'<div class="note">Puedes agregar fotografías JPG, PNG o WebP de máximo 1 MB. Se almacenan solo en la memoria de la demostración y desaparecen al recargar.</div>'+banner();
 }
 function promotions(){
-return head("Promociones","Administra banners y campañas sencillas, sin modificar otras páginas.",'<button class="primary" data-modal="promo" '+(!canEdit()?"disabled":"")+'>+ Nueva promoción</button>')+
-'<div class="grid cards">'+(site().sharedDraft.promos.length?site().sharedDraft.promos.map(function(p){return '<article class="card"><div class="eyebrow">PROMOCIÓN</div><h2 style="margin-top:12px">'+esc(p.title)+'</h2>'+tag(p.active?"Activa":"Pausada")+
-'<div class="sectionactions"><button class="secondary" data-toggle-promo="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>'+(p.active?"Pausar":"Activar")+'</button><button class="danger" data-remove-promo="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Quitar</button></div></article>';}).join(""):'<div class="card empty">Aún no has creado promociones de demostración.</div>')+'</div>'+banner();
+var today=localISODate();
+return head("Promociones","Programa campañas con fechas de inicio y fin. Solo las vigentes aparecerán en las vistas previas de la tienda.",
+'<button class="primary" data-modal="promo" '+(!canEdit()?"disabled":"")+'>+ Nueva promoción</button>')+
+'<div class="grid cards">'+(site().sharedDraft.promos.length?site().sharedDraft.promos.map(function(p){
+var status=promoStatus(p,today);
+return '<article class="card"><div class="eyebrow">PROMOCIÓN</div><h2 style="margin:11px 0 5px">'+esc(p.title)+'</h2>'+
+'<p>'+esc(p.description||"Sin descripción")+'</p>'+
+'<span class="tag '+(status==="Vigente"?"":"warn")+'">'+esc(status)+'</span>'+
+'<div class="hint" style="margin-top:10px">Desde: '+esc(p.startsAt||"Sin fecha")+' · Hasta: '+esc(p.endsAt||"Sin fecha")+'</div>'+
+'<div class="sectionactions"><button class="secondary" data-edit-promo="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Editar</button>'+
+'<button class="secondary" data-toggle-promo="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>'+(p.active?"Pausar":"Activar")+'</button>'+
+'<button class="danger" data-remove-promo="'+esc(p.id)+'" '+(!canEdit()?"disabled":"")+'>Quitar</button></div></article>';}).join(""):
+'<div class="card empty">Aún no has creado promociones de demostración.</div>')+'</div>'+
+'<div class="note">La fecha se interpreta según el dispositivo para esta demostración; en producción se establecerá la zona horaria del sitio en el servidor.</div>'+banner();
 }
 
 /* PUBLICACIÓN CENTRALIZADA — SIMULACIÓN EXCLUSIVAMENTE LOCAL.
@@ -309,15 +422,18 @@ function checkBeforePublish(){
   issue("error","SHARED_MISSING","Faltan catálogo o promociones compartidos.","catalogo");
  } else {
   data.products.forEach(function(product,i){
-   if(!String(product.name||"").trim()||String(product.name||"").trim().length<2)
-    issue("error","PRODUCT_NAME","Producto "+(i+1)+": nombre no válido.","catalogo");
-   var price=Number(product.price);
-   if(!Number.isFinite(price)||price<0||price>100000||Math.abs(Math.round(price*100)-price*100)>0.00001)
-    issue("error","PRODUCT_PRICE","Producto "+(i+1)+": revisa el precio (USD con máximo dos decimales).","catalogo");
+   var error=validateProduct(product);
+   if(error)issue("error","PRODUCT_INVALID","Producto "+(i+1)+": "+error,"catalogo");
+   if(product.visible&&!product.photo)
+    issue("warning","PRODUCT_NO_IMAGE","Producto "+(i+1)+": considera subir una fotografía.","catalogo");
   });
   data.promos.forEach(function(promo,i){
-   if(String(promo.title||"").trim().length<2)
-    issue("error","PROMO_NAME","Promoción "+(i+1)+": falta un título válido.","promociones");
+   var error=validatePromotion(promo);
+   if(error)issue("error","PROMO_INVALID","Promoción "+(i+1)+": "+error,"promociones");
+   if(promo.active&&promoStatus(promo)==="Programada")
+    issue("warning","PROMO_SCHEDULED","Promoción "+(i+1)+": iniciará en una fecha futura.","promociones");
+   if(promo.active&&promoStatus(promo)==="Vencida")
+    issue("warning","PROMO_EXPIRED","Promoción "+(i+1)+": su fecha final ya pasó.","promociones");
   });
  }
  var slugs=new Set();
@@ -704,10 +820,13 @@ $("orgSwitch").onchange=function(){activeOrg=this.value;previewMode="draft";rend
 $("roleSwitch").onchange=function(){activeRole=this.value;render();};
 if(tab==="visual")bindVisual();
 if(tab==="identidad")bindIdentity();
+if(tab==="catalogo"){var cf=$("categoryFilter");if(cf)cf.onchange=function(){selectedCategoryByOrg[activeOrg]=this.value;render();};}
 if(tab==="paginas"||tab==="plantillas")bindPageManager();
 $("pageSwitch").onchange=function(){activePageByOrg[activeOrg]=this.value;previewMode="draft";render();};
 $("content").querySelectorAll("[data-go]").forEach(function(b){b.onclick=function(){tab=b.dataset.go;render();};});
-$("content").querySelectorAll("[data-modal]").forEach(function(b){b.onclick=function(){if(!canEdit())return;showModal(b.dataset.modal);};});
+$("content").querySelectorAll("[data-modal]").forEach(function(b){b.onclick=function(){if(!canEdit())return;showModal(b.dataset.modal,null);};});
+$("content").querySelectorAll("[data-edit-product]").forEach(function(b){b.onclick=function(){if(canEdit())showModal("product",b.dataset.editProduct);};});
+$("content").querySelectorAll("[data-edit-promo]").forEach(function(b){b.onclick=function(){if(canEdit())showModal("promo",b.dataset.editPromo);};});
 $("content").querySelectorAll("[data-preview]").forEach(function(b){b.onclick=function(){previewMode=b.dataset.preview;render();};});
 $("content").querySelectorAll("[data-toggle-product]").forEach(function(b){b.onclick=function(){if(!canEdit())return;var p=site().sharedDraft.products.find(function(x){return x.id===b.dataset.toggleProduct;});if(p){p.visible=!p.visible;bumpShared();}};});
 $("content").querySelectorAll("[data-remove-product]").forEach(function(b){b.onclick=function(){if(!canEdit())return;site().sharedDraft.products=site().sharedDraft.products.filter(function(x){return x.id!==b.dataset.removeProduct;});bumpShared();};});
@@ -722,21 +841,66 @@ if(title.length<3||title.length>100||description.length<3||description.length>30
 t.title=title;t.description=description;t.cta=cta;bump();notice("Borrador actualizado en la demostración.");};
 }
 function bump(){site().draftRevision++;render();}
-function showModal(kind){
-$("dialogTitle").textContent=kind==="product"?"Nuevo producto":"Nueva promoción";$("dialogDescription").textContent="Los datos se agregan al negocio de ejemplo seleccionado y desaparecen al recargar.";
-$("modalForm").dataset.kind=kind;
-$("modalFields").innerHTML=kind==="product"?'<label class="field full">Nombre<input name="name" required maxlength="90" placeholder="Ejemplo: Taza decorada"></label><label class="field">Precio USD<input name="price" type="number" required min="0" max="100000" step="0.01" placeholder="5.00"></label><label class="field">Visible<select name="visible"><option value="yes">Sí</option><option value="no">No</option></select></label>':'<label class="field full">Título de promoción<input name="name" required maxlength="100" placeholder="Ejemplo: Descuento de temporada"></label><label class="field full">Estado<select name="active"><option value="yes">Activa</option><option value="no">Pausada</option></select></label>';
-$("dialog").showModal();
+function showModal(kind,recordId){
+ if(!canEdit())return;
+ var isProduct=kind==="product";
+ var found=isProduct?site().sharedDraft.products.find(function(x){return x.id===recordId;}):
+ site().sharedDraft.promos.find(function(x){return x.id===recordId;});
+ if(recordId&&!found){notice("El registro no existe.");return;}
+ var p=found||{};
+ $("dialogTitle").textContent=(recordId?"Editar ":"Nuevo ")+(isProduct?"producto":"promoción");
+ $("dialogDescription").textContent="Los cambios se comparten entre las páginas del negocio ficticio y desaparecen al recargar.";
+ $("modalForm").dataset.kind=kind;$("modalForm").dataset.recordId=recordId||"";
+ $("modalForm").dataset.organizationId=activeOrg;
+ if(isProduct){
+  $("modalFields").innerHTML=
+  '<label class="field full">Nombre del producto<input name="name" required maxlength="90" value="'+esc(p.name||"")+'" placeholder="Ej.: Cuaderno rayado"></label>'+
+  '<label class="field">Categoría<input name="category" required maxlength="60" list="categorySuggestions" value="'+esc(p.category||"")+'" placeholder="Ej.: Papelería"></label>'+
+  '<datalist id="categorySuggestions">'+productCategoryList().map(function(x){return '<option value="'+esc(x)+'"></option>';}).join("")+'</datalist>'+
+  '<label class="field">Precio USD<input name="price" type="number" required min="0" max="100000" step="0.01" value="'+(Number.isFinite(p.price)?p.price:"")+'"></label>'+
+  '<label class="field full">Descripción<textarea name="description" maxlength="500">'+esc(p.description||"")+'</textarea></label>'+
+  '<label class="field">Disponibilidad<select name="availability">'+Object.keys(AVAILABILITY).map(function(k){return '<option value="'+k+'" '+((p.availability||"available")===k?"selected":"")+'>'+esc(AVAILABILITY[k])+'</option>';}).join("")+'</select></label>'+
+  '<label class="field">Mostrar en la web<select name="visible"><option value="yes" '+(p.visible!==false?"selected":"")+'>Visible</option><option value="no" '+(p.visible===false?"selected":"")+'>Oculto</option></select></label>'+
+  '<label class="field full">Fotografía (JPG, PNG, WebP; máximo 1 MB)<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"></label>'+
+  (p.photo&&validImageSource(p.photo)?'<div class="full"><img class="catalogEditPreview" src="'+p.photo+'" alt="Fotografía actual"><label class="field"><span><input type="checkbox" name="removePhoto" value="yes"> Quitar foto</span></label></div>':'');
+ }else{
+  $("modalFields").innerHTML=
+  '<label class="field full">Título de la promoción<input name="name" required maxlength="100" value="'+esc(p.title||"")+'" placeholder="Ej.: Oferta por temporada"></label>'+
+  '<label class="field full">Descripción<textarea name="description" maxlength="350">'+esc(p.description||"")+'</textarea></label>'+
+  '<label class="field">Fecha de inicio (opcional)<input type="date" name="startsAt" value="'+esc(p.startsAt||"")+'"></label>'+
+  '<label class="field">Fecha de finalización (opcional)<input type="date" name="endsAt" value="'+esc(p.endsAt||"")+'"></label>'+
+  '<label class="field full">Estado manual<select name="active"><option value="yes" '+(p.active!==false?"selected":"")+'>Activa</option><option value="no" '+(p.active===false?"selected":"")+'>Pausada</option></select></label>';
+ }
+ $("dialog").showModal();
 }
 $("modalForm").onsubmit=function(e){
-e.preventDefault();if(!canEdit())return;
-var kind=e.currentTarget.dataset.kind,d=new FormData(e.currentTarget),name=String(d.get("name")||"").trim();
-if(kind==="page"){var template=e.currentTarget.dataset.template;$("dialog").close();addPage(name,template);return;}
-if(name.length<2){notice("Ingresa un nombre válido.");return;}
-var id="demo-"+String(Date.now())+"-"+String(Math.floor(Math.random()*100000));
-if(kind==="product"){var amount=Number(d.get("price"));if(!Number.isFinite(amount)||amount<0||amount>100000||Math.round(amount*100)/100!==amount){notice("Ingresa un precio válido con máximo dos decimales.");return;}site().sharedDraft.products.push({id:id,name:name,price:amount,visible:d.get("visible")==="yes"});}
-else{site().sharedDraft.promos.push({id:id,title:name,active:d.get("active")==="yes"});}
-$("dialog").close();bumpShared();notice("Registro agregado al negocio de demostración.");
+ e.preventDefault();if(!canEdit())return;
+ var form=e.currentTarget,kind=form.dataset.kind,d=new FormData(form);
+ var name=String(d.get("name")||"").trim();
+ if(kind==="page"){var template=form.dataset.template;$("dialog").close();addPage(name,template);return;}
+ var recordId=form.dataset.recordId||null,originOrg=form.dataset.organizationId;
+ if(originOrg!==activeOrg){notice("Cambiaste de negocio. Abre el formulario de nuevo.");return;}
+ if(kind==="product"){
+  var existing=site().sharedDraft.products.find(function(x){return x.id===recordId;});
+  var files=form.elements.namedItem("photo");
+  var file=files&&files.files&&files.files.length?files.files[0]:null;
+  var data={name:name,category:String(d.get("category")||"").trim(),
+   description:String(d.get("description")||"").trim(),price:Number(d.get("price")),
+   availability:String(d.get("availability")||"available"),visible:d.get("visible")==="yes",
+   photo:(existing&&existing.photo)||""};
+  if(d.get("removePhoto")==="yes")data.photo="";
+  var finish=function(){if(activeOrg!==originOrg){notice("La selección de negocio cambió; no se guardó nada.");return;}
+   if(saveProductRecord(data,recordId)){$("dialog").close();notice("Producto guardado únicamente en la demostración.");}};
+  if(file){readVisualImage(file).then(function(src){data.photo=src;finish();}).catch(function(err){notice(err.message);});}
+  else finish();
+  return;
+ }
+ if(kind==="promo"){
+  var p={title:name,description:String(d.get("description")||"").trim(),
+   startsAt:String(d.get("startsAt")||""),endsAt:String(d.get("endsAt")||""),
+   active:d.get("active")==="yes"};
+  if(savePromotionRecord(p,recordId)){$("dialog").close();notice("Promoción guardada únicamente en la demostración.");}
+ }
 };
 $("modalClose").onclick=function(){$("dialog").close();};
 $("menuToggle").onclick=function(){$("sidebar").classList.toggle("open");};
