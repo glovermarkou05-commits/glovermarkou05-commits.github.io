@@ -1250,6 +1250,7 @@ var pages={inicio:intro,identidad:identity,configuracion:businessConfig,seo:site
 $("content").innerHTML='<div class="card" style="margin-bottom:20px"><div class="row" style="justify-content:space-between;align-items:end"><div><div class="eyebrow">SESIÓN DE PRUEBA</div><p style="margin:5px 0 0;color:var(--muted)">Alterna negocios y roles ficticios para revisar el diseño. Esta selección NO es autenticación.'+
  (demoBridgeContext?' · Contexto de navegación de SUPERADMIN cargado'+(demoBridgePlanApplied?' (incluye plan de muestra)':'')+'. Los demás cambios no se sincronizan.':'')+(sharedService?' · Servicio común en memoria V1 activo.':' · Servicio autónomo de reserva.')+'</p></div><div class="row">'+
  (demoBridgeContext?'<a class="secondary" href="./prototipo.html" target="_blank" rel="noopener noreferrer">↩ Panel SUPERADMIN demo</a>':'')+
+ '<a class="secondary" href="./laboratorio-sincronizacion.html" target="_blank" rel="noopener noreferrer">Probar versiones (demo)</a>'+
  dropdown()+'</div></div></div>'+pages[tab]();
 $("orgSwitch").onchange=function(){activeOrg=this.value;previewMode="draft";render();};
 $("roleSwitch").onchange=function(){activeRole=this.value;render();};
