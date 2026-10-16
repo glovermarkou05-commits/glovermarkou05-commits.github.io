@@ -7,6 +7,7 @@ const base=path.join(__dirname,"..");
 const read=p=>fs.readFileSync(path.join(base,p),"utf8");
 const globalDemo={};new Function("window",read("shared/mg-ai-web-assistant-demo.js"))(globalDemo);
 new Function("window",read("shared/mg-proposal-exchange-demo.js"))(globalDemo);
+new Function("window",read("shared/mg-proposal-review-demo.js"))(globalDemo);
 const generator=globalDemo.MGAIWebAssistant,exchange=globalDemo.MGWebProposalExchange;
 const example={brand:"Café Horizonte",type:"restaurante",style:"natural",goal:"contacto",plan:"Crece",
  offering:"café de especialidad, postres y meriendas",audience:"familias, estudiantes y profesionales"};
@@ -21,11 +22,11 @@ function panel(file,which){
  const tail="\nrender();\n})();";assert.ok(js.endsWith(tail),"Footer inesperado");
  const extra=which==="admin"?
  "return {state,prepareAgencyAI,exportAgencyAIPackage,agencyAIPage,render};":
- "return {site,organizations,receiveAIProposalPackage,applyAIProposal,aiProposalByOrg,role:x=>activeRole=x,org:x=>activeOrg=x,tab:x=>tab=x,aiWizardPage,render};";
+ "return {site,organizations,receiveAIProposalPackage,decideClientProposal,applyAIProposal,aiProposalByOrg,role:x=>activeRole=x,org:x=>activeOrg=x,tab:x=>tab=x,aiWizardPage,render};";
  js=js.slice(0,-tail.length)+"\n"+extra+"\n})();";
  const elements={};const dom={getElementById(id){return elements[id]||(elements[id]={innerHTML:"",textContent:"",dataset:{},style:{},value:"",querySelectorAll:()=>[],querySelector:()=>null,addEventListener(){},classList:{remove(){},toggle(){}}})}};
  const app=new Function("document","window","confirm","alert","prompt","return "+js)(dom,
- {MGAIWebAssistant:generator,MGWebProposalExchange:exchange,location:{search:""}},()=>true,()=>{},()=>{});
+ {MGAIWebAssistant:generator,MGWebProposalExchange:exchange,MGWebProposalReview:globalDemo.MGWebProposalReview,location:{search:""}},()=>true,()=>{},()=>{});
  return {app,elements};
 }
 async function main(){
@@ -70,15 +71,18 @@ async function main(){
  check("cliente valida transferencia",client.app.receiveAIProposalPackage(exported.json).ok);
  check("todavía sin modificar borrador",client.app.site().pages.length===1);
  check("tres páginas pendientes",client.app.aiProposalByOrg.c1.proposal.pages.length===3);
+ check("requiere aprobación antes de aplicar",!client.app.applyAIProposal().ok);
+ check("cliente aprueba la revisión",client.app.decideClientProposal("approved","").ok);
  check("acepta en borrador",client.app.applyAIProposal().ok);
  check("añadió dos páginas",client.app.site().pages.length===3);
  check("sin publicación ni release",client.app.site().releases.length===0);
  check("reimportación tras aplicación",client.app.receiveAIProposalPackage(exported.json).ok);
  const title=client.app.site().pages[0].draft.title;
+ check("nueva aprobación explícita de revisión V10",client.app.decideClientProposal("approved","").ok);
  check("colisión de slug detectada",!client.app.applyAIProposal().ok);
  check("sin cambios parciales tras colisión",client.app.site().pages[0].draft.title===title);
  client.app.role("CLIENT_VIEWER");
- check("viewer puede recibir para revisar",client.app.receiveAIProposalPackage(exported.json).ok);
+ check("viewer no puede aprobar",!client.app.decideClientProposal("approved","").ok);
  check("viewer no aplica",!client.app.applyAIProposal().ok);
  client.app.role("CLIENT_OWNER");client.app.org("c2");
  check("cliente B no importa de A",!client.app.receiveAIProposalPackage(exported.json).ok);
@@ -87,6 +91,7 @@ async function main(){
  const packet2=admin.app.exportAgencyAIPackage("s2");
  check("paquete B es Start",packet2.ok&&packet2.packet.proposal.pages.length===1);
  check("cliente B recibe paquete B",client.app.receiveAIProposalPackage(packet2.json).ok);
+ check("B aprueba su propuesta",client.app.decideClientProposal("approved","").ok);
  check("cliente B aplica Inicio",client.app.applyAIProposal().ok&&client.app.site().pages.length===1);
  check("cliente A conserva tres páginas",client.app.organizations.find(x=>x.id==="c1").site.pages.length===3);
  client.app.tab("asistente-ia");client.app.render();
