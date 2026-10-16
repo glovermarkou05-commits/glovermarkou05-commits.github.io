@@ -95,6 +95,7 @@ footer{margin-top:45px;font-size:11px;color:#6888a2}.mobile-toggle{display:none}
 <script src="./shared/mg-web-studio-services.js"></script>
 <script src="./shared/mg-ai-web-assistant-demo.js"></script>
 <script src="./shared/mg-proposal-exchange-demo.js"></script>
+<script src="./shared/mg-proposal-review-demo.js"></script>
 <script>
 (function(){
 "use strict";
@@ -529,6 +530,8 @@ function agencyAIPage(){
  '</section><section class="card"><h2>Propuesta para revisión</h2>'+
  (saved?'<div class="summary-line"><span>Negocio</span><b>'+clean(saved.proposal.businessName)+'</b></div>'+
  '<div class="summary-line"><span>Plan</span><b>'+clean(saved.plan)+'</b></div>'+
+ '<div class="summary-line"><span>Revisión</span><b>v'+clean(saved.revision||1)+' · '+clean(saved.status)+'</b></div>'+
+ (saved.review?'<div class="note"><strong>Respuesta recibida: '+clean(saved.review.label)+'</strong><p>'+clean(saved.review.note||"Sin observaciones")+'</p></div>':'')+
  (saved.plan!==(client?.plan)?'<div class="note warning">El plan del cliente cambió. Prepara una nueva propuesta antes de aplicarla en el futuro.</div>':'')+
  '<div class="aiAgencyPages">'+saved.proposal.pages.map((page,i)=>'<article class="aiAgencyPage"><strong>'+(i+1)+'. '+clean(page.name)+'</strong>'+
  '<small>'+clean(page.title)+'</small><p>'+clean(page.description)+'</p>'+
@@ -536,7 +539,9 @@ function agencyAIPage(){
  '<div class="dialog-actions"><button class="secondary" data-discard-agency-ai="'+clean(current.id)+'">Descartar propuesta</button></div>'+
  '<h2 style="margin-top:20px">Transferir al portal (manual · demo)</h2>'+
  '<p class="small">Prepara el paquete ficticio, copia el JSON y pégalo en el módulo IA del mismo negocio en el otro panel. Esta operación NO envía datos a un servidor ni autentica al remitente.</p>'+
- '<button class="secondary" data-export-agency-ai="'+clean(current.id)+'">Preparar paquete JSON</button>'+
+ '<button class="secondary" data-export-agency-ai="'+clean(current.id)+'" '+(["Borrador","Enviada a revisión"].includes(saved.status)?"":"disabled")+'>Enviar a revisión / preparar JSON</button>'+
+ '<p class="small">Exportar marca la revisión como enviada únicamente en este panel; no se envía realmente al cliente.</p>'+
+ (saved.status==="Enviada a revisión"?'<form id="agencyReviewForm" class="formgrid"><label class="field full">Pega respuesta de revisión del cliente (JSON ficticio)<textarea name="reviewJSON" maxlength="5000" rows="5" required></textarea></label><div class="dialog-actions full"><button type="submit" class="secondary">Registrar respuesta de revisión</button></div></form>':'')+
  '<div id="agencyTransferArea"></div>'+
  '<p class="small">Propuesta preparada, sin aprobación ni traspaso automático al portal del emprendedor.</p>':
  '<div class="empty">Todavía no hay propuesta para el sitio seleccionado.</div>')+
@@ -550,7 +555,10 @@ function prepareAgencyAI(data){
  const client=clientById(site.clientId);if(!client)return {ok:false,error:"El cliente ya no existe."};
  const generated=helper.createProposal({...data,plan:client.plan});
  if(!generated.ok)return generated;
- state.aiProposals[site.id]={siteId:site.id,clientId:client.id,plan:client.plan,proposal:generated.proposal,status:"Para revisión"};
+ const old=state.aiProposals[site.id];
+ state.aiProposals[site.id]={siteId:site.id,clientId:client.id,plan:client.plan,
+  proposal:generated.proposal,revision:(old?old.revision||1:0)+1,status:"Borrador",
+  review:null,history:old&&Array.isArray(old.history)?old.history.slice():[]};
  state.aiSiteId=site.id;
  logEvent("Propuesta web preparada con plantillas",client.name+" · "+site.title+" · Sin IA real");
  return {ok:true,proposal:generated.proposal};
@@ -563,11 +571,50 @@ function exportAgencyAIPackage(siteId){
   return {ok:false,error:"No existe una propuesta compatible con el sitio."};
  const client=clientById(existing.clientId);
  if(!client||client.plan!==saved.plan)return {ok:false,error:"El plan cambió; genera la propuesta nuevamente."};
- return exchange.createPackage({clientId:client.id,siteId:existing.id,plan:client.plan,proposal:saved.proposal});
+ if(!["Borrador","Enviada a revisión"].includes(saved.status))
+  return {ok:false,error:"Esta revisión ya tiene respuesta. Crea una revisión nueva para reenviarla."};
+ const result=exchange.createPackage({clientId:client.id,siteId:existing.id,plan:client.plan,proposal:saved.proposal});
+ if(!result.ok)return result;
+ const review=typeof window!=="undefined"&&window.MGWebProposalReview;
+ if(!review)return {ok:false,error:"No está disponible el módulo de revisión V11."};
+ const metadata=review.proposalMetadata(result.packet.proposal,saved.revision);
+ if(!metadata.ok)return metadata;
+ const packet={...result.packet,review:metadata.review};
+ const json=JSON.stringify(packet,null,2);
+ if(json.length>40000)return {ok:false,error:"Paquete de revisión demasiado grande."};
+ saved.status="Enviada a revisión";
+ logEvent("Propuesta simulada enviada a revisión",client.name+" · "+existing.title+" · v"+saved.revision+" (manual)");
+ return {ok:true,json,packet};
+}
+function registerAgencyReview(siteId,json){
+ const review=typeof window!=="undefined"&&window.MGWebProposalReview;
+ const existing=state.sites.find(s=>s.id===siteId),saved=state.aiProposals[siteId];
+ if(!review||!existing||!saved||saved.clientId!==existing.clientId||
+    saved.status!=="Enviada a revisión")return {ok:false,error:"No existe revisión enviada pendiente."};
+ const current=clientById(existing.clientId);
+ if(!current||current.plan!==saved.plan)return {ok:false,error:"El plan del cliente cambió."};
+ const parsed=review.readReview(json,{target:{clientId:saved.clientId,siteId,plan:saved.plan},
+  revision:saved.revision,proposal:saved.proposal});
+ if(!parsed.ok)return parsed;
+ const labels={approved:"Aprobada (demo)",changes:"Cambios solicitados (demo)",rejected:"Rechazada (demo)"};
+ saved.review=parsed.review;
+ saved.status=labels[parsed.review.decision];
+ saved.history.push({revision:saved.revision,status:saved.status,note:parsed.review.note,
+  at:new Date().toLocaleString("es-EC")});
+ logEvent("Respuesta de propuesta registrada",current.name+" · "+existing.title+" · "+saved.status+" (demo)");
+ return {ok:true,status:saved.status};
 }
 function bindAgencyAI(){
  const siteSelect=$("agencyAISite");
  if(siteSelect)siteSelect.onchange=()=>{state.aiSiteId=siteSelect.value;render();};
+ const reviewForm=$("agencyReviewForm");
+ if(reviewForm)reviewForm.onsubmit=e=>{
+  e.preventDefault();
+  const text=String(new FormData(reviewForm).get("reviewJSON")||"");
+  const result=registerAgencyReview(state.aiSiteId,text);
+  if(!result.ok){toast(result.error);return;}
+  render();toast("Respuesta ficticia registrada: "+result.status);
+ };
  const form=$("agencyAIForm");if(form)form.onsubmit=e=>{
   e.preventDefault();const input=Object.fromEntries(new FormData(form).entries());
   const r=prepareAgencyAI(input);if(!r.ok){toast(r.error);return;}
