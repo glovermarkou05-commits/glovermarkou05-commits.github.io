@@ -37,6 +37,25 @@ footer{margin-top:45px;font-size:11px;color:#6888a2}.mobile-toggle{display:none}
 @media(max-width:1150px){.app{grid-template-columns:225px 1fr}.kpis{grid-template-columns:repeat(2,1fr)}.cards{grid-template-columns:repeat(2,1fr)}.split{grid-template-columns:1fr}}
 @media(max-width:740px){.app{grid-template-columns:1fr}aside{position:fixed;inset:0 auto 0 0;width:250px;z-index:30;transform:translateX(-100%);transition:transform .2s}aside.open{transform:translateX(0)}.mobile-toggle{display:inline-block}.page-head{align-items:start;flex-direction:column}.top{gap:9px}.pill{font-size:9px}.cards,.kpis,.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.view{padding-top:23px}main{padding:16px 20px 45px}}
 @media(prefers-reduced-motion:reduce){aside{transition:none}}
+
+.filterbar{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin:0 0 18px}
+.filterbar .field{min-width:165px;flex:1}.filterbar .field:first-child{min-width:235px;flex:2}
+.table button{font-size:11px;padding:7px 9px}
+.table td:last-child{white-space:nowrap}
+.admin-badge{display:inline-flex;border:1px solid rgba(82,208,255,.22);background:rgba(82,208,255,.08);border-radius:9px;color:#9ce5ff;padding:5px 9px;font-size:10px;font-weight:800}
+.admin-badge.muted{border-color:var(--edge);color:#bdcfe0;background:rgba(255,255,255,.035)}
+.admin-kpis{grid-template-columns:repeat(3,minmax(0,1fr));margin:15px 0}
+.audit-entry{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--edge);padding:12px 0}
+.audit-entry:last-child{border:0}
+.audit-entry strong{font-size:12px}.audit-entry small{display:block;font-size:11px;color:var(--muted)}
+.audit-entry time{font-size:10px;color:#9bb2c6;white-space:nowrap}
+.summary-line{display:flex;justify-content:space-between;gap:9px;border-bottom:1px solid var(--edge);padding:12px 0;font-size:12px}
+.summary-line:last-child{border:0}.summary-line span{color:var(--muted)}
+.danger{background:rgba(255,119,119,.06);border:1px solid rgba(255,119,119,.25);color:#ffbab5;border-radius:10px;padding:9px 12px;font-weight:800}
+.dialog .field textarea{min-height:75px}.dialog select{width:100%}
+.note.warning{border-color:var(--warn);color:#f3d7a5;background:rgba(255,204,122,.025)}
+@media(max-width:1050px){.admin-kpis{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:650px){.filterbar .field{width:100%;flex:1 1 100%}.admin-kpis{grid-template-columns:1fr}.audit-entry{flex-direction:column}}
 </style>
 </head>
 <body>
@@ -58,65 +77,289 @@ footer{margin-top:45px;font-size:11px;color:#6888a2}.mobile-toggle{display:none}
 <script>
 (function(){
 "use strict";
-const NAV=[["dashboard","▦","Dashboard"],["clientes","♧","Clientes"],["sitios","▣","Páginas web"],["plantillas","▤","Plantillas"],["dominios","◎","Dominios y hosting"],["suscripciones","▥","Suscripciones"],["soporte","◇","Soporte"],["reportes","↗","Reportes"],["ajustes","⚙","Configuración"]];
-const state={section:"dashboard",clients:[{name:"Panadería Horizonte",code:"CLI-001",plan:"Business",status:"Activo"},{name:"Estudio Creativo Norte",code:"CLI-002",plan:"Start",status:"Activo"},{name:"Servicios Costa",code:"CLI-003",plan:"Premium",status:"Propuesta"}],sites:[{title:"Panadería Horizonte",owner:"Panadería Horizonte",type:"Corporativa",status:"Publicado",domain:"horizonte.ejemplo.invalid"},{title:"Estudio Creativo",owner:"Estudio Creativo Norte",type:"Portafolio",status:"Borrador",domain:"sin-dominio"}],tickets:[{title:"Actualizar portada",client:"Panadería Horizonte",status:"Abierto"},{title:"Consultar dominio",client:"Estudio Creativo Norte",status:"En revisión"}],templates:["Emprendedores","Corporativa","Portafolio","Restaurante","Catálogo","Tienda online"]};
-const $=id=>document.getElementById(id);
+/* SUPERADMIN solo es una maqueta. No hay autenticación, RLS, cobros ni datos persistentes. */
+const PLANS=["Start","Crece","Pro"];
+const CLIENT_STATES=["Propuesta","Activo","Pausado"];
+const BILLING_STATES=["No configurada","Pendiente","Activa","En pausa","Cancelada"];
+const CYCLES=["Mensual","Anual"];
+const TICKET_STATES=["Abierto","En seguimiento","Resuelto","Cerrado"];
+const PRIORITIES=["Baja","Media","Alta"];
+const NAV=[["dashboard","▦","Dashboard"],["clientes","♧","Clientes"],["sitios","▣","Sitios web"],
+ ["plantillas","▤","Plantillas"],["dominios","◎","Dominios y hosting"],
+ ["suscripciones","▥","Suscripciones"],["soporte","◇","Soporte"],
+ ["reportes","↗","Reportes"],["auditoria","◷","Actividad demo"],["ajustes","⚙","Configuración"]];
+const state={
+ section:"dashboard",filters:{clientText:"",clientState:"Todos",ticketState:"Todos"},
+ clients:[
+  {id:"c1",code:"CLI-001",name:"Panadería Horizonte (ejemplo)",plan:"Crece",status:"Activo",
+   subscription:{cycle:"Mensual",status:"No configurada",referenceDate:"",note:""}},
+  {id:"c2",code:"CLI-002",name:"Estudio Creativo Norte (ejemplo)",plan:"Start",status:"Activo",
+   subscription:{cycle:"Mensual",status:"No configurada",referenceDate:"",note:""}},
+  {id:"c3",code:"CLI-003",name:"Servicios Costa (ejemplo)",plan:"Pro",status:"Propuesta",
+   subscription:{cycle:"Mensual",status:"No configurada",referenceDate:"",note:""}}
+ ],
+ sites:[
+  {id:"s1",title:"Panadería Horizonte",clientId:"c1",type:"Corporativa",status:"Publicado (demo)",domain:"horizonte.ejemplo.invalid"},
+  {id:"s2",title:"Estudio Creativo",clientId:"c2",type:"Portafolio",status:"Borrador",domain:"estudio.ejemplo.invalid"}
+ ],
+ tickets:[
+  {id:"t1",title:"Actualizar portada (ejemplo)",clientId:"c1",status:"Abierto",priority:"Media",note:""},
+  {id:"t2",title:"Consultar dominio (ejemplo)",clientId:"c2",status:"En seguimiento",priority:"Baja",note:""}
+ ],
+ templates:["Emprendedores","Corporativa","Portafolio","Restaurante","Catálogo","Tienda online"],
+ audit:[],seq:10
+};
+const $=id=>document.getElementById(id), nav=$("nav"),view=$("view");
 const clean=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const nav=$("nav"),view=$("view");
-function navDraw(){nav.innerHTML=NAV.map(([id,icon,label])=>'<button type="button" data-page="'+id+'" class="'+(state.section===id?"active":"")+'"><span class="sym">'+icon+'</span>'+label+'</button>').join("");nav.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{state.section=b.dataset.page;$("sidebar").classList.remove("open");render()})}
-function header(title,desc,action,kind){return '<div class="page-head"><div><div class="eyebrow">MG WEB STUDIO CLOUD</div><h1>'+title+'</h1><p>'+desc+'</p></div>'+(action?'<button class="primary" data-create="'+kind+'">'+action+' →</button>':'')+'</div>'}
-function table(headers,rows){return '<div class="tablewrap"><table class="table"><thead><tr>'+headers.map(x=>'<th>'+x+'</th>').join("")+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(c=>'<td>'+c+'</td>').join("")+'</tr>').join("")+'</tbody></table></div>'}
-function status(x){return '<span class="status '+(/borrador|revisión|propuesta/i.test(x)?"draft":"")+'">'+clean(x)+'</span>'}
-const card=(t,v,d)=>'<div class="card"><div class="metric-label">'+t+'</div><div class="metric-value">'+v+'</div><div class="metric-foot">'+d+'</div></div>';
-function dashboard(){
- const active=state.sites.filter(x=>x.status==="Publicado").length;
- const content='<div class="grid kpis">'+card("Clientes registrados",state.clients.length,"Ejemplos del prototipo")+card("Sitios en demostración",state.sites.length,"Incluye borradores")+card("Sitios publicados (simulados)",active,"No se publicaron sitios")+card("Tickets en demostración",state.tickets.length,"Sin conexiones externas")+'</div>';
- const recent='<div class="card"><div class="section-head"><h2>Sitios recientes</h2><span class="small">Vista simulada</span></div>'+table(["PROYECTO","CLIENTE","ESTADO"],state.sites.map(s=>[clean(s.title),clean(s.owner),status(s.status)]))+'</div>';
- const chart='<div class="card"><div class="section-head"><h2>Vista del crecimiento</h2><span class="small">Valores ilustrativos</span></div><div class="chart" aria-label="Gráfico decorativo de ejemplo">'+[28,40,35,56,50,72,88].map(x=>'<span style="height:'+x+'%"></span>').join("")+'</div><div class="legend"><span>No representa ingresos reales</span><b>Demo</b></div></div>';
- return header("Resumen general","Administra clientes, páginas, operaciones y servicios desde un solo lugar.", "Crear cliente","client")+content+'<div class="grid split">'+recent+chart+'</div>'+tip("Este panel es un prototipo. La fase de autenticación y datos reales requiere un Supabase independiente, controles por rol y pruebas de seguridad.");
+const permitted=(val,list)=>list.includes(val);
+const makeId=prefix=>prefix+String(++state.seq);
+const clientById=id=>state.clients.find(c=>c.id===id)||null;
+const clientName=id=>clientById(id)?.name||"Cliente no disponible";
+function logEvent(label,detail){
+ state.audit.unshift({label,detail,at:new Date().toLocaleString("es-EC")});
+ state.audit=state.audit.slice(0,100);
 }
-function tip(t){return '<div class="note">'+t+'</div>'}
-function clients(){return header("Clientes y empresas","Registra empresas, asigna planes y consulta su relación con los sitios administrados.","Nuevo cliente","client")+'<div class="card">'+table(["CLIENTE","CÓDIGO","PLAN","ESTADO"],state.clients.map(c=>[clean(c.name),clean(c.code),clean(c.plan),status(c.status)]))+'</div>'+tip("Los registros creados aquí son temporales y se eliminan al recargar la página.")}
+function navDraw(){
+ nav.innerHTML=NAV.map(([id,icon,label])=>'<button type="button" data-page="'+id+'" class="'+(state.section===id?"active":"")+'"><span class="sym">'+icon+'</span>'+label+'</button>').join("");
+ nav.querySelectorAll("[data-page]").forEach(b=>b.onclick=()=>{state.section=b.dataset.page;$("sidebar").classList.remove("open");render();});
+}
+function header(title,description,action,kind){
+ return '<div class="page-head"><div><div class="eyebrow">MG WEB STUDIO CLOUD / SUPERADMIN DEMO</div><h1>'+title+'</h1><p>'+description+'</p></div>'+
+ (action?'<button class="primary" data-create="'+kind+'">'+action+' →</button>':"")+'</div>';
+}
+function status(value){return '<span class="status '+(/borrador|revisión|propuesta|pendiente|pausa|abierto/i.test(value)?"draft":"")+'">'+clean(value)+'</span>';}
+function tip(msg,warning){return '<div class="note '+(warning?"warning":"")+'">'+msg+'</div>';}
+function metric(title,count,sub){return '<div class="card"><div class="metric-label">'+title+'</div><div class="metric-value">'+count+'</div><div class="small">'+sub+'</div></div>';}
+function table(headers,rows){return '<div class="tablewrap"><table class="table"><thead><tr>'+headers.map(h=>'<th>'+clean(h)+'</th>').join("")+'</tr></thead><tbody>'+rows.map(row=>'<tr>'+row.map(x=>'<td>'+x+'</td>').join("")+'</tr>').join("")+'</tbody></table></div>';}
+function optionList(options,selected){return options.map(v=>'<option value="'+clean(v)+'" '+(selected===v?"selected":"")+'>'+clean(v)+'</option>').join("");}
+function clientOptions(selected){return state.clients.map(c=>'<option value="'+clean(c.id)+'" '+(selected===c.id?"selected":"")+'>'+clean(c.name)+'</option>').join("");}
+function footerNotice(){return tip("Todos los clientes, sitios, planes, tickets y eventos aquí mostrados son ficticios. Los cambios solo duran esta sesión. No existen cobros, correos, suspensiones ni publicaciones reales.",true);}
+function overview(){
+ const active=state.clients.filter(x=>x.status==="Activo").length,pending=state.tickets.filter(x=>!["Resuelto","Cerrado"].includes(x.status)).length;
+ return header("Resumen ejecutivo","Gestiona negocios, planes de servicio, soporte y sitios desde un único panel interno.","Nuevo cliente","client")+
+ '<div class="grid kpis">'+metric("Clientes de ejemplo",state.clients.length,"Datos temporales")+
+ metric("Clientes activos (demo)",active,"No hay cuentas reales")+
+ metric("Sitios de ejemplo",state.sites.length,"Sin despliegues reales")+
+ metric("Tickets pendientes",pending,"No se envían alertas")+'</div>'+
+ '<div class="grid split"><section class="card"><div class="section-head"><h2>Clientes y servicios</h2><span class="small">Estado del prototipo</span></div>'+
+ table(["NEGOCIO","PLAN","CLIENTE","SUSCRIPCIÓN"],state.clients.map(c=>[clean(c.name),clean(c.plan),status(c.status),status(c.subscription.status)]))+'</section>'+
+ '<section class="card"><h2>Prioridades de implementación</h2>'+
+ [["Autenticación y MFA","Pendiente"],["Base independiente y RLS","Pendiente"],["Pagos / facturación","Sin integración"],["Soporte real","Sin integración"],["Publicación / DNS","Sin integración"]].map(([a,b])=>
+ '<div class="summary-line"><span>'+a+'</span>'+status(b)+'</div>').join("")+'</section></div>'+footerNotice();
+}
+function clients(){
+ const q=state.filters.clientText.toLowerCase(),filter=state.filters.clientState;
+ const list=state.clients.filter(c=>(c.name.toLowerCase().includes(q)||c.code.toLowerCase().includes(q))&&(filter==="Todos"||c.status===filter));
+ return header("Clientes y empresas","Busca, registra y administra el estado y el plan de cada negocio ficticio.","Nuevo cliente","client")+
+ '<section class="card"><div class="filterbar">'+
+ '<label class="field">Buscar nombre o código<input id="clientSearch" maxlength="80" value="'+clean(state.filters.clientText)+'" placeholder="Buscar negocios..."></label>'+
+ '<label class="field">Estado<select id="clientStateFilter">'+optionList(["Todos",...CLIENT_STATES],filter)+'</select></label></div>'+
+ table(["CLIENTE","CÓDIGO","PLAN","ESTADO","SITIOS","ACCIONES"],list.map(c=>[
+ clean(c.name),clean(c.code),clean(c.plan),status(c.status),String(state.sites.filter(s=>s.clientId===c.id).length),
+ '<button class="secondary" data-edit-client="'+clean(c.id)+'">Administrar</button>'
+ ]))+(list.length?"":'<p class="empty">No se encontraron clientes con estos filtros.</p>')+'</section>'+footerNotice();
+}
 function sites(){
-return header("Páginas web","Organiza el trabajo editorial, cada dominio y el estado de los proyectos.","Nuevo sitio","site")+'<div class="grid cards">'+state.sites.map(s=>'<article class="card"><div class="site-thumb"><div></div><div class="site-line w"></div><div class="site-line"></div><div class="site-line"></div></div><div class="site-title">'+clean(s.title)+'</div><div class="site-meta">'+clean(s.owner)+' · '+clean(s.domain)+'</div>'+status(s.status)+'<div class="site-actions"><button class="secondary" data-action="inspect" data-site="'+clean(s.title)+'">Ver detalles</button></div></article>').join("")+'</div>'+tip("Crear o inspeccionar un sitio aquí solo cambia la demostración. El editor, despliegue y DNS reales corresponden a fases posteriores.")
+ return header("Sitios web","Cada sitio queda asociado a un cliente de demostración. Crear registros no publica páginas.","Nuevo sitio","site")+
+ '<div class="grid cards">'+state.sites.map(s=>'<article class="card"><div class="site-thumb"><div></div><div class="site-line w"></div><div class="site-line"></div></div>'+
+ '<div class="site-title">'+clean(s.title)+'</div><div class="site-meta">'+clean(clientName(s.clientId))+' · '+clean(s.domain)+'</div>'+
+ status(s.status)+'<div class="site-actions"><button class="secondary" data-inspect-site="'+clean(s.id)+'">Ver detalles</button></div></article>').join("")+
+ '</div>'+tip("Los dominios terminados en .invalid no existen. La asignación, hosting y los estados mostrados son ejemplos.") ;
 }
-function templates(){return header("Biblioteca de plantillas","Colecciones pensadas para reutilizar estilos y componentes sin mezclar datos de diferentes negocios.")+'<div class="grid cards">'+state.templates.map((s,i)=>'<article class="card"><div class="site-thumb" style="background:linear-gradient(145deg,'+["#123450,#1b3353","#203a58,#09293c","#302b5e,#112c3f"][i%3]+')"><div></div><div class="site-line w"></div><div class="site-line"></div></div><div class="site-title">'+clean(s)+'</div><div class="site-meta">Diseño conceptual · requiere construcción e integración</div><button class="secondary" data-action="template" data-site="'+clean(s)+'">Seleccionar plantilla</button></article>').join("")+'</div>'+tip("Solo la plantilla estática Web Emprendedores creada anteriormente existe en código. Los demás modelos son categorías planificadas.")}
-function generic(title,description,items,notice){return header(title,description)+'<div class="grid cards">'+items.map(([a,b,c])=>'<div class="card"><div class="eyebrow">'+a+'</div><h3 style="margin:10px 0">'+b+'</h3><p class="small">'+c+'</p></div>').join("")+'</div>'+tip(notice)}
-function tickets(){return header("Soporte técnico","Bandeja central para solicitudes de clientes y seguimiento de respuestas.","Nuevo ticket","ticket")+'<div class="card">'+table(["ASUNTO","CLIENTE","ESTADO"],state.tickets.map(t=>[clean(t.title),clean(t.client),status(t.status)]))+'</div>'+tip("Tickets de ejemplo; aún no se envían notificaciones ni se registran en servidor.")}
+function templates(){
+ return header("Plantillas web","Categorías de referencia del catálogo editorial. Estas tarjetas no generan sitios automáticamente.")+
+ '<div class="grid cards">'+state.templates.map((x,i)=>'<article class="card"><div class="site-thumb" style="background:linear-gradient(135deg,'+["#123450,#1b3353","#203a58,#09293c","#302b5e,#112c3f"][i%3]+')"><div></div><div class="site-line w"></div></div>'+
+ '<div class="site-title">'+clean(x)+'</div><p class="small">Categoría conceptual; requiere integración y control de permisos.</p></article>').join("")+'</div>'+footerNotice();
+}
+function subscriptions(){
+ const subCounts={active:state.clients.filter(c=>c.subscription.status==="Activa").length,pending:state.clients.filter(c=>c.subscription.status==="Pendiente").length};
+ return header("Suscripciones y servicios","Asigna planes, ciclos y estados internos. No se factura ni se cobra desde este panel.")+
+ '<div class="grid admin-kpis">'+metric("Suscripciones simuladas activas",subCounts.active,"No equivale a pagos recibidos")+
+ metric("Pendientes simuladas",subCounts.pending,"Sin conciliación bancaria")+
+ metric("Facturas emitidas",0,"Sin módulo de facturación conectado")+'</div>'+
+ '<section class="card"><h2>Control de servicios</h2>'+
+ table(["CLIENTE","PLAN","CICLO","ESTADO","FECHA REFERENCIAL","ACCIONES"],state.clients.map(c=>[
+ clean(c.name),clean(c.plan),clean(c.subscription.cycle),status(c.subscription.status),
+ clean(c.subscription.referenceDate||"No establecida"),
+ '<button class="secondary" data-edit-sub="'+clean(c.id)+'">Configurar</button>'
+ ]))+'</section>'+
+ tip("Los planes Start, Crece y Pro están definidos como nombres de producto. Precios, cupos, implementación y condiciones deben aprobarse antes de facturar. Cambiar un estado no activa cobros automáticos, DNS ni suspensiones.",true);
+}
+function tickets(){
+ const f=state.filters.ticketState,list=state.tickets.filter(t=>f==="Todos"||t.status===f);
+ return header("Centro de soporte","Registra solicitudes ficticias, prioridades, seguimiento y resolución.","Nuevo ticket","ticket")+
+ '<section class="card"><div class="filterbar">'+
+ '<label class="field">Estado<select id="ticketFilter">'+optionList(["Todos",...TICKET_STATES],f)+'</select></label></div>'+
+ table(["ASUNTO","CLIENTE","PRIORIDAD","ESTADO","ACCIONES"],list.map(t=>[
+ clean(t.title),clean(clientName(t.clientId)),clean(t.priority),status(t.status),
+ '<button class="secondary" data-edit-ticket="'+clean(t.id)+'">Gestionar</button>'
+ ]))+(list.length?"":'<div class="empty">No hay tickets en este estado.</div>')+'</section>'+footerNotice();
+}
+function audit(){
+ return header("Actividad de demostración","Registro temporal de operaciones realizadas dentro de esta sesión del SUPERADMIN.")+
+ '<section class="card"><div class="section-head"><h2>Eventos recientes</h2><span class="small">'+state.audit.length+' registros locales</span></div>'+
+ (state.audit.length?state.audit.map(x=>'<div class="audit-entry"><div><strong>'+clean(x.label)+'</strong><small>'+clean(x.detail)+'</small></div><time>'+clean(x.at)+'</time></div>').join(""):
+ '<div class="empty">Aún no se han realizado cambios durante esta sesión.</div>')+'</section>'+
+ tip("Este registro no equivale a una auditoría segura: desaparece al recargar y puede ser manipulado por quien abre el navegador. La auditoría real requiere persistencia y autenticación en el servidor.");
+}
+function generic(title,desc,items,note){
+ return header(title,desc)+'<div class="grid cards">'+items.map(([title,heading,body])=>
+ '<section class="card"><div class="eyebrow">'+title+'</div><h3>'+heading+'</h3><p class="small">'+body+'</p></section>').join("")+'</div>'+tip(note,true);
+}
+function pageForSection(){
+ return {
+ dashboard:overview,clientes:clients,sitios:sites,plantillas:templates,
+ dominios:()=>generic("Dominios y hosting","Servicios técnicos para los sitios de clientes.",
+ [["DOMINIOS","Propiedad","Verificar titularidad y autorización antes de cualquier conexión."],
+ ["ALOJAMIENTO","Recursos","Consumo y alojamiento de cada sitio, aún sin proveedor."],
+ ["SSL","Certificados","No se han configurado DNS ni SSL de clientes."]],
+ "El panel no cambia registros DNS ni dominios existentes."),
+ suscripciones:subscriptions,soporte:tickets,
+ reportes:()=>generic("Reportes ejecutivos","Indicadores del negocio central para cuando existan datos reales.",
+ [["OPERACIÓN","Altas y bajas","Tendencias por plan, cohortes y períodos."],
+ ["SERVICIO","Tickets y resolución","Plazos de atención pendientes de condiciones comerciales definitivas."],
+ ["FINANZAS","Ingresos recurrentes","Solo se calcularán con información de cobros verificable."]],
+ "No se muestran ingresos ficticios ni indicadores que puedan confundirse con pagos reales."),
+ auditoria:audit,
+ ajustes:()=>generic("Configuración y seguridad","Controles técnicos obligatorios antes de abrir cuentas reales.",
+ [["ACCESO","SUPERADMIN con MFA","Requiere autenticación, privilegios mínimos y sesiones verificadas."],
+ ["AISLAMIENTO","Organizaciones y RLS","Comprobar permisos en servidor; nunca confiar en selects del frontend."],
+ ["RESPALDOS","Datos y auditoría","Retención y recuperación según políticas contratadas."]],
+ "Esto es una maqueta pública de experiencia: NO es un panel administrativo protegido.")
+ }[state.section]||overview;
+}
 function render(){
- navDraw();
- const content={
- dashboard:dashboard,
- clientes:clients,
- sitios:sites,
- plantillas:templates,
- dominios:()=>generic("Dominios y hosting","Servicios de alojamiento, SSL, DNS, correo y renovaciones.",[["DOMINIOS","Renovaciones","Alertas por vencimiento y titularidad."],["HOSTING","Consumo","Almacenamiento y recursos acordados."],["CORREOS","Buzones empresariales","Cuentas y proveedores por cliente."]],"Gestión real de dominios y alojamiento pendiente de integración con proveedor."),
- suscripciones:()=>generic("Suscripciones y cobros","Planes, contratos, mensualidades, facturación interna y conciliación.",[["MG START","$29 / mes","Implementación comercial de referencia: $249."],["MG BUSINESS","$49 / mes","Implementación comercial de referencia: $499."],["MG PREMIUM","Desde $99 / mes","Implementación desde $999; según alcance."]],"Precios comerciales propuestos. No hay contratos, facturas emitidas ni pagos reales en este prototipo."),
- soporte:tickets,
- reportes:()=>generic("Reportes y analítica","Indicadores de clientes, sitios y desempeño comercial.",[["CLIENTES","Retención","Estado de altas y renovaciones."],["OPERACIÓN","Visitas y solicitudes","Actividad por sitio y canal."],["FINANZAS","Ingresos recurrentes","Margen, facturación y cobranza."]],"Los indicadores reales estarán disponibles cuando existan fuentes y permisos configurados."),
- ajustes:()=>generic("Configuración y seguridad","Usuarios, roles, protección de datos y proveedores.",[["AUTENTICACIÓN","MFA y acceso","Será obligatorio para privilegios administrativos."],["PERMISOS","Roles por organización","Acceso limitado a cada empresa y sus sitios."],["AUDITORÍA","Acciones registradas","Publicaciones, cambios de permisos y operaciones sensibles."]],"No existe una sesión autenticada en este prototipo. No introducir datos reales.")
- };
- view.innerHTML=content[state.section]();
- view.querySelectorAll("[data-create]").forEach(b=>b.onclick=()=>newRecord(b.dataset.create));
- view.querySelectorAll("[data-action]").forEach(b=>b.onclick=()=>{toast("Simulación: "+(b.dataset.action==="template"?"plantilla seleccionada":"detalle solicitado")+" · "+b.dataset.site+". Próxima fase: integración segura.")});
+ navDraw();view.innerHTML=pageForSection()();
+ view.querySelectorAll("[data-create]").forEach(b=>b.onclick=()=>openModal(b.dataset.create));
+ view.querySelectorAll("[data-edit-client]").forEach(b=>b.onclick=()=>openModal("editClient",b.dataset.editClient));
+ view.querySelectorAll("[data-edit-ticket]").forEach(b=>b.onclick=()=>openModal("editTicket",b.dataset.editTicket));
+ view.querySelectorAll("[data-edit-sub]").forEach(b=>b.onclick=()=>openModal("subscription",b.dataset.editSub));
+ view.querySelectorAll("[data-inspect-site]").forEach(b=>b.onclick=()=>{
+  const s=state.sites.find(x=>x.id===b.dataset.inspectSite);
+  if(s)toast("Sitio ficticio: "+s.title+" · Cliente: "+clientName(s.clientId)+". No está desplegado.");
+ });
+ const cs=$("clientSearch");if(cs)cs.oninput=function(){state.filters.clientText=cs.value;render();const restored=$("clientSearch");restored.focus();restored.setSelectionRange(restored.value.length,restored.value.length);};
+ const cf=$("clientStateFilter");if(cf)cf.onchange=function(){state.filters.clientState=cf.value;render();};
+ const tf=$("ticketFilter");if(tf)tf.onchange=function(){state.filters.ticketState=tf.value;render();};
 }
-function toast(s){const t=$("toast");t.textContent=s;t.style.display="block";clearTimeout(toast.t);toast.t=setTimeout(()=>t.style.display="none",4600)}
-function newRecord(kind){
-const title={client:"Nuevo cliente",site:"Nueva página",ticket:"Nuevo ticket"}[kind];
-$("dialogTitle").textContent=title;
-$("dialogLead").textContent="Este registro se agregará únicamente a la demostración del navegador.";
-const defs={client:[["nombre","Nombre comercial","text"],["plan","Plan","select"]],site:[["nombre","Nombre del sitio","text"],["cliente","Cliente","selectclient"]],ticket:[["nombre","Asunto del ticket","text"],["cliente","Cliente","selectclient"]]}[kind];
-$("fields").innerHTML=defs.map(([key,label,type])=>'<label class="field">'+label+(type==="select"?'<select name="'+key+'"><option>Start</option><option>Business</option><option>Premium</option></select>':type==="selectclient"?'<select name="'+key+'">'+state.clients.map(x=>'<option>'+clean(x.name)+'</option>').join("")+'</select>':'<input name="'+key+'" required maxlength="80" placeholder="'+label+'">')+'</label>').join("");
-$("dialog").dataset.kind=kind;$("dialog").showModal();
+function toast(s){
+ const t=$("toast");t.textContent=s;t.style.display="block";clearTimeout(toast.t);
+ toast.t=setTimeout(()=>{t.style.display="none";},3800);
+}
+function input(name,title,value,extra){
+ return '<label class="field">'+title+'<input name="'+name+'" required maxlength="90" value="'+clean(value||"")+'" '+(extra||"")+'></label>';
+}
+function select(name,title,options,current){
+ return '<label class="field">'+title+'<select name="'+name+'" required>'+optionList(options,current)+'</select></label>';
+}
+function textarea(name,title,text){
+ return '<label class="field full">'+title+'<textarea name="'+name+'" maxlength="400">'+clean(text||"")+'</textarea></label>';
+}
+function openModal(kind,id){
+ const item=kind==="editClient"||kind==="subscription"?clientById(id):
+ kind==="editTicket"?state.tickets.find(t=>t.id===id):null;
+ if(["editClient","subscription","editTicket"].includes(kind)&&!item){toast("No se encontró el registro.");return;}
+ const titles={client:"Nuevo cliente",editClient:"Administrar cliente",site:"Nuevo sitio",
+ ticket:"Nuevo ticket de soporte",editTicket:"Gestionar ticket",subscription:"Configurar suscripción"};
+ $("dialogTitle").textContent=titles[kind];
+ $("dialogLead").textContent="Datos ficticios. No se modificarán cuentas, contratos ni suscripciones reales.";
+ let fields="";
+ if(["client","editClient"].includes(kind)){
+  fields=input("name","Nombre comercial",item?.name)+
+   select("plan","Plan (demo)",PLANS,item?.plan||"Start")+
+   select("status","Estado del cliente",CLIENT_STATES,item?.status||"Propuesta");
+ }
+ if(kind==="site"){
+  fields=input("title","Nombre del sitio","")+
+   select("clientId","Empresa",state.clients.map(x=>x.id),"")+ 
+   '<p class="small field full">Los códigos corresponden a los negocios de ejemplo. No se crearán sitios ni dominios reales.</p>';
+  fields=fields.replace(/<option value="(c\d+)"/g,(whole,id)=>{
+   const c=clientById(id);return whole.replace('>'+id+'</option>','>'+clean(c?.name||id)+'</option>');
+  });
+ }
+ if(kind==="ticket"||kind==="editTicket"){
+  const ticket=kind==="editTicket"?item:null;
+  fields=input("title","Asunto del ticket",ticket?.title)+
+   (kind==="ticket"?'<label class="field">Cliente<select name="clientId">'+clientOptions(state.clients[0]?.id)+'</select></label>':
+    '<label class="field">Cliente<input value="'+clean(clientName(ticket.clientId))+'" disabled></label>')+
+   select("priority","Prioridad",PRIORITIES,ticket?.priority||"Media")+
+   select("status","Estado",TICKET_STATES,ticket?.status||"Abierto")+
+   textarea("note","Nota de seguimiento",ticket?.note);
+ }
+ if(kind==="subscription"){
+  fields='<p class="field full small">Cliente de demostración: '+clean(item.name)+'</p>'+
+   select("plan","Plan",PLANS,item.plan)+
+   select("cycle","Frecuencia referencial",CYCLES,item.subscription.cycle)+
+   select("status","Estado de suscripción",BILLING_STATES,item.subscription.status)+
+   '<label class="field">Fecha de referencia (opcional)<input name="referenceDate" type="date" value="'+clean(item.subscription.referenceDate)+'"></label>'+
+   textarea("note","Observación interna",item.subscription.note);
+ }
+ $("fields").innerHTML=fields;
+ $("dialog").dataset.kind=kind;
+ $("dialog").dataset.recordId=id||"";
+ $("dialog").showModal();
+}
+function validateDate(v){
+ if(!v)return true;
+ if(!/^\d{4}-\d\d-\d\d$/.test(v))return false;
+ const [y,m,d]=v.split("-").map(Number),t=new Date(Date.UTC(y,m-1,d));
+ return t.getUTCFullYear()===y&&t.getUTCMonth()===m-1&&t.getUTCDate()===d;
+}
+function applyRecord(kind,id,data){
+ const name=String(data.name||"").trim(),title=String(data.title||"").trim();
+ if(kind==="client"){
+  if(name.length<2||name.length>90||!permitted(data.plan,PLANS)||!permitted(data.status,CLIENT_STATES))return {ok:false,error:"Revisa el nombre, plan y estado."};
+  const c={id:makeId("c"),code:"DEMO-"+String(state.seq).padStart(3,"0"),name,plan:data.plan,status:data.status,
+   subscription:{cycle:"Mensual",status:"No configurada",referenceDate:"",note:""}};
+  state.clients.unshift(c);logEvent("Cliente de ejemplo creado",c.name);return {ok:true};
+ }
+ if(kind==="editClient"){
+  const c=clientById(id);
+  if(!c||name.length<2||name.length>90||!permitted(data.plan,PLANS)||!permitted(data.status,CLIENT_STATES))return {ok:false,error:"Cliente o datos inválidos."};
+  c.name=name;c.plan=data.plan;c.status=data.status;
+  logEvent("Cliente actualizado",c.name+" · "+c.plan+" · "+c.status);
+  return {ok:true};
+ }
+ if(kind==="site"){
+  if(!clientById(data.clientId)||title.length<2||title.length>90)return {ok:false,error:"Selecciona un cliente y un nombre válido."};
+  const s={id:makeId("s"),title,clientId:data.clientId,type:"Corporativa",status:"Borrador",domain:"sin-dominio"};
+  state.sites.unshift(s);logEvent("Sitio de ejemplo registrado",s.title+" · "+clientName(s.clientId));return {ok:true};
+ }
+ if(kind==="ticket"){
+  if(!clientById(data.clientId)||title.length<2||title.length>90||
+   !permitted(data.priority,PRIORITIES)||!permitted(data.status,TICKET_STATES)||String(data.note||"").length>400)
+   return {ok:false,error:"Revisa el ticket, cliente y prioridad."};
+  const t={id:makeId("t"),title,clientId:data.clientId,status:data.status,priority:data.priority,note:String(data.note||"").trim()};
+  state.tickets.unshift(t);logEvent("Ticket creado",title+" · "+clientName(t.clientId));return {ok:true};
+ }
+ if(kind==="editTicket"){
+  const t=state.tickets.find(t=>t.id===id);
+  if(!t||title.length<2||title.length>90||!permitted(data.priority,PRIORITIES)||
+    !permitted(data.status,TICKET_STATES)||String(data.note||"").length>400)
+    return {ok:false,error:"Ticket o datos inválidos."};
+  t.title=title;t.status=data.status;t.priority=data.priority;t.note=String(data.note||"").trim();
+  logEvent("Ticket actualizado",t.title+" · "+t.status);return {ok:true};
+ }
+ if(kind==="subscription"){
+  const c=clientById(id);
+  if(!c||!permitted(data.plan,PLANS)||!permitted(data.cycle,CYCLES)||
+    !permitted(data.status,BILLING_STATES)||!validateDate(String(data.referenceDate||""))||
+    String(data.note||"").length>400)return {ok:false,error:"Revisa plan, fechas y estado de la suscripción."};
+  c.plan=data.plan;
+  c.subscription={cycle:data.cycle,status:data.status,referenceDate:String(data.referenceDate||""),
+    note:String(data.note||"").trim()};
+  logEvent("Suscripción simulada actualizada",c.name+" · "+c.plan+" · "+c.subscription.status);
+  return {ok:true};
+ }
+ return {ok:false,error:"Tipo de operación no admitido."};
 }
 $("dialogForm").addEventListener("submit",function(e){
- e.preventDefault();const kind=$("dialog").dataset.kind;
- const v=new FormData(e.target),name=String(v.get("nombre")||"").trim();
- if(!name)return;
- if(kind==="client")state.clients.unshift({name,code:"DEMO-"+String(state.clients.length+1).padStart(3,"0"),plan:String(v.get("plan")),status:"Propuesta"});
- if(kind==="site")state.sites.unshift({title:name,owner:String(v.get("cliente")),type:"Corporativa",status:"Borrador",domain:"sin-dominio"});
- if(kind==="ticket")state.tickets.unshift({title:name,client:String(v.get("cliente")),status:"Abierto"});
- $("dialog").close();render();toast("Registro agregado a la demostración. No se ha guardado en ninguna base de datos.");
+ e.preventDefault();const kind=$("dialog").dataset.kind,id=$("dialog").dataset.recordId;
+ const data=Object.fromEntries(new FormData(e.target).entries());
+ const r=applyRecord(kind,id,data);
+ if(!r.ok){toast(r.error);return;}
+ $("dialog").close();render();
+ toast("Cambio registrado solo en la demostración. Ningún servicio real fue modificado.");
 });
 $("cancel").onclick=()=>$("dialog").close();
 $("toggle").onclick=()=>$("sidebar").classList.toggle("open");
