@@ -66,6 +66,10 @@ footer{margin-top:45px;font-size:11px;color:#6888a2}.mobile-toggle{display:none}
 .progress-demo{height:10px;background:#061726;border-radius:20px;overflow:hidden}
 .progress-demo span{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--violet));border-radius:20px;transition:width .15s}
 .primary:disabled,.secondary:disabled,.danger:disabled{opacity:.45;cursor:not-allowed}
+
+.bridgeLink{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;padding:8px 10px;font-size:11px;border-radius:9px;margin:2px}
+#bridgeResult a{margin:8px 5px}
+#bridgeResult small{display:block;margin-top:9px;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -94,23 +98,23 @@ const BILLING_STATES=["No configurada","Pendiente","Activa","En pausa","Cancelad
 const CYCLES=["Mensual","Anual"];
 const TICKET_STATES=["Abierto","En seguimiento","Resuelto","Cerrado"];
 const PRIORITIES=["Baja","Media","Alta"];
-const NAV=[["dashboard","▦","Dashboard"],["clientes","♧","Clientes"],["incorporacion","✓","Incorporación"],["invitaciones","✉","Invitaciones"],["usuarios","♙","Usuarios y permisos"],["sitios","▣","Sitios web"],
+const NAV=[["dashboard","▦","Dashboard"],["clientes","♧","Clientes"],["incorporacion","✓","Incorporación"],["invitaciones","✉","Invitaciones"],["usuarios","♙","Usuarios y permisos"],["conexion","⇄","Conexión de paneles"],["sitios","▣","Sitios web"],
  ["plantillas","▤","Plantillas"],["dominios","◎","Dominios y hosting"],
  ["suscripciones","▥","Suscripciones"],["soporte","◇","Soporte"],
  ["reportes","↗","Reportes"],["auditoria","◷","Actividad demo"],["ajustes","⚙","Configuración"]];
 const state={
  section:"dashboard",filters:{clientText:"",clientState:"Todos",ticketState:"Todos",inviteStatus:"Todos",memberClientId:"Todos",memberStatus:"Activo (demo)"},selectedOnboardClientId:"c1",invitations:[],members:[],
  clients:[
-  {id:"c1",code:"CLI-001",name:"Panadería Horizonte (ejemplo)",plan:"Crece",status:"Activo",
+  {id:"c1",code:"CLI-001",name:"Café Horizonte (ejemplo)",plan:"Crece",status:"Activo",
    subscription:{cycle:"Mensual",status:"No configurada",referenceDate:"",note:""}},
-  {id:"c2",code:"CLI-002",name:"Estudio Creativo Norte (ejemplo)",plan:"Start",status:"Activo",
+  {id:"c2",code:"CLI-002",name:"Papelería Nube (ejemplo)",plan:"Start",status:"Activo",
    subscription:{cycle:"Mensual",status:"No configurada",referenceDate:"",note:""}},
   {id:"c3",code:"CLI-003",name:"Servicios Costa (ejemplo)",plan:"Pro",status:"Propuesta",
    subscription:{cycle:"Mensual",status:"No configurada",referenceDate:"",note:""}}
  ],
  sites:[
-  {id:"s1",title:"Panadería Horizonte",clientId:"c1",type:"Corporativa",status:"Publicado (demo)",domain:"horizonte.ejemplo.invalid"},
-  {id:"s2",title:"Estudio Creativo",clientId:"c2",type:"Portafolio",status:"Borrador",domain:"estudio.ejemplo.invalid"}
+  {id:"s1",title:"Café Horizonte",clientId:"c1",type:"Corporativa",status:"Borrador",domain:"cafe-horizonte.ejemplo.invalid"},
+  {id:"s2",title:"Papelería Nube",clientId:"c2",type:"Catálogo",status:"Borrador",domain:"papeleria-nube.ejemplo.invalid"}
  ],
  tickets:[
   {id:"t1",title:"Actualizar portada (ejemplo)",clientId:"c1",status:"Abierto",priority:"Media",note:""},
@@ -422,11 +426,63 @@ function clients(){
  '<button class="secondary" data-edit-client="'+clean(c.id)+'">Administrar</button> <button class="secondary" data-onboard-client="'+clean(c.id)+'">Incorporar</button>'
  ]))+(list.length?"":'<p class="empty">No se encontraron clientes con estos filtros.</p>')+'</section>'+footerNotice();
 }
+
+/* Puente entre MAQUETAS estáticas, solo navega al portal:
+   NO sincroniza altas, precios, usuarios, archivos, revisiones ni membresías.
+   En producción sustituir por API y sesión del servidor, nunca confiar en URL. */
+const PORTAL_FIXTURES={
+ s1:{clientId:"c1",siteId:"s1",portalName:"Café Horizonte"},
+ s2:{clientId:"c2",siteId:"s2",portalName:"Papelería Nube"}
+};
+function linkedPortalFixture(siteId){
+ const site=state.sites.find(x=>x.id===siteId),mapping=PORTAL_FIXTURES[siteId];
+ if(!site||!mapping||site.clientId!==mapping.clientId)return null;
+ return mapping;
+}
+function portalDemoLink(siteId,memberId){
+ const map=linkedPortalFixture(siteId);
+ if(!map)return null;
+ let role="CLIENT_OWNER";
+ if(memberId){
+  const m=memberFor(memberId);
+  if(!m||!canDemoMember(memberId,siteId,"read"))return null;
+  role=m.role;
+ }
+ const parts=[map.clientId,map.siteId,role];
+ return "./portal-cliente.html?mgdemo="+encodeURIComponent(parts.join("."));
+}
+function panelBridge(){
+ const linked=state.sites.filter(s=>linkedPortalFixture(s.id));
+ return header("Conexión de paneles (demostración)","Relaciona los mismos identificadores ficticios de negocio y sitio entre SUPERADMIN y el portal cliente. La navegación no transporta datos privados ni permisos reales.")+
+ '<div class="grid admin-kpis">'+
+ metric("Negocios de ejemplo conectables",new Set(linked.map(s=>s.clientId)).size,"Solo fixtures locales")+
+ metric("Sitios con portal de prueba",linked.length,"El resto se prepara al conectar un backend")+
+ metric("Colaboradores ficticios activos",state.members.filter(m=>m.status==="Activo (demo)").length,"Sin autenticación")+
+ '</div><section class="card"><h2>Correspondencia de clientes y sitios</h2>'+
+ table(["NEGOCIO","ID CLIENTE","SITIO","ID SITIO","PREVIA DEL CLIENTE"],
+ state.sites.map(site=>{
+  const fixture=linkedPortalFixture(site.id),href=portalDemoLink(site.id);
+  return [clean(clientName(site.clientId)),clean(site.clientId),clean(site.title),clean(site.id),
+   fixture?'<a class="secondary bridgeLink" href="'+clean(href)+'" target="_blank" rel="noopener noreferrer">Abrir portal ficticio</a>':
+   '<span class="admin-badge muted">Sin portal de ejemplo</span>'];
+ }))+'</section>'+
+ '<section class="card" style="margin-top:17px"><h2>Probar rol y acceso por sitio</h2>'+
+ '<div class="filterbar"><label class="field">Colaborador aceptado en la demo<select id="bridgeMember">'+
+ state.members.filter(m=>m.status==="Activo (demo)").map(m=>
+ '<option value="'+clean(m.id)+'">'+clean(clientName(m.clientId)+" · "+m.email+" · "+m.role)+'</option>').join("")+'</select></label>'+
+ '<label class="field">Sitio del cliente<select id="bridgeSite">'+state.sites.map(site=>
+ '<option value="'+clean(site.id)+'">'+clean(clientName(site.clientId)+" · "+site.title)+'</option>').join("")+'</select></label></div>'+
+ '<button class="secondary" id="bridgeValidate" '+(!state.members.some(m=>m.status==="Activo (demo)")?"disabled":"")+'>Comprobar acceso y preparar enlace</button>'+
+ '<div class="note" id="bridgeResult">Prepara una invitación ficticia y simula su aceptación en «Invitaciones». Después podrás comprobar permisos y abrir el portal con ese rol visual.</div></section>'+
+ tip("La navegación puede funcionar cuando las dos páginas HTML se sirven desde la misma carpeta y origen. Algunos visores HTML externos no conservan la ruta ni los parámetros. Esta vinculación NO comparte estado en tiempo real: los cambios que hagas en SUPERADMIN no aparecerán automáticamente en el portal. Manipular ?mgdemo= nunca debe conceder permisos reales.",true);
+}
+
 function sites(){
  return header("Sitios web","Cada sitio queda asociado a un cliente de demostración. Crear registros no publica páginas.","Nuevo sitio","site")+
  '<div class="grid cards">'+state.sites.map(s=>'<article class="card"><div class="site-thumb"><div></div><div class="site-line w"></div><div class="site-line"></div></div>'+
  '<div class="site-title">'+clean(s.title)+'</div><div class="site-meta">'+clean(clientName(s.clientId))+' · '+clean(s.domain)+'</div>'+
- status(s.status)+'<div class="site-actions"><button class="secondary" data-inspect-site="'+clean(s.id)+'">Ver detalles</button></div></article>').join("")+
+ status(s.status)+'<div class="site-actions"><button class="secondary" data-inspect-site="'+clean(s.id)+'">Ver detalles</button>'+
+ (portalDemoLink(s.id)?'<a class="secondary bridgeLink" href="'+clean(portalDemoLink(s.id))+'" target="_blank" rel="noopener noreferrer">Portal demo</a>':'')+'</div></article>').join("")+
  '</div>'+tip("Los dominios terminados en .invalid no existen. La asignación, hosting y los estados mostrados son ejemplos.") ;
 }
 function templates(){
@@ -471,7 +527,7 @@ function generic(title,desc,items,note){
 }
 function pageForSection(){
  return {
- dashboard:overview,clientes:clients,incorporacion:onboarding,invitaciones:invitations,usuarios:memberPanel,sitios:sites,plantillas:templates,
+ dashboard:overview,clientes:clients,incorporacion:onboarding,invitaciones:invitations,usuarios:memberPanel,conexion:panelBridge,sitios:sites,plantillas:templates,
  dominios:()=>generic("Dominios y hosting","Servicios técnicos para los sitios de clientes.",
  [["DOMINIOS","Propiedad","Verificar titularidad y autorización antes de cualquier conexión."],
  ["ALOJAMIENTO","Recursos","Consumo y alojamiento de cada sitio, aún sin proveedor."],
@@ -514,6 +570,12 @@ function render(){
   const r=setInvitationStatus(b.dataset.revokeInvite,"Revocada");if(!r.ok)toast(r.error);render();
  });
  const invFilter=$("inviteFilter");if(invFilter)invFilter.onchange=()=>{state.filters.inviteStatus=invFilter.value;render();};
+ const bridgeCheck=$("bridgeValidate");if(bridgeCheck)bridgeCheck.onclick=()=>{
+  const memberId=$("bridgeMember").value,siteId=$("bridgeSite").value;
+  const href=portalDemoLink(siteId,memberId),result=$("bridgeResult");
+  if(!href){result.textContent="Acceso DENEGADO en esta simulación, o el sitio no tiene un portal de ejemplo configurado. No se abrió ninguna página.";return;}
+  result.innerHTML='<strong>Acceso permitido solo en demostración.</strong> <a class="secondary bridgeLink" href="'+clean(href)+'" target="_blank" rel="noopener noreferrer">Abrir portal con rol de ejemplo</a> <small>No es un inicio de sesión; la URL no lleva datos reales.</small>';
+ };
  const checkAccess=$("checkAccessDemo");if(checkAccess)checkAccess.onclick=()=>{
   const granted=canDemoMember($("accessMember").value,$("accessSite").value,$("accessAction").value);
   $("accessResult").textContent=(granted?"Permitido":"Denegado")+" SOLO EN DEMO. Esta comprobación no habilita ni restringe accesos reales.";
