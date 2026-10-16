@@ -142,6 +142,12 @@ footer{padding-top:35px;color:#7794a9;font-size:11px}
 .inquiryManage textarea{min-height:42px}
 .inquiryManage button{height:41px}
 @media(max-width:920px){.inquiryManage{grid-template-columns:1fr}}
+
+.aiPages{display:grid;gap:10px;margin:10px 0}
+.aiPagePreview{border:1px solid var(--line);padding:12px;border-radius:12px;background:rgba(80,135,200,.04)}
+.aiPagePreview strong{display:block;font-size:12px}.aiPagePreview small{display:block;margin:4px 0;color:var(--muted);font-size:11px}
+.aiPagePreview p{font-size:11px;margin:6px 0;line-height:1.5}.aiPagePreview span{font-size:10px;color:var(--muted)}
+.aiColorSwatch{display:inline-block;width:14px;height:14px;border-radius:4px;vertical-align:middle;border:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -163,6 +169,7 @@ footer{padding-top:35px;color:#7794a9;font-size:11px}
 <dialog class="dialog" id="dialog"><h2 id="dialogTitle">Nuevo registro</h2><p id="dialogDescription">No se guardará en un servidor.</p><form id="modalForm"><div id="modalFields" class="formgrid"></div><div class="dialogActions"><button class="secondary" type="button" id="modalClose">Cancelar</button><button class="primary" type="submit">Guardar en demo</button></div></form></dialog>
 <div role="status" aria-live="polite" id="toast" class="toast"></div>
 <script src="./shared/mg-web-studio-services.js"></script>
+<script src="./shared/mg-ai-web-assistant-demo.js"></script>
 <script>
 (function(){
 "use strict";
@@ -288,7 +295,7 @@ function templateDraft(t,source){
 }
 function pageAddress(page){return site().domain+(page.id==="home"?"":"/"+page.slug);}
 
-var navItems=[["inicio","▦","Inicio"],["identidad","◉","Mi negocio"],["configuracion","⌂","Datos y horarios"],["seo","⌕","SEO de páginas"],["medios","▧","Biblioteca multimedia"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["consultas","✉","Solicitudes"],["vista","▣","Vista previa"],["revision","✓","Revisión previa"],["publicaciones","⇄","Publicaciones"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
+var navItems=[["inicio","▦","Inicio"],["identidad","◉","Mi negocio"],["configuracion","⌂","Datos y horarios"],["seo","⌕","SEO de páginas"],["medios","▧","Biblioteca multimedia"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["asistente-ia","✦","Asistente web IA (demo)"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["consultas","✉","Solicitudes"],["vista","▣","Vista previa"],["revision","✓","Revisión previa"],["publicaciones","⇄","Publicaciones"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
 var $=function(id){return document.getElementById(id);};
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function getOrg(){return organizations.find(function(x){return x.id===activeOrg;});}
@@ -605,6 +612,105 @@ return '<div class="sitePreview"><div class="previewbar"><span>◉ '+esc(address
 '<div class="previewSection"><h3>Productos y servicios</h3><div class="previewProducts">'+(products.length?products.slice(0,4).map(function(p){return '<div class="previewProduct">'+((mediaURL(p.photoAssetId,common)||p.photo)&&validImageSource(mediaURL(p.photoAssetId,common)||p.photo)?'<img class="previewProductPhoto" src="'+(mediaURL(p.photoAssetId,common)||p.photo)+'" alt="'+esc(p.name)+'">':"")+'<span class="catalogCategory">'+esc(p.category||"Otros")+'</span><div>'+esc(p.name)+'</div><b>'+money(p.price)+'</b><small>'+esc(AVAILABILITY[p.availability]||"Disponible")+'</small></div>';}).join(""):'<div class="previewProduct">Sin productos visibles.</div>')+'</div>'+
 promos.slice(0,2).map(function(p){return '<div class="previewPromo">✦ '+esc(p.title)+'</div>';}).join("")+'</div>'+publicBlocks(data,common,meta?meta.page.id:currentPage().id)+businessDetailsHTML(common)+'</div></div>';
 }
+
+/* V9 — asistente guiado (plantillas deterministas, sin modelo IA).
+   Ningún dato de la propuesta se envía fuera de esta página. */
+var aiProposalByOrg={};
+function aiDraftSignature(){
+ var s=site();
+ return JSON.stringify({siteId:s.id,plan:s.plan,sharedRevision:s.sharedRevision,
+  pages:s.pages.map(function(p){return [p.id,p.draftRevision];})});
+}
+function aiWizardPage(){
+ var s=site(),helper=typeof window!=="undefined"&&window.MGAIWebAssistant;
+ var pending=aiProposalByOrg[activeOrg];
+ if(!helper)return head("Asistente web IA (demostración)","No se cargó el generador local. Abre esta maqueta desde un servidor estático con su carpeta shared.")+banner();
+ var makeOptions=function(values,active){return values.map(function(o){return '<option value="'+esc(o.id)+'" '+(o.id===active?"selected":"")+'>'+esc(o.label)+'</option>';}).join("");};
+ var prev=pending&&pending.proposal;
+ return head("MG AI WEB ASSISTANT","Crea una propuesta orientativa desde plantillas locales. No es una IA real y no utiliza API, tokens ni créditos.")+
+ '<div class="grid split"><section class="card"><h2>Cuéntanos sobre el negocio</h2><form id="aiWizardForm" class="formgrid">'+
+ '<label class="field full">Nombre ficticio del negocio<input required name="brand" maxlength="65" value="'+esc(s.name)+'"></label>'+
+ '<label class="field">Sector<select name="type">'+makeOptions(helper.sectors,"tienda")+'</select></label>'+
+ '<label class="field">Estilo visual<select name="style">'+makeOptions(helper.styles,"moderno")+'</select></label>'+
+ '<label class="field">Objetivo principal<select name="goal">'+makeOptions(helper.goals,"contacto")+'</select></label>'+
+ '<label class="field">Plan<select name="plan" disabled><option>'+esc(s.plan)+'</option></select></label>'+
+ '<label class="field full">¿Qué productos o servicios ofrece?<textarea required name="offering" maxlength="170" placeholder="Ej.: artículos escolares, pintura, tecnología y juguetes"></textarea></label>'+
+ '<label class="field full">¿A qué público se dirige?<input required name="audience" maxlength="100" placeholder="Ej.: familias, estudiantes y emprendedores"></label>'+
+ '<div class="sectionactions full"><button class="primary" type="submit">Preparar propuesta gratuita</button></div></form></section>'+
+ '<section class="card"><h2>Revisión de la propuesta</h2>'+
+ (prev?'<div class="tile"><b>'+esc(prev.businessName)+'</b><small>'+esc(prev.summary)+'</small></div>'+
+ '<div class="hint" style="margin:10px 0">Color sugerido: <span class="aiColorSwatch" style="background:'+prev.color+'"></span> '+esc(prev.color)+'</div>'+
+ '<div class="aiPages">'+prev.pages.map(function(pg,i){return '<article class="aiPagePreview"><strong>'+esc((i+1)+". "+pg.name)+'</strong>'+
+ '<small>'+esc(pg.title)+'</small><p>'+esc(pg.description)+'</p><span>'+pg.blocks.length+' secciones sugeridas · '+esc(pg.cta)+'</span></article>';}).join("")+'</div>'+
+ '<div class="sectionactions"><button class="primary" data-ai-apply="true" '+(!canEdit()?"disabled":"")+'>Aplicar al borrador (demo)</button>'+
+ '<button class="secondary" data-ai-discard="true">Descartar propuesta</button></div>':
+ '<div class="empty">Completa el formulario para obtener una propuesta de páginas, portada, contenido y SEO que podrás revisar antes de aplicar.</div>')+
+ '</section></div>'+
+ '<div class="note warnnote">El texto es una plantilla orientativa generada mediante reglas. Utiliza datos ficticios. La propuesta nunca publica sitios, no altera productos o precios ni transmite información a terceros. Si aceptas, solo cambia los borradores de este negocio.</div>'+banner();
+}
+function createAIProposal(formData){
+ var helper=typeof window!=="undefined"&&window.MGAIWebAssistant;
+ if(!helper)return {ok:false,error:"No se cargó el asistente."};
+ var input={brand:String(formData.brand||""),type:String(formData.type||""),
+  style:String(formData.style||""),goal:String(formData.goal||""),
+  offering:String(formData.offering||""),audience:String(formData.audience||""),
+  plan:site().plan};
+ var generated=helper.createProposal(input);
+ if(!generated.ok)return generated;
+ aiProposalByOrg[activeOrg]={proposal:generated.proposal,signature:aiDraftSignature(),siteId:site().id};
+ return {ok:true,proposal:generated.proposal};
+}
+function applyAIProposal(){
+ var entry=aiProposalByOrg[activeOrg],s=site();
+ if(!entry||!entry.proposal)return {ok:false,error:"Primero prepara una propuesta."};
+ if(!canEdit())return {ok:false,error:"El rol de demostración no puede editar borradores."};
+ if(entry.siteId!==s.id||entry.signature!==aiDraftSignature())
+  return {ok:false,error:"El sitio cambió desde la creación de la propuesta. Genera una nueva antes de aplicar."};
+ var proposal=entry.proposal,rule=PLAN_RULES[s.plan]||PLAN_RULES.Start;
+ if(proposal.plan!==s.plan||proposal.pages.length>rule.pages)return {ok:false,error:"El plan o el límite de páginas ya no coincide."};
+ var home=s.pages.find(function(pg){return pg.id==="home";});
+ if(!home)return {ok:false,error:"No se encontró la página de inicio."};
+ var newPages=proposal.pages.slice(1).filter(function(pg){return !s.pages.some(function(existing){return existing.slug===pg.slug;});});
+ if(s.pages.length+newPages.length>rule.pages)return {ok:false,error:"No hay suficientes páginas disponibles en este plan de demostración. Revisa páginas existentes."};
+ // Validar ANTES de modificar cualquier borrador.
+ if(!proposal.pages.every(function(pg){return pg.blocks.length<=rule.sections&&
+ pg.blocks.every(function(block){return !!BLOCKS[block.type]&&blockAllowed(block.type,s.plan);});}))
+ return {ok:false,error:"La propuesta contiene secciones fuera del plan."};
+ function toDraft(pg,idPrefix){var d=deepCopy(pg);delete d.name;delete d.slug;
+  d.blocks=d.blocks.map(function(b,i){b.id=idPrefix+"-"+i;b.imageAssetId="";b.galleryAssetIds=[];return b;});
+  return d;
+ }
+ // Sin escribir en s.releases, s.sharedPublished ni histories publicadas.
+ home.draft=toDraft(proposal.pages[0],"ai-home");home.draftRevision++;
+ newPages.forEach(function(pg,i){
+  var key="ai-"+Date.now()+"-"+i;
+  s.pages.push({id:key,name:pg.name,slug:pg.slug,draft:toDraft(pg,key),
+   published:null,history:[],draftRevision:1});
+ });
+ s.sharedDraft.brand.color=proposal.color;s.sharedRevision++;
+ activePageByOrg[activeOrg]="home";previewMode="draft";delete aiProposalByOrg[activeOrg];
+ render();
+ return {ok:true,pagesCreated:newPages.length};
+}
+function bindAIWizard(){
+ var form=$("aiWizardForm");
+ if(form)form.onsubmit=function(e){
+  e.preventDefault();
+  var info=Object.fromEntries(new FormData(form).entries());
+  var out=createAIProposal(info);
+  if(!out.ok){notice(out.error);return;}
+  render();notice("Propuesta de plantilla preparada para revisión. No se publicó.");
+ };
+ $("content").querySelectorAll("[data-ai-apply]").forEach(function(b){b.onclick=function(){
+  if(!confirm("¿Aplicar la propuesta AL BORRADOR del negocio ficticio? Cambiará la página Inicio y podría crear páginas nuevas, pero no publicará nada."))return;
+  var out=applyAIProposal();if(!out.ok)notice(out.error);
+  else{tab="paginas";render();notice("Propuesta aplicada al borrador. Páginas nuevas: "+out.pagesCreated+". Ningún sitio fue publicado.");}
+ };});
+ $("content").querySelectorAll("[data-ai-discard]").forEach(function(b){b.onclick=function(){
+  delete aiProposalByOrg[activeOrg];render();notice("Propuesta descartada, sin modificar borradores.");
+ };});
+}
+
 function intro(){
 var s=site(),draft=s.draft,shared=s.sharedDraft;
 return head("Bienvenido a tu espacio","Administra tu página web de forma sencilla: personaliza, agrega productos y revisa antes de publicar.",'<button class="primary" data-go="contenido">Editar mi página →</button>')+
@@ -1246,7 +1352,7 @@ function bindPageManager(){
 
 function render(){
 navDraw();
-var pages={inicio:intro,identidad:identity,configuracion:businessConfig,seo:siteSEO,medios:mediaLibrary,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,consultas:inquiryInbox,vista:preview,revision:preflightPanel,publicaciones:sitePublications,historial:history,dominio:domain,soporte:support};
+var pages={inicio:intro,identidad:identity,configuracion:businessConfig,seo:siteSEO,medios:mediaLibrary,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,consultas:inquiryInbox,"asistente-ia":aiWizardPage,vista:preview,revision:preflightPanel,publicaciones:sitePublications,historial:history,dominio:domain,soporte:support};
 $("content").innerHTML='<div class="card" style="margin-bottom:20px"><div class="row" style="justify-content:space-between;align-items:end"><div><div class="eyebrow">SESIÓN DE PRUEBA</div><p style="margin:5px 0 0;color:var(--muted)">Alterna negocios y roles ficticios para revisar el diseño. Esta selección NO es autenticación.'+
  (demoBridgeContext?' · Contexto de navegación de SUPERADMIN cargado'+(demoBridgePlanApplied?' (incluye plan de muestra)':'')+'. Los demás cambios no se sincronizan.':'')+(sharedService?' · Servicio común en memoria V1 activo.':' · Servicio autónomo de reserva.')+'</p></div><div class="row">'+
  (demoBridgeContext?'<a class="secondary" href="./prototipo.html" target="_blank" rel="noopener noreferrer">↩ Panel SUPERADMIN demo</a>':'')+
@@ -1260,6 +1366,7 @@ if(tab==="configuracion")bindBusinessConfig();
 if(tab==="seo")bindSEO();
 if(tab==="medios")bindMediaLibrary();
 if(tab==="consultas")bindInquiryInbox();
+if(tab==="asistente-ia")bindAIWizard();
 bindInquiryForms();
 if(tab==="catalogo"){var cf=$("categoryFilter");if(cf)cf.onchange=function(){selectedCategoryByOrg[activeOrg]=this.value;render();};}
 if(tab==="paginas"||tab==="plantillas")bindPageManager();
