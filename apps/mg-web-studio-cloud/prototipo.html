@@ -88,6 +88,7 @@ footer{margin-top:45px;font-size:11px;color:#6888a2}.mobile-toggle{display:none}
 </div>
 <dialog class="dialog" id="dialog"><h2 id="dialogTitle">Nuevo registro</h2><p id="dialogLead">Simulación local.</p><form id="dialogForm"><div class="formgrid" id="fields"></div><div class="dialog-actions"><button type="button" class="secondary" id="cancel">Cancelar</button><button type="submit" class="primary">Crear en demostración</button></div></form></dialog>
 <div class="toast" role="status" id="toast" aria-live="polite"></div>
+<script src="./shared/mg-web-studio-services.js"></script>
 <script>
 (function(){
 "use strict";
@@ -134,6 +135,15 @@ const INVITATION_ROLES=["CLIENT_OWNER","CLIENT_ADMIN","CLIENT_EDITOR","CLIENT_VI
 const INVITATION_STATES=["Preparada","Aceptada (demo)","Revocada"];
 function freshOnboarding(){return {steps:{perfil:false,plan:false,contenido:false,dominio:false,privacidad:false},activated:false};}
 state.clients.forEach(c=>{c.onboarding=freshOnboarding();});
+/* Adaptador en memoria de uso compartido. Ante una vista HTML externa que no
+   cargue scripts relativos, las maquetas conservan sus funciones independientes. */
+const sharedService=typeof window!=="undefined"&&window.MGWebStudioServices?
+ window.MGWebStudioServices.createMemoryService(()=>({
+  organizations:state.clients.map(c=>({id:c.id,name:c.name,plan:c.plan,status:c.status})),
+  sites:state.sites.map(s=>({id:s.id,clientId:s.clientId,name:s.title,domain:s.domain})),
+  members:state.members
+ })) :null;
+
 
 const $=id=>document.getElementById(id), nav=$("nav"),view=$("view");
 const clean=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -268,6 +278,7 @@ const privilegedRole=role=>role==="CLIENT_OWNER"||role==="CLIENT_ADMIN";
 function memberFor(id){return state.members.find(m=>m.id===id)||null;}
 function activeMembers(clientId){return state.members.filter(m=>m.clientId===clientId&&m.status==="Activo (demo)");}
 function canDemoMember(memberId,siteId,action){
+ if(sharedService)return sharedService.can(memberId,siteId,action);
  const m=memberFor(memberId),site=state.sites.find(s=>s.id===siteId);
  if(!m||!site||m.status!=="Activo (demo)"||m.clientId!==site.clientId)return false;
  if(!Object.prototype.hasOwnProperty.call(ROLE_MATRIX[m.role]||{},action)||!ROLE_MATRIX[m.role][action])return false;
@@ -435,6 +446,7 @@ const PORTAL_FIXTURES={
  s2:{clientId:"c2",siteId:"s2",portalName:"Papelería Nube"}
 };
 function linkedPortalFixture(siteId){
+ if(sharedService){const x=sharedService.getFixtureSite(siteId);return x.ok?x.data:null;}
  const site=state.sites.find(x=>x.id===siteId),mapping=PORTAL_FIXTURES[siteId];
  if(!site||!mapping||site.clientId!==mapping.clientId)return null;
  return mapping;
@@ -449,11 +461,17 @@ function portalDemoLink(siteId,memberId){
   role=m.role;
  }
  const parts=[map.clientId,map.siteId,role],plan=clientById(map.clientId)?.plan||"Start";
+ if(sharedService){
+  const answer=sharedService.createNavigation({clientId:map.clientId,siteId:map.siteId,role,plan,memberId:memberId||null});
+  return answer.ok?answer.data.relativeHref:null;
+ }
  return "./portal-cliente.html?mgdemo="+encodeURIComponent(parts.join("."))+"&mgplan="+encodeURIComponent(plan);
 }
 function panelBridge(){
  const linked=state.sites.filter(s=>linkedPortalFixture(s.id));
  return header("Conexión de paneles (demostración)","Relaciona los mismos identificadores ficticios de negocio y sitio entre SUPERADMIN y el portal cliente. La navegación no transporta datos privados ni permisos reales.")+
+ '<div class="note">'+(sharedService?"Servicio común de consulta en memoria V1 activo.":"Modo autónomo de reserva: no se cargó el módulo externo de servicios.")+
+ ' No existe sincronización ni backend real.</div>'+
  '<div class="grid admin-kpis">'+
  metric("Negocios de ejemplo conectables",new Set(linked.map(s=>s.clientId)).size,"Solo fixtures locales")+
  metric("Sitios con portal de prueba",linked.length,"El resto se prepara al conectar un backend")+
