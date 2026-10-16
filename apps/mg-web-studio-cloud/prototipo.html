@@ -94,6 +94,7 @@ footer{margin-top:45px;font-size:11px;color:#6888a2}.mobile-toggle{display:none}
 <div class="toast" role="status" id="toast" aria-live="polite"></div>
 <script src="./shared/mg-web-studio-services.js"></script>
 <script src="./shared/mg-ai-web-assistant-demo.js"></script>
+<script src="./shared/mg-proposal-exchange-demo.js"></script>
 <script>
 (function(){
 "use strict";
@@ -533,6 +534,10 @@ function agencyAIPage(){
  '<small>'+clean(page.title)+'</small><p>'+clean(page.description)+'</p>'+
  '<small>'+page.blocks.length+' secciones · '+clean(page.cta)+'</small></article>').join("")+'</div>'+
  '<div class="dialog-actions"><button class="secondary" data-discard-agency-ai="'+clean(current.id)+'">Descartar propuesta</button></div>'+
+ '<h2 style="margin-top:20px">Transferir al portal (manual · demo)</h2>'+
+ '<p class="small">Prepara el paquete ficticio, copia el JSON y pégalo en el módulo IA del mismo negocio en el otro panel. Esta operación NO envía datos a un servidor ni autentica al remitente.</p>'+
+ '<button class="secondary" data-export-agency-ai="'+clean(current.id)+'">Preparar paquete JSON</button>'+
+ '<div id="agencyTransferArea"></div>'+
  '<p class="small">Propuesta preparada, sin aprobación ni traspaso automático al portal del emprendedor.</p>':
  '<div class="empty">Todavía no hay propuesta para el sitio seleccionado.</div>')+
  '</section></div>'+
@@ -550,6 +555,16 @@ function prepareAgencyAI(data){
  logEvent("Propuesta web preparada con plantillas",client.name+" · "+site.title+" · Sin IA real");
  return {ok:true,proposal:generated.proposal};
 }
+
+function exportAgencyAIPackage(siteId){
+ const exchange=typeof window!=="undefined"&&window.MGWebProposalExchange;
+ const existing=state.sites.find(s=>s.id===siteId),saved=state.aiProposals[siteId];
+ if(!exchange||!existing||!saved||saved.clientId!==existing.clientId)
+  return {ok:false,error:"No existe una propuesta compatible con el sitio."};
+ const client=clientById(existing.clientId);
+ if(!client||client.plan!==saved.plan)return {ok:false,error:"El plan cambió; genera la propuesta nuevamente."};
+ return exchange.createPackage({clientId:client.id,siteId:existing.id,plan:client.plan,proposal:saved.proposal});
+}
 function bindAgencyAI(){
  const siteSelect=$("agencyAISite");
  if(siteSelect)siteSelect.onchange=()=>{state.aiSiteId=siteSelect.value;render();};
@@ -558,6 +573,22 @@ function bindAgencyAI(){
   const r=prepareAgencyAI(input);if(!r.ok){toast(r.error);return;}
   render();toast("Propuesta simulada creada y pendiente de revisión. No se publicó.");
  };
+ view.querySelectorAll("[data-export-agency-ai]").forEach(button=>button.onclick=()=>{
+  const result=exportAgencyAIPackage(button.dataset.exportAgencyAi);
+  if(!result.ok){toast(result.error);return;}
+  const area=$("agencyTransferArea");
+  area.innerHTML='<label class="field full">Paquete JSON (solo datos ficticios)<textarea id="agencyExportJSON" readonly rows="7"></textarea></label>'+
+   '<div class="dialog-actions"><button type="button" class="secondary" id="agencyCopyJSON">Copiar paquete</button></div>'+
+   '<p class="small">Se transfiere únicamente al pegarlo en el portal. No demuestra pertenencia ni identidad; no ingreses información real.</p>';
+  $("agencyExportJSON").value=result.json;
+  $("agencyCopyJSON").onclick=async()=>{
+   if(typeof navigator!=="undefined"&&navigator.clipboard&&navigator.clipboard.writeText){
+    try{await navigator.clipboard.writeText(result.json);toast("Paquete de prueba copiado.");return;}catch(e){}
+   }
+   $("agencyExportJSON").focus();$("agencyExportJSON").select();
+   toast("Selecciona el texto y cópialo con Ctrl+C.");
+  };
+ });
  view.querySelectorAll("[data-discard-agency-ai]").forEach(button=>button.onclick=()=>{
   delete state.aiProposals[button.dataset.discardAgencyAi];render();toast("Propuesta descartada en esta demostración.");
  });
