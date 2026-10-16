@@ -472,6 +472,7 @@ function panelBridge(){
  return header("Conexión de paneles (demostración)","Relaciona los mismos identificadores ficticios de negocio y sitio entre SUPERADMIN y el portal cliente. La navegación no transporta datos privados ni permisos reales.")+
  '<div class="note">'+(sharedService?"Servicio común de consulta en memoria V1 activo.":"Modo autónomo de reserva: no se cargó el módulo externo de servicios.")+
  ' No existe sincronización ni backend real.</div>'+
+ '<p><a class="secondary bridgeLink" href="./laboratorio-sincronizacion.html" target="_blank" rel="noopener noreferrer">Abrir laboratorio de versiones y conflictos (demo)</a></p>'+
  '<div class="grid admin-kpis">'+
  metric("Negocios de ejemplo conectables",new Set(linked.map(s=>s.clientId)).size,"Solo fixtures locales")+
  metric("Sitios con portal de prueba",linked.length,"El resto se prepara al conectar un backend")+
