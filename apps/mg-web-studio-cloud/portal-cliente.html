@@ -162,6 +162,7 @@ footer{padding-top:35px;color:#7794a9;font-size:11px}
 </div>
 <dialog class="dialog" id="dialog"><h2 id="dialogTitle">Nuevo registro</h2><p id="dialogDescription">No se guardará en un servidor.</p><form id="modalForm"><div id="modalFields" class="formgrid"></div><div class="dialogActions"><button class="secondary" type="button" id="modalClose">Cancelar</button><button class="primary" type="submit">Guardar en demo</button></div></form></dialog>
 <div role="status" aria-live="polite" id="toast" class="toast"></div>
+<script src="./shared/mg-web-studio-services.js"></script>
 <script>
 (function(){
 "use strict";
@@ -171,10 +172,25 @@ var seed=[
 ];
 function deepCopy(x){return JSON.parse(JSON.stringify(x));}
 var organizations=deepCopy(seed),activeOrg="c1",activeRole="CLIENT_OWNER",tab="inicio",previewMode="draft",viewPublication=false,selectedCategoryByOrg={},demoBridgeContext=false,demoBridgePlanApplied=false;
+var sharedService=typeof window!=="undefined"&&window.MGWebStudioServices?
+ window.MGWebStudioServices.createMemoryService(function(){return {
+  organizations:organizations.map(function(o){return {id:o.id,name:o.name,plan:o.site.plan};}),
+  sites:organizations.map(function(o){return {id:o.site.id,clientId:o.id,name:o.site.name,domain:o.site.domain};}),
+  members:[]
+ };}):null;
 /* Enlace de navegación entre las dos maquetas (sin permisos ni datos reales).
    Los parámetros de la URL se aceptan únicamente si coinciden con fixtures
    locales conocidos. Manipular la URL NO autentica ni concede acceso. */
 function applyDemoBridgeLocation(search){
+ if(sharedService){
+  var answer=sharedService.readNavigation(search);
+  if(!answer.ok)return false;
+  var info=answer.data,selected=organizations.find(function(o){return o.id===info.clientId;});
+  if(!selected||selected.site.id!==info.siteId)return false;
+  activeOrg=selected.id;activeRole=info.role;demoBridgeContext=true;
+  if(info.plan){selected.site.plan=info.plan;demoBridgePlanApplied=true;}
+  return true;
+ }
  var match=String(search||"").match(/[?&]mgdemo=([^&#]+)/);
  if(!match)return false;
  var input;try{input=decodeURIComponent(match[1]);}catch(e){return false;}
@@ -291,7 +307,8 @@ function pageSelector(){
  }).join("")+'</select></label>';
 }
 function dropdown(){
-return '<label class="field" style="min-width:205px">Negocio de ejemplo<select id="orgSwitch">'+organizations.map(function(o){return '<option value="'+esc(o.id)+'" '+(o.id===activeOrg?"selected":"")+'>'+esc(o.name)+'</option>';}).join("")+'</select></label>'+
+return '<label class="field" style="min-width:205px">Negocio de ejemplo<select id="orgSwitch">'+
+ (sharedService?sharedService.listOrganizations():organizations).map(function(o){return '<option value="'+esc(o.id)+'" '+(o.id===activeOrg?"selected":"")+'>'+esc(o.name)+'</option>';}).join("")+'</select></label>'+
 '<label class="field" style="min-width:170px">Vista de rol (simulada)<select id="roleSwitch">'+["CLIENT_OWNER","CLIENT_ADMIN","CLIENT_EDITOR","CLIENT_VIEWER"].map(function(r){return '<option value="'+r+'" '+(r===activeRole?"selected":"")+'>'+r.replace("CLIENT_","")+'</option>';}).join("")+'</select></label>'+pageSelector();
 }
 function head(title,desc,actions){return '<div class="pagehead"><div><div class="eyebrow">'+esc(getOrg().name)+'</div><h1>'+title+'</h1><p>'+desc+'</p></div>'+ (actions||"")+'</div>';}
@@ -1231,7 +1248,7 @@ function render(){
 navDraw();
 var pages={inicio:intro,identidad:identity,configuracion:businessConfig,seo:siteSEO,medios:mediaLibrary,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,consultas:inquiryInbox,vista:preview,revision:preflightPanel,publicaciones:sitePublications,historial:history,dominio:domain,soporte:support};
 $("content").innerHTML='<div class="card" style="margin-bottom:20px"><div class="row" style="justify-content:space-between;align-items:end"><div><div class="eyebrow">SESIÓN DE PRUEBA</div><p style="margin:5px 0 0;color:var(--muted)">Alterna negocios y roles ficticios para revisar el diseño. Esta selección NO es autenticación.'+
- (demoBridgeContext?' · Contexto de navegación de SUPERADMIN cargado'+(demoBridgePlanApplied?' (incluye plan de muestra)':'')+'. Los demás cambios no se sincronizan.':'')+'</p></div><div class="row">'+
+ (demoBridgeContext?' · Contexto de navegación de SUPERADMIN cargado'+(demoBridgePlanApplied?' (incluye plan de muestra)':'')+'. Los demás cambios no se sincronizan.':'')+(sharedService?' · Servicio común en memoria V1 activo.':' · Servicio autónomo de reserva.')+'</p></div><div class="row">'+
  (demoBridgeContext?'<a class="secondary" href="./prototipo.html" target="_blank" rel="noopener noreferrer">↩ Panel SUPERADMIN demo</a>':'')+
  dropdown()+'</div></div></div>'+pages[tab]();
 $("orgSwitch").onchange=function(){activeOrg=this.value;previewMode="draft";render();};
