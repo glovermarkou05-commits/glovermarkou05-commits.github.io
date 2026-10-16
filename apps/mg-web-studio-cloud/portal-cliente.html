@@ -122,6 +122,26 @@ footer{padding-top:35px;color:#7794a9;font-size:11px}
 .previewBusiness h3{font-size:15px;margin:0 0 9px}.previewBusiness p{font-size:11px;margin:6px 0;overflow-wrap:anywhere}
 .previewBusiness small{font-size:10px;color:#758a9d}
 @media(max-width:790px){.scheduleRow{grid-template-columns:1fr 1fr}.scheduleRow>span{grid-column:1/-1}}
+
+.contactBlock{background:#f5f9fc}
+.contactForm{display:grid;gap:10px;max-width:440px;margin-top:14px}
+.contactForm label{display:grid;gap:5px;color:#344f65;font-size:11px;font-weight:700}
+.contactForm input,.contactForm select,.contactForm textarea{border:1px solid #ccdce7;border-radius:8px;background:#fff;color:#142e40;padding:9px;min-width:0}
+.contactForm textarea{min-height:88px;resize:vertical}
+.contactForm button{border:0;background:var(--site-accent,#186999);border-radius:8px;color:white;padding:12px;font-weight:800}
+.contactNotice{background:#fff1d9;border:1px solid #e5d6b1;color:#785411;padding:8px 10px;border-radius:9px;font-size:10px;font-weight:800}
+.contactForm .contactConsent{display:flex;gap:8px;align-items:flex-start;line-height:1.4}
+.contactForm .contactConsent input{margin:2px 0 0}
+.contactTrap{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}
+.inquiryItem{padding:15px 0;border-top:1px solid var(--line)}
+.inquiryItemHead{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.inquiryItemHead strong{display:block}
+.inquiryItemHead small{display:block;font-size:11px;color:var(--muted);margin-top:3px}
+.inquiryItem>p{color:#d0e4f1;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0 8px}
+.inquiryManage{display:grid;grid-template-columns:minmax(130px,.4fr) minmax(190px,1fr) auto;gap:12px;align-items:end;margin-top:13px}
+.inquiryManage textarea{min-height:42px}
+.inquiryManage button{height:41px}
+@media(max-width:920px){.inquiryManage{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -161,6 +181,7 @@ var BLOCKS={
  services:{name:"Servicios",tier:"Start",defaultTitle:"Lo que ofrecemos",defaultBody:"Presenta tus servicios en esta sección."},
  faq:{name:"Preguntas frecuentes",tier:"Start",defaultTitle:"Preguntas frecuentes",defaultBody:"Pregunta: ¿Cómo podemos ayudarte? Respuesta: Escríbenos."},
  cta:{name:"Llamado a la acción",tier:"Start",defaultTitle:"Hablemos de tu proyecto",defaultBody:"Contáctanos para conocer más detalles."},
+ contact:{name:"Formulario de contacto",tier:"Start",defaultTitle:"¿En qué podemos ayudarte?",defaultBody:"Déjanos una consulta para solicitar información sobre productos o servicios."},
  quote:{name:"Testimonio",tier:"Crece",defaultTitle:"Lo que dicen nuestros clientes",defaultBody:"Agrega una opinión real, autorizada y verificable."},
  feature:{name:"Beneficios destacados",tier:"Pro",defaultTitle:"¿Por qué elegirnos?",defaultBody:"Calidad, acompañamiento y atención."}
 };
@@ -185,7 +206,7 @@ var PAGE_TEMPLATES=[
 {id:"presentacion",name:"Presentación",title:"Descubre nuestro negocio",description:"Conoce quiénes somos y qué nos hace diferentes.",cta:"Contáctanos",blocks:["text","services","cta"]},
 {id:"servicios",name:"Servicios",title:"Nuestros servicios",description:"Soluciones para cada necesidad de nuestros clientes.",cta:"Pedir información",blocks:["services","faq","cta"]},
 {id:"portafolio",name:"Portafolio",title:"Trabajos que nos representan",description:"Compartimos nuestras mejores creaciones y proyectos.",cta:"Conversemos",blocks:["gallery","text","cta"]},
-{id:"contacto",name:"Contacto",title:"Estamos para ayudarte",description:"Conversa con nuestro equipo sobre tu próximo proyecto.",cta:"Contáctanos",blocks:["text","faq"]},
+{id:"contacto",name:"Contacto",title:"Estamos para ayudarte",description:"Conversa con nuestro equipo sobre tu próximo proyecto.",cta:"Contáctanos",blocks:["text","faq","contact"]},
 {id:"catalogo",name:"Catálogo",title:"Descubre nuestros productos",description:"Conoce lo que ofrecemos a nuestros clientes.",cta:"Explorar catálogo",blocks:["gallery","text","cta"]}
 ];
 organizations.forEach(function(org){
@@ -209,7 +230,7 @@ organizations.forEach(function(org){
  s.sharedDraft.promos.forEach(function(p){
   p.description=p.description||"";p.startsAt=p.startsAt||"";p.endsAt=p.endsAt||"";
  });
- s.sharedPublished=null;s.sharedRevision=1;s.sharedHistory=[];s.releases=[];s.activeReleaseNumber=null;
+ s.sharedPublished=null;s.sharedRevision=1;s.sharedHistory=[];s.releases=[];s.activeReleaseNumber=null;s.demoInquiries=[];
  delete d.color;delete d.phone;delete d.products;delete d.promos;
  s.pages=[{id:"home",name:"Inicio",slug:"",draft:d,published:p,history:h,draftRevision:r}];
  activePageByOrg[org.id]="home";
@@ -233,7 +254,7 @@ function templateDraft(t,source){
 }
 function pageAddress(page){return site().domain+(page.id==="home"?"":"/"+page.slug);}
 
-var navItems=[["inicio","▦","Inicio"],["identidad","◉","Mi negocio"],["configuracion","⌂","Datos y horarios"],["seo","⌕","SEO de páginas"],["medios","▧","Biblioteca multimedia"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["vista","▣","Vista previa"],["revision","✓","Revisión previa"],["publicaciones","⇄","Publicaciones"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
+var navItems=[["inicio","▦","Inicio"],["identidad","◉","Mi negocio"],["configuracion","⌂","Datos y horarios"],["seo","⌕","SEO de páginas"],["medios","▧","Biblioteca multimedia"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["consultas","✉","Solicitudes"],["vista","▣","Vista previa"],["revision","✓","Revisión previa"],["publicaciones","⇄","Publicaciones"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
 var $=function(id){return document.getElementById(id);};
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function getOrg(){return organizations.find(function(x){return x.id===activeOrg;});}
@@ -332,7 +353,117 @@ function bindMediaLibrary(){
  };});
 }
 
-function publicBlocks(data,shared){
+
+/* Solicitudes comerciales LOCALES para probar el flujo editorial.
+   No enviar correos, no recopilar datos reales, no llamar APIs. El servidor
+   de producción deberá aplicar consentimiento, privacidad, MFA/RLS y antispam. */
+var INQUIRY_STATUSES={nuevo:"Nueva",seguimiento:"En seguimiento",atendido:"Atendida",descartado:"Descartada"};
+var INQUIRY_INTERESTS={informacion:"Información general",producto:"Productos",servicio:"Servicios",cotizacion:"Cotización"};
+var INQUIRY_LIMIT=50;
+function inquiryCount(){return site().demoInquiries.filter(function(q){return q.status==="nuevo";}).length;}
+function validInquiry(data){
+ var name=String(data&&data.name||"").trim(),email=String(data&&data.email||"").trim(),
+  msg=String(data&&data.message||"").trim(),interest=String(data&&data.interest||"");
+ if(data&&data.website)return "Formulario descartado por campo de seguridad.";
+ if(name.length<2||name.length>80)return "El nombre debe tener de 2 a 80 caracteres.";
+ if(email.length>150||!(/^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(email)))return "Ingresa un correo de prueba con formato válido.";
+ if(msg.length<10||msg.length>1200)return "El mensaje debe tener entre 10 y 1200 caracteres.";
+ if(!Object.prototype.hasOwnProperty.call(INQUIRY_INTERESTS,interest))return "Selecciona el motivo de la consulta.";
+ if(data.consent!==true)return "Marca la confirmación de demostración para enviar.";
+ return null;
+}
+function captureInquiry(info,pageId){
+ var problem=validInquiry(info);
+ if(problem)return {ok:false,error:problem};
+ var page=site().pages.find(function(p){return p.id===pageId;});
+ if(!page)return {ok:false,error:"La página ya no existe en este negocio de demostración."};
+ if(site().demoInquiries.length>=INQUIRY_LIMIT)return {ok:false,error:"Se alcanzó el límite de 50 solicitudes ficticias en esta sesión."};
+ var q={id:"lead-"+Date.now()+"-"+Math.floor(Math.random()*1000000),sourcePageId:page.id,
+  sourcePageName:page.name,name:String(info.name).trim(),email:String(info.email).trim(),
+  interest:info.interest,message:String(info.message).trim(),status:"nuevo",internalNote:"",
+  createdAt:new Date().toLocaleString("es-EC")};
+ site().demoInquiries.unshift(q);
+ return {ok:true,inquiry:q};
+}
+function updateInquiry(id,fields){
+ if(!canEdit())return false;
+ var lead=site().demoInquiries.find(function(x){return x.id===id;});
+ if(!lead)return false;
+ var status=String(fields&&fields.status||"");
+ if(!Object.prototype.hasOwnProperty.call(INQUIRY_STATUSES,status))return false;
+ var note=String(fields&&fields.internalNote||"").trim();
+ if(note.length>500)return false;
+ lead.status=status;lead.internalNote=note;render();return true;
+}
+function demoContactForm(block,pageId){
+ return '<section class="publicBlock contactBlock">'+
+ '<h3>'+esc(block.title)+'</h3><p>'+esc(block.body)+'</p>'+
+ '<form data-inquiry-form="yes" data-page-id="'+esc(pageId)+'" class="contactForm">'+
+ '<div class="contactNotice">FORMULARIO DE PRUEBA — No ingreses información personal real. No se envían mensajes ni correos.</div>'+
+ '<label>Nombre ficticio<input required name="name" maxlength="80" autocomplete="off" placeholder="Ej.: Cliente de prueba"></label>'+
+ '<label>Correo ficticio<input required name="email" inputmode="email" maxlength="150" autocomplete="off" placeholder="cliente@ejemplo.invalid"></label>'+
+ '<label>Motivo<select required name="interest">'+Object.keys(INQUIRY_INTERESTS).map(function(k){return '<option value="'+k+'">'+esc(INQUIRY_INTERESTS[k])+'</option>';}).join("")+'</select></label>'+
+ '<label>Consulta ficticia<textarea required name="message" minlength="10" maxlength="1200" placeholder="Escribe una consulta de ejemplo de al menos 10 caracteres."></textarea></label>'+
+ '<div class="contactTrap" aria-hidden="true"><label>Sitio web<input name="website" tabindex="-1" autocomplete="off"></label></div>'+
+ '<label class="contactConsent"><input type="checkbox" name="consent" required> Confirmo que los datos son ficticios y acepto usarlos solo para probar esta demostración.</label>'+
+ '<button type="submit">Guardar consulta de prueba</button></form></section>';
+}
+function bindInquiryForms(){
+ $("content").querySelectorAll("[data-inquiry-form]").forEach(function(form){
+  form.onsubmit=function(e){
+   e.preventDefault();
+   var fd=new FormData(form);
+   var data={name:fd.get("name"),email:fd.get("email"),interest:fd.get("interest"),
+     message:fd.get("message"),website:fd.get("website"),consent:fd.has("consent")};
+   var out=captureInquiry(data,form.dataset.pageId);
+   if(!out.ok){notice(out.error);return;}
+   form.reset();notice("Consulta ficticia registrada solo en memoria. Revísala en «Solicitudes».");
+  };
+ });
+}
+function inquiryInbox(){
+ var all=site().demoInquiries,filter=INQUIRY_FILTER[activeOrg]||"todos";
+ var visible=filter==="todos"?all:all.filter(function(q){return q.status===filter;});
+ return head("Solicitudes comerciales","Bandeja interna para consultas ficticias recibidas desde los formularios de tus páginas.",
+ '<button class="secondary" data-create-example="yes" '+(!canEdit()?"disabled":"")+'>+ Crear consulta de ejemplo</button>')+
+ '<div class="grid cards" style="margin-bottom:16px">'+
+ '<div class="card kpi"><span>Total de consultas</span><strong>'+all.length+'</strong><div class="hint">Solo esta sesión</div></div>'+
+ '<div class="card kpi"><span>Nuevas</span><strong>'+all.filter(function(q){return q.status==="nuevo";}).length+'</strong><div class="hint">Pendientes por revisar</div></div></div>'+
+ '<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:15px"><h2 style="margin:0">Bandeja de seguimiento</h2>'+
+ '<label class="field">Filtrar por estado<select id="inquiryFilter"><option value="todos">Todos los estados</option>'+
+ Object.keys(INQUIRY_STATUSES).map(function(k){return '<option value="'+k+'" '+(filter===k?"selected":"")+'>'+esc(INQUIRY_STATUSES[k])+'</option>';}).join("")+
+ '</select></label></div>'+
+ (visible.length?visible.map(function(q){return '<article class="inquiryItem"><div class="inquiryItemHead">'+
+ '<div><strong>'+esc(q.name)+' · '+esc(INQUIRY_INTERESTS[q.interest])+'</strong><small>Origen: '+esc(q.sourcePageName)+' · '+esc(q.createdAt)+'</small></div>'+
+ '<span class="tag '+(q.status==="nuevo"?"warn":"")+'">'+esc(INQUIRY_STATUSES[q.status])+'</span></div>'+
+ '<p>'+esc(q.message)+'</p><div class="hint">Correo ficticio: '+esc(q.email)+'</div>'+
+ '<form class="inquiryManage" data-manage-inquiry="'+esc(q.id)+'">'+
+ '<label class="field">Estado<select name="status" '+(!canEdit()?"disabled":"")+'>'+
+ Object.keys(INQUIRY_STATUSES).map(function(k){return '<option value="'+k+'" '+(q.status===k?"selected":"")+'>'+esc(INQUIRY_STATUSES[k])+'</option>';}).join("")+'</select></label>'+
+ '<label class="field">Nota interna (demo)<textarea name="internalNote" maxlength="500" '+(!canEdit()?"disabled":"")+'>'+esc(q.internalNote)+'</textarea></label>'+
+ '<button class="secondary" type="submit" '+(!canEdit()?"disabled":"")+'>Guardar seguimiento</button></form></article>';}).join(""):
+ '<div class="empty">No hay consultas en este estado. Agrega un bloque de formulario de contacto en el editor visual y prueba el envío; también puedes crear una consulta ficticia aquí.</div>')+'</div>'+
+ '<div class="note warnnote">Estas solicitudes NO llegan por correo, WhatsApp ni otra plataforma. Solo se conservan durante esta sesión del navegador. No introduzcas datos personales reales.</div>'+banner();
+}
+var INQUIRY_FILTER={};
+function bindInquiryInbox(){
+ var f=$("inquiryFilter");if(f)f.onchange=function(){INQUIRY_FILTER[activeOrg]=this.value;render();};
+ $("content").querySelectorAll("[data-create-example]").forEach(function(b){b.onclick=function(){
+  if(!canEdit())return;
+  var out=captureInquiry({name:"Cliente de prueba",email:"cliente@ejemplo.invalid",
+   interest:"cotizacion",message:"¿Podrían enviarme información sobre sus productos?",website:"",consent:true},site().pages[0].id);
+  if(!out.ok){notice(out.error);return;}render();notice("Consulta de ejemplo creada.");
+ };});
+ $("content").querySelectorAll("[data-manage-inquiry]").forEach(function(form){form.onsubmit=function(e){
+  e.preventDefault();if(!canEdit())return;
+  var fd=new FormData(form);
+  if(updateInquiry(form.dataset.manageInquiry,{status:fd.get("status"),internalNote:fd.get("internalNote")})){
+   notice("Seguimiento actualizado sin enviar ningún mensaje.");
+  }else notice("No fue posible actualizar la consulta.");
+ };});
+}
+
+function publicBlocks(data,shared,sourcePageId){
  return (data.blocks||[]).filter(function(b){return b.visible&&BLOCKS[b.type];}).map(function(b){
  var type=b.type, h='<h3>'+esc(b.title)+'</h3>',body='<p>'+esc(b.body)+'</p>';
  if(type==="image"){
@@ -345,6 +476,7 @@ function publicBlocks(data,shared){
    if(!arr.length)arr=(b.images||[]).filter(validImageSource).slice(0,4);
    return '<section class="publicBlock">'+h+'<div class="blockGallery">'+(arr.length?arr.map(function(src){return '<img src="'+src+'" alt="'+esc(b.alt||b.title)+'">';}).join(""):'<div class="mockImage">Agrega imágenes a tu galería</div>')+'</div>'+body+'</section>';
  }
+ if(type==="contact")return demoContactForm(b,sourcePageId||currentPage().id);
  if(type==="cta")return '<section class="publicBlock">'+h+body+'<span class="mockCTA">Contactar →</span></section>';
  if(type==="quote")return '<section class="publicBlock quote">'+h+body+'</section>';
  return '<section class="publicBlock">'+h+body+'</section>';
@@ -434,7 +566,7 @@ var logo=mediaURL(common.brand.logoAssetId,common),banner=mediaURL(common.brand.
 return '<div class="sitePreview"><div class="previewbar"><span>◉ '+esc(address)+'</span><b>'+esc(label)+'</b></div><div class="previewInner" style="--site-accent:'+color+'">'+
 '<div class="previewHero">'+(banner?'<img class="previewBanner" src="'+banner+'" alt="Banner">':'')+'<div class="previewLogo">'+(logo?'<img class="previewLogoImg" src="'+logo+'" alt="Logotipo">':'')+esc(businessName)+'</div><h2>'+esc(data.title)+'</h2><p>'+esc(data.description)+'</p><span class="previewBtn">'+esc(data.cta)+' →</span></div>'+
 '<div class="previewSection"><h3>Productos y servicios</h3><div class="previewProducts">'+(products.length?products.slice(0,4).map(function(p){return '<div class="previewProduct">'+((mediaURL(p.photoAssetId,common)||p.photo)&&validImageSource(mediaURL(p.photoAssetId,common)||p.photo)?'<img class="previewProductPhoto" src="'+(mediaURL(p.photoAssetId,common)||p.photo)+'" alt="'+esc(p.name)+'">':"")+'<span class="catalogCategory">'+esc(p.category||"Otros")+'</span><div>'+esc(p.name)+'</div><b>'+money(p.price)+'</b><small>'+esc(AVAILABILITY[p.availability]||"Disponible")+'</small></div>';}).join(""):'<div class="previewProduct">Sin productos visibles.</div>')+'</div>'+
-promos.slice(0,2).map(function(p){return '<div class="previewPromo">✦ '+esc(p.title)+'</div>';}).join("")+'</div>'+publicBlocks(data,common)+businessDetailsHTML(common)+'</div></div>';
+promos.slice(0,2).map(function(p){return '<div class="previewPromo">✦ '+esc(p.title)+'</div>';}).join("")+'</div>'+publicBlocks(data,common,meta?meta.page.id:currentPage().id)+businessDetailsHTML(common)+'</div></div>';
 }
 function intro(){
 var s=site(),draft=s.draft,shared=s.sharedDraft;
@@ -443,7 +575,7 @@ return head("Bienvenido a tu espacio","Administra tu página web de forma sencil
 '<div class="card kpi"><span>Plan asignado (demo)</span><strong>'+esc(s.plan)+'</strong><div class="hint">Servicio de muestra</div></div>'+
 '<div class="card kpi"><span>Productos del negocio</span><strong>'+shared.products.length+'</strong><div class="hint">Catálogo del negocio</div></div>'+
 '<div class="card kpi"><span>Promociones vigentes</span><strong>'+shared.promos.filter(promoVisible).length+'</strong><div class="hint">Borrador editable</div></div>'+
-'<div class="card kpi"><span>Versiones del sitio</span><strong>'+s.releases.length+'</strong><div class="hint">Simulación sin despliegue</div></div></div>'+
+'<div class="card kpi"><span>Solicitudes nuevas</span><strong>'+inquiryCount()+'</strong><div class="hint">Solo datos ficticios</div></div></div>'+
 '<div class="grid split"><section class="card"><h2>Tu página web</h2>'+previewCard(draft,"Vista de borrador")+'<div class="sectionactions"><button class="secondary" data-go="vista">Revisar vista previa</button></div></section>'+
 '<section class="card"><h2>Tu lista de trabajo</h2><div class="tiles" style="grid-template-columns:1fr">'+
 '<div class="tile"><b>1. Personaliza tu portada</b><small>Cambia el título, la descripción y el botón principal.</small></div>'+
@@ -568,6 +700,7 @@ function checkBeforePublish(){
    if(!b.visible)return;
    if(String(b.title||"").trim().length<2)
     issue("error","BLOCK_TITLE",label+": una sección visible no tiene título.","visual");
+   if(b.type==="contact")issue("warning","CONTACT_DEMO",label+": el formulario de contacto solo guarda solicitudes de demostración; antes de producción se requiere aviso de privacidad y protección antispam.","visual");
    if(b.type==="image"){
     if(!validImageSource(b.image))issue("warning","IMAGE_MISSING",label+": sección de imagen sin archivo cargado.","visual");
     else if(!String(b.alt||"").trim())issue("warning","IMAGE_ALT",label+": agrega texto alternativo descriptivo a la imagen.","visual");
@@ -759,7 +892,7 @@ function visualBuilder(){
 }
 function findBlock(id){return (site().draft.blocks||[]).find(function(b){return b.id===id;});}
 function redrawPreview(){
- var preview=$("visualPreview");if(preview)preview.innerHTML=previewCard(site().draft,"Borrador");
+ var preview=$("visualPreview");if(preview){preview.innerHTML=previewCard(site().draft,"Borrador");bindInquiryForms();}
 }
 function readVisualImage(file){
  return new Promise(function(resolve,reject){
@@ -1076,7 +1209,7 @@ function bindPageManager(){
 
 function render(){
 navDraw();
-var pages={inicio:intro,identidad:identity,configuracion:businessConfig,seo:siteSEO,medios:mediaLibrary,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,vista:preview,revision:preflightPanel,publicaciones:sitePublications,historial:history,dominio:domain,soporte:support};
+var pages={inicio:intro,identidad:identity,configuracion:businessConfig,seo:siteSEO,medios:mediaLibrary,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,consultas:inquiryInbox,vista:preview,revision:preflightPanel,publicaciones:sitePublications,historial:history,dominio:domain,soporte:support};
 $("content").innerHTML='<div class="card" style="margin-bottom:20px"><div class="row" style="justify-content:space-between;align-items:end"><div><div class="eyebrow">SESIÓN DE PRUEBA</div><p style="margin:5px 0 0;color:var(--muted)">Alterna negocios y roles ficticios para revisar el diseño. Esta selección NO es autenticación.</p></div><div class="row">'+dropdown()+'</div></div></div>'+pages[tab]();
 $("orgSwitch").onchange=function(){activeOrg=this.value;previewMode="draft";render();};
 $("roleSwitch").onchange=function(){activeRole=this.value;render();};
@@ -1085,6 +1218,8 @@ if(tab==="identidad")bindIdentity();
 if(tab==="configuracion")bindBusinessConfig();
 if(tab==="seo")bindSEO();
 if(tab==="medios")bindMediaLibrary();
+if(tab==="consultas")bindInquiryInbox();
+bindInquiryForms();
 if(tab==="catalogo"){var cf=$("categoryFilter");if(cf)cf.onchange=function(){selectedCategoryByOrg[activeOrg]=this.value;render();};}
 if(tab==="paginas"||tab==="plantillas")bindPageManager();
 $("pageSwitch").onchange=function(){activePageByOrg[activeOrg]=this.value;previewMode="draft";render();};
