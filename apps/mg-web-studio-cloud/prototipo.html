@@ -271,11 +271,8 @@ function openModal(kind,id){
  }
  if(kind==="site"){
   fields=input("title","Nombre del sitio","")+
-   select("clientId","Empresa",state.clients.map(x=>x.id),"")+ 
-   '<p class="small field full">Los códigos corresponden a los negocios de ejemplo. No se crearán sitios ni dominios reales.</p>';
-  fields=fields.replace(/<option value="(c\d+)"/g,(whole,id)=>{
-   const c=clientById(id);return whole.replace('>'+id+'</option>','>'+clean(c?.name||id)+'</option>');
-  });
+   '<label class="field">Empresa<select name="clientId" required>'+clientOptions(state.clients[0]?.id)+'</select></label>'+
+   '<p class="small field full">Solo se seleccionan negocios ficticios. No se crearán sitios ni dominios reales.</p>';
  }
  if(kind==="ticket"||kind==="editTicket"){
   const ticket=kind==="editTicket"?item:null;
