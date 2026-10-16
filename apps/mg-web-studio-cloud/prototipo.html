@@ -208,13 +208,17 @@ function validateDemoEmail(value){
  return email.length>=8&&email.length<=150&&/^[a-z0-9._%+-]+@[a-z0-9.-]+\.invalid$/.test(email)&&
   !email.includes("..")&&!email.endsWith("@.invalid");
 }
+function invitationStillGrantsAccess(i){
+ return i.status==="Preparada"||i.status==="Aceptada (demo)"&&
+  state.members.some(m=>m.invitationId===i.id&&m.status==="Activo (demo)");
+}
 function createInvitation(info){
  const c=clientById(info&&info.clientId),role=String(info&&info.role||""),email=String(info&&info.email||"").trim().toLowerCase();
  if(!c||!permitted(role,INVITATION_ROLES))return {ok:false,error:"Cliente o rol no válido."};
  if(!validateDemoEmail(email))return {ok:false,error:"Utiliza un correo ficticio terminado en .invalid. No introduzcas direcciones reales."};
- if(state.invitations.some(i=>i.clientId===c.id&&i.email===email&&i.status!=="Revocada"))
+ if(state.invitations.some(i=>i.clientId===c.id&&i.email===email&&invitationStillGrantsAccess(i)))
   return {ok:false,error:"Ya existe una invitación no revocada para ese correo de ejemplo."};
- if(role==="CLIENT_OWNER"&&state.invitations.some(i=>i.clientId===c.id&&i.role===role&&i.status!=="Revocada"))
+ if(role==="CLIENT_OWNER"&&state.invitations.some(i=>i.clientId===c.id&&i.role===role&&invitationStillGrantsAccess(i)))
   return {ok:false,error:"Este cliente ya tiene una invitación de propietario pendiente o aceptada en la demo."};
  const scope=privilegedRole(role)?"all":"selected",siteIds=scope==="selected"?[String(info.siteId||"")]:[];
  const scopeError=validateMemberScope(c.id,role,scope,siteIds);
@@ -347,6 +351,17 @@ function memberPanel(){
  (listed.length?"":'<div class="empty">Aún no existen miembros en esta vista. Prepara y acepta una invitación ficticia desde «Invitaciones».</div>')+'</section>'+
  '<section class="card" style="margin-top:18px"><h2>Matriz referencial de permisos</h2><p class="small">Roles propuestos para el CMS; su verificación en el navegador no constituye seguridad.</p>'+
  permissionTable+'</section>'+
+ '<section class="card" style="margin-top:17px"><h2>Comprobador de acceso (solo demo)</h2>'+
+ '<p class="small">Selecciona un colaborador, un sitio y una acción para visualizar la decisión simulada. No prueba seguridad real.</p>'+
+ '<div class="filterbar">'+
+ '<label class="field">Colaborador<select id="accessMember">'+state.members.filter(m=>m.status==="Activo (demo)").map(m=>
+ '<option value="'+clean(m.id)+'">'+clean(clientName(m.clientId)+" · "+m.email+" · "+m.role)+'</option>').join("")+'</select></label>'+
+ '<label class="field">Sitio<select id="accessSite">'+state.sites.map(site=>
+ '<option value="'+clean(site.id)+'">'+clean(clientName(site.clientId)+" · "+site.title)+'</option>').join("")+'</select></label>'+
+ '<label class="field">Acción<select id="accessAction">'+MEMBER_ACTIONS.map(x=>
+ '<option value="'+clean(x[0])+'">'+clean(x[1])+'</option>').join("")+'</select></label>'+
+ '</div><button class="secondary" id="checkAccessDemo" type="button" '+(state.members.some(m=>m.status==="Activo (demo)")?"":"disabled")+'>Comprobar permiso</button>'+
+ '<div id="accessResult" class="note">Selecciona valores y pulsa comprobar. Toda autorización real deberá verificarla el backend.</div></section>'+
  tip("Solo el SUPERADMIN real, con MFA y autorización comprobada, podrá otorgar o revocar accesos. La demostración permite experimentar con roles ficticios y jamás crea usuarios, cambia contraseñas o envía invitaciones.",true);
 }
 
@@ -499,6 +514,10 @@ function render(){
   const r=setInvitationStatus(b.dataset.revokeInvite,"Revocada");if(!r.ok)toast(r.error);render();
  });
  const invFilter=$("inviteFilter");if(invFilter)invFilter.onchange=()=>{state.filters.inviteStatus=invFilter.value;render();};
+ const checkAccess=$("checkAccessDemo");if(checkAccess)checkAccess.onclick=()=>{
+  const granted=canDemoMember($("accessMember").value,$("accessSite").value,$("accessAction").value);
+  $("accessResult").textContent=(granted?"Permitido":"Denegado")+" SOLO EN DEMO. Esta comprobación no habilita ni restringe accesos reales.";
+ };
  const mf=$("memberOrgFilter");if(mf)mf.onchange=()=>{state.filters.memberClientId=mf.value;render();};
  const ms=$("memberStatusFilter");if(ms)ms.onchange=()=>{state.filters.memberStatus=ms.value;render();};
  view.querySelectorAll("[data-edit-member]").forEach(b=>b.onclick=()=>openModal("member",b.dataset.editMember));
