@@ -94,12 +94,12 @@ const BILLING_STATES=["No configurada","Pendiente","Activa","En pausa","Cancelad
 const CYCLES=["Mensual","Anual"];
 const TICKET_STATES=["Abierto","En seguimiento","Resuelto","Cerrado"];
 const PRIORITIES=["Baja","Media","Alta"];
-const NAV=[["dashboard","▦","Dashboard"],["clientes","♧","Clientes"],["incorporacion","✓","Incorporación"],["invitaciones","✉","Invitaciones"],["sitios","▣","Sitios web"],
+const NAV=[["dashboard","▦","Dashboard"],["clientes","♧","Clientes"],["incorporacion","✓","Incorporación"],["invitaciones","✉","Invitaciones"],["usuarios","♙","Usuarios y permisos"],["sitios","▣","Sitios web"],
  ["plantillas","▤","Plantillas"],["dominios","◎","Dominios y hosting"],
  ["suscripciones","▥","Suscripciones"],["soporte","◇","Soporte"],
  ["reportes","↗","Reportes"],["auditoria","◷","Actividad demo"],["ajustes","⚙","Configuración"]];
 const state={
- section:"dashboard",filters:{clientText:"",clientState:"Todos",ticketState:"Todos",inviteStatus:"Todos"},selectedOnboardClientId:"c1",invitations:[],
+ section:"dashboard",filters:{clientText:"",clientState:"Todos",ticketState:"Todos",inviteStatus:"Todos",memberClientId:"Todos",memberStatus:"Activo (demo)"},selectedOnboardClientId:"c1",invitations:[],members:[],
  clients:[
   {id:"c1",code:"CLI-001",name:"Panadería Horizonte (ejemplo)",plan:"Crece",status:"Activo",
    subscription:{cycle:"Mensual",status:"No configurada",referenceDate:"",note:""}},
@@ -172,7 +172,7 @@ function overview(){
 }
 function onboardingSummary(c){
  const linkedSites=state.sites.filter(s=>s.clientId===c.id);
- const acceptedOwner=state.invitations.some(i=>i.clientId===c.id&&i.role==="CLIENT_OWNER"&&i.status==="Aceptada (demo)");
+ const acceptedOwner=activeMembers(c.id).some(m=>m.role==="CLIENT_OWNER");
  const flags=ONBOARDING_STEPS.map(x=>Boolean(c.onboarding.steps[x.id]));
  const completed=flags.filter(Boolean).length+Number(linkedSites.length>0)+Number(acceptedOwner);
  const total=ONBOARDING_STEPS.length+2;
@@ -216,7 +216,11 @@ function createInvitation(info){
   return {ok:false,error:"Ya existe una invitación no revocada para ese correo de ejemplo."};
  if(role==="CLIENT_OWNER"&&state.invitations.some(i=>i.clientId===c.id&&i.role===role&&i.status!=="Revocada"))
   return {ok:false,error:"Este cliente ya tiene una invitación de propietario pendiente o aceptada en la demo."};
- const invite={id:makeId("i"),clientId:c.id,email,role,status:"Preparada",createdAt:new Date().toLocaleString("es-EC")};
+ const scope=privilegedRole(role)?"all":"selected",siteIds=scope==="selected"?[String(info.siteId||"")]:[];
+ const scopeError=validateMemberScope(c.id,role,scope,siteIds);
+ if(scopeError)return {ok:false,error:scopeError};
+ if(activeMembers(c.id).some(m=>m.email===email))return {ok:false,error:"Este correo ficticio ya tiene acceso activo a este negocio."};
+ const invite={id:makeId("i"),clientId:c.id,email,role,scope,siteIds,status:"Preparada",createdAt:new Date().toLocaleString("es-EC")};
  state.invitations.unshift(invite);
  logEvent("Invitación ficticia preparada",c.name+" · "+email+" · "+role+" (sin envío)");
  return {ok:true,invite};
@@ -225,11 +229,127 @@ function setInvitationStatus(id,next){
  const invitation=state.invitations.find(i=>i.id===id);
  if(!invitation||!permitted(next,["Aceptada (demo)","Revocada"]))return {ok:false,error:"Invitación o estado inválidos."};
  if(invitation.status!=="Preparada")return {ok:false,error:"Solo se pueden simular respuestas sobre invitaciones preparadas."};
+ if(next==="Aceptada (demo)"){
+  const grant=activateMembershipForInvitation(invitation);
+  if(!grant.ok)return grant;
+ }
  invitation.status=next;
  const c=clientById(invitation.clientId);if(c)adjustOnboarding(c);
  logEvent("Invitación ficticia actualizada",clientName(invitation.clientId)+" · "+next+" · sin correo enviado");
  return {ok:true};
 }
+
+/* SIMULACIÓN de membresías. Ninguna función es una autorización segura.
+ En producción solo el servidor puede verificar usuario, tenant, rol, sitio y acción. */
+const MEMBER_STATES=["Activo (demo)","Revocado"];
+const MEMBER_ACTIONS=[
+ ["read","Leer contenido y vista previa"],
+ ["edit","Editar borradores y medios"],
+ ["publish","Simular publicación"],
+ ["users","Gestionar colaboradores"],
+ ["support","Consultar soporte del negocio"],
+ ["billing","Administrar suscripciones"]
+];
+const ROLE_MATRIX={
+ CLIENT_OWNER:{read:true,edit:true,publish:true,users:true,support:true,billing:true},
+ CLIENT_ADMIN:{read:true,edit:true,publish:true,users:true,support:true,billing:false},
+ CLIENT_EDITOR:{read:true,edit:true,publish:false,users:false,support:false,billing:false},
+ CLIENT_VIEWER:{read:true,edit:false,publish:false,users:false,support:false,billing:false}
+};
+const privilegedRole=role=>role==="CLIENT_OWNER"||role==="CLIENT_ADMIN";
+function memberFor(id){return state.members.find(m=>m.id===id)||null;}
+function activeMembers(clientId){return state.members.filter(m=>m.clientId===clientId&&m.status==="Activo (demo)");}
+function canDemoMember(memberId,siteId,action){
+ const m=memberFor(memberId),site=state.sites.find(s=>s.id===siteId);
+ if(!m||!site||m.status!=="Activo (demo)"||m.clientId!==site.clientId)return false;
+ if(!Object.prototype.hasOwnProperty.call(ROLE_MATRIX[m.role]||{},action)||!ROLE_MATRIX[m.role][action])return false;
+ if(m.scope==="all")return privilegedRole(m.role);
+ return m.scope==="selected"&&m.siteIds.includes(siteId);
+}
+function memberSiteNames(member){
+ if(member.scope==="all")return "Todos los sitios del negocio";
+ return member.siteIds.map(id=>state.sites.find(s=>s.id===id))
+  .filter(s=>s&&s.clientId===member.clientId).map(s=>s.title).join(", ")||"Sin sitios";
+}
+function validateMemberScope(clientId,role,scope,siteIds){
+ if(!permitted(role,INVITATION_ROLES))return "Rol no válido.";
+ if(privilegedRole(role)){
+  if(scope!=="all"||siteIds.length)return "Propietario y administrador deben abarcar el negocio completo.";
+ }else{
+  if(scope!=="selected"||siteIds.length!==1)return "Selecciona un sitio específico para el editor o visor.";
+  const site=state.sites.find(s=>s.id===siteIds[0]);
+  if(!site||site.clientId!==clientId)return "No se puede asignar un sitio perteneciente a otro negocio.";
+ }
+ return null;
+}
+function saveMemberAccess(id,next){
+ const m=memberFor(id);if(!m||m.status!=="Activo (demo)")return {ok:false,error:"No existe una membresía activa."};
+ const newRole=String(next.role||""),scope=privilegedRole(newRole)?"all":"selected",siteIds=scope==="selected"?[String(next.siteId||"")]:[];
+ if(m.role==="CLIENT_OWNER"||newRole==="CLIENT_OWNER")return {ok:false,error:"No se puede transferir o modificar propietarios desde la demostración."};
+ const err=validateMemberScope(m.clientId,newRole,scope,siteIds);
+ if(err)return {ok:false,error:err};
+ m.role=newRole;m.scope=scope;m.siteIds=siteIds;
+ logEvent("Permisos ficticios modificados",clientName(m.clientId)+" · "+m.email+" · "+newRole);
+ return {ok:true};
+}
+function revokeMembership(id){
+ const m=memberFor(id);
+ if(!m||m.status!=="Activo (demo)")return {ok:false,error:"Membresía no activa."};
+ if(m.role==="CLIENT_OWNER"&&activeMembers(m.clientId).filter(x=>x.role==="CLIENT_OWNER").length<=1)
+  return {ok:false,error:"No es posible retirar al único propietario del negocio."};
+ m.status="Revocado";
+ const c=clientById(m.clientId);if(c)adjustOnboarding(c);
+ logEvent("Acceso ficticio revocado",clientName(m.clientId)+" · "+m.email);
+ return {ok:true};
+}
+function activateMembershipForInvitation(invitation){
+ const clientId=invitation.clientId,role=invitation.role;
+ const existing=activeMembers(clientId).find(m=>m.email===invitation.email);
+ if(existing)return {ok:false,error:"Ya hay una membresía activa con ese correo ficticio en la organización."};
+ const scope=invitation.scope,siteIds=[...(invitation.siteIds||[])];
+ const err=validateMemberScope(clientId,role,scope,siteIds);
+ if(err)return {ok:false,error:err};
+ if(role==="CLIENT_OWNER"&&activeMembers(clientId).some(m=>m.role==="CLIENT_OWNER"))
+  return {ok:false,error:"El negocio ya tiene un propietario de demostración."};
+ const m={id:makeId("m"),clientId:clientId,email:invitation.email,
+  role:role,scope:scope,siteIds:siteIds,status:"Activo (demo)",invitationId:invitation.id};
+ state.members.push(m);
+ logEvent("Membresía ficticia activada",clientName(clientId)+" · "+invitation.email+" · "+role+" (sin cuenta)");
+ return {ok:true,member:m};
+}
+function siteChoices(clientId,selected){
+ return state.sites.filter(s=>s.clientId===clientId).map(s=>
+  '<option value="'+clean(s.id)+'" '+(s.id===selected?"selected":"")+'>'+clean(s.title)+'</option>').join("");
+}
+function memberPanel(){
+ const fc=state.filters.memberClientId,fs=state.filters.memberStatus;
+ const listed=state.members.filter(m=>(fc==="Todos"||m.clientId===fc)&&(fs==="Todos"||m.status===fs));
+ const clients=[{id:"Todos",name:"Todos los negocios"},...state.clients];
+ const clientOpts=clients.map(c=>'<option value="'+clean(c.id)+'" '+(fc===c.id?"selected":"")+'>'+clean(c.name)+'</option>').join("");
+ const roleHeaders=ROLE_MATRIX;
+ const permissionTable=table(["ROL",...MEMBER_ACTIONS.map(x=>x[0].toUpperCase())],
+  INVITATION_ROLES.map(role=>[clean(role),...MEMBER_ACTIONS.map(x=>
+   '<span class="admin-badge '+(roleHeaders[role][x[0]]?"":"muted")+'">'+(roleHeaders[role][x[0]]?"Sí":"No")+'</span>')]));
+ return header("Usuarios y permisos por organización","Simula colaboradores y asignaciones de sitios. Los permisos reales solo existirán tras integrar autenticación y políticas en servidor.")+
+ '<div class="grid admin-kpis">'+
+ metric("Membresías activas ficticias",state.members.filter(m=>m.status==="Activo (demo)").length,"No son cuentas reales")+
+ metric("Organizaciones representadas",new Set(state.members.filter(m=>m.status==="Activo (demo)").map(m=>m.clientId)).size,"Aislamiento solo lógico en la demo")+
+ metric("Revocaciones de ejemplo",state.members.filter(m=>m.status==="Revocado").length,"No se cierra ninguna sesión real")+'</div>'+
+ '<section class="card"><h2>Colaboradores</h2><div class="filterbar">'+
+ '<label class="field">Empresa<select id="memberOrgFilter">'+clientOpts+'</select></label>'+
+ '<label class="field">Estado<select id="memberStatusFilter">'+optionList(["Todos",...MEMBER_STATES],fs)+'</select></label></div>'+
+ table(["NEGOCIO","COLABORADOR FICTICIO","ROL","ACCESO A SITIOS","ESTADO","ACCIONES"],
+  listed.map(m=>[clean(clientName(m.clientId)),clean(m.email),clean(m.role),
+   clean(memberSiteNames(m)),status(m.status),
+   m.status==="Activo (demo)"?'<button class="secondary" data-edit-member="'+clean(m.id)+'" '+(m.role==="CLIENT_OWNER"?"disabled":"")+'>Permisos</button> '+
+   '<button class="danger" data-revoke-member="'+clean(m.id)+'" '+(m.role==="CLIENT_OWNER"&&activeMembers(m.clientId).filter(x=>x.role==="CLIENT_OWNER").length===1?"disabled":"")+'>Revocar</button>':
+   '<span class="small">Revocado</span>']))+
+ (listed.length?"":'<div class="empty">Aún no existen miembros en esta vista. Prepara y acepta una invitación ficticia desde «Invitaciones».</div>')+'</section>'+
+ '<section class="card" style="margin-top:18px"><h2>Matriz referencial de permisos</h2><p class="small">Roles propuestos para el CMS; su verificación en el navegador no constituye seguridad.</p>'+
+ permissionTable+'</section>'+
+ tip("Solo el SUPERADMIN real, con MFA y autorización comprobada, podrá otorgar o revocar accesos. La demostración permite experimentar con roles ficticios y jamás crea usuarios, cambia contraseñas o envía invitaciones.",true);
+}
+
 function onboarding(){
  const c=clientById(state.selectedOnboardClientId)||state.clients[0];
  if(!c)return header("Incorporación de clientes","No hay clientes de demostración.");
@@ -267,8 +387,8 @@ function invitations(){
  metric("Preparadas",state.invitations.filter(i=>i.status==="Preparada").length,"Sin tokens ni enlaces")+
  metric("Aceptadas (simuladas)",state.invitations.filter(i=>i.status==="Aceptada (demo)").length,"Sin cuentas creadas")+'</div>'+
  '<section class="card"><div class="filterbar"><label class="field">Estado<select id="inviteFilter">'+optionList(["Todos",...INVITATION_STATES],f)+'</select></label></div>'+
- table(["EMPRESA","CORREO FICTICIO","ROL","ESTADO","ACCIONES"],items.map(i=>[
- clean(clientName(i.clientId)),clean(i.email),clean(i.role),status(i.status),
+ table(["EMPRESA","CORREO FICTICIO","ROL","ALCANCE","ESTADO","ACCIONES"],items.map(i=>[
+ clean(clientName(i.clientId)),clean(i.email),clean(i.role),clean(i.scope==="all"?"Todos los sitios":memberSiteNames(i)),status(i.status),
  i.status==="Preparada"?'<button class="secondary" data-accept-invite="'+clean(i.id)+'">Simular aceptación</button> '+
  '<button class="danger" data-revoke-invite="'+clean(i.id)+'">Revocar</button>':
  '<span class="small">Sin acciones</span>'
@@ -336,7 +456,7 @@ function generic(title,desc,items,note){
 }
 function pageForSection(){
  return {
- dashboard:overview,clientes:clients,incorporacion:onboarding,invitaciones:invitations,sitios:sites,plantillas:templates,
+ dashboard:overview,clientes:clients,incorporacion:onboarding,invitaciones:invitations,usuarios:memberPanel,sitios:sites,plantillas:templates,
  dominios:()=>generic("Dominios y hosting","Servicios técnicos para los sitios de clientes.",
  [["DOMINIOS","Propiedad","Verificar titularidad y autorización antes de cualquier conexión."],
  ["ALOJAMIENTO","Recursos","Consumo y alojamiento de cada sitio, aún sin proveedor."],
@@ -379,6 +499,13 @@ function render(){
   const r=setInvitationStatus(b.dataset.revokeInvite,"Revocada");if(!r.ok)toast(r.error);render();
  });
  const invFilter=$("inviteFilter");if(invFilter)invFilter.onchange=()=>{state.filters.inviteStatus=invFilter.value;render();};
+ const mf=$("memberOrgFilter");if(mf)mf.onchange=()=>{state.filters.memberClientId=mf.value;render();};
+ const ms=$("memberStatusFilter");if(ms)ms.onchange=()=>{state.filters.memberStatus=ms.value;render();};
+ view.querySelectorAll("[data-edit-member]").forEach(b=>b.onclick=()=>openModal("member",b.dataset.editMember));
+ view.querySelectorAll("[data-revoke-member]").forEach(b=>b.onclick=()=>{
+  if(!confirm("¿Revocar el acceso ficticio de este colaborador?"))return;
+  const r=revokeMembership(b.dataset.revokeMember);if(!r.ok)toast(r.error);render();
+ });
  view.querySelectorAll("[data-edit-ticket]").forEach(b=>b.onclick=()=>openModal("editTicket",b.dataset.editTicket));
  view.querySelectorAll("[data-edit-sub]").forEach(b=>b.onclick=()=>openModal("subscription",b.dataset.editSub));
  view.querySelectorAll("[data-inspect-site]").forEach(b=>b.onclick=()=>{
@@ -404,10 +531,11 @@ function textarea(name,title,text){
 }
 function openModal(kind,id){
  const item=kind==="editClient"||kind==="subscription"?clientById(id):
- kind==="editTicket"?state.tickets.find(t=>t.id===id):null;
- if(["editClient","subscription","editTicket"].includes(kind)&&!item){toast("No se encontró el registro.");return;}
+ kind==="editTicket"?state.tickets.find(t=>t.id===id):
+ kind==="member"?memberFor(id):null;
+ if(["editClient","subscription","editTicket","member"].includes(kind)&&!item){toast("No se encontró el registro.");return;}
  const titles={client:"Nuevo cliente",editClient:"Administrar cliente",site:"Nuevo sitio",
- ticket:"Nuevo ticket de soporte",editTicket:"Gestionar ticket",subscription:"Configurar suscripción",invitation:"Preparar invitación ficticia"};
+ ticket:"Nuevo ticket de soporte",editTicket:"Gestionar ticket",subscription:"Configurar suscripción",invitation:"Preparar invitación ficticia",member:"Configurar acceso por sitio (demo)"};
  $("dialogTitle").textContent=titles[kind];
  $("dialogLead").textContent="Datos ficticios. No se modificarán cuentas, contratos ni suscripciones reales.";
  let fields="";
@@ -416,11 +544,19 @@ function openModal(kind,id){
    select("plan","Plan (demo)",PLANS,item?.plan||"Start")+
    select("status","Estado del cliente",CLIENT_STATES,item?.status||"Propuesta");
  }
+ if(kind==="member"){
+  if(item.status!=="Activo (demo)"||item.role==="CLIENT_OWNER"){toast("No puedes modificar este miembro desde la demo.");return;}
+  fields='<p class="field full small">Negocio: '+clean(clientName(item.clientId))+' · '+clean(item.email)+'</p>'+
+   select("role","Rol del colaborador",["CLIENT_ADMIN","CLIENT_EDITOR","CLIENT_VIEWER"],item.role)+
+   '<label class="field full" id="memberSiteWrap">Sitio permitido<select id="memberSite" name="siteId">'+siteChoices(item.clientId,item.siteIds[0])+'</select></label>'+
+   '<p class="small field full">Solo un sitio para EDITOR/VIEWER; ADMIN dispone de todo el negocio. El propietario no puede transferirse desde este formulario.</p>';
+ }
  if(kind==="invitation"){
   fields='<label class="field">Cliente ficticio<select required name="clientId">'+clientOptions(state.selectedOnboardClientId)+'</select></label>'+
    select("role","Rol de ejemplo",INVITATION_ROLES,"CLIENT_OWNER")+
    '<label class="field full">Correo de ejemplo (.invalid)<input name="email" type="email" required maxlength="150" placeholder="persona@empresa.invalid" autocomplete="off"></label>'+
-   '<p class="small field full">No utilices correos reales. Se creará un registro de invitación, sin enviar ningún mensaje.</p>';
+   '<label class="field full" id="inviteSiteWrap">Sitio para EDITOR/VIEWER<select id="inviteSite" name="siteId"></select></label>'+ 
+   '<p class="small field full">No utilices correos reales. Para EDITOR o VIEWER debes seleccionar un sitio de la misma empresa; OWNER y ADMIN acceden a todos los sitios del negocio.</p>';
  }
  if(kind==="site"){
   fields=input("title","Nombre del sitio","")+
@@ -445,6 +581,27 @@ function openModal(kind,id){
    textarea("note","Observación interna",item.subscription.note);
  }
  $("fields").innerHTML=fields;
+ if(kind==="invitation"){
+  const sync=()=>{
+   const clientId=$("fields").querySelector('[name="clientId"]').value;
+   const role=$("fields").querySelector('[name="role"]').value;
+   const restricted=!privilegedRole(role);
+   const wrap=$("inviteSiteWrap"),siteSelect=$("inviteSite");
+   wrap.style.display=restricted?"":"none";
+   siteSelect.required=restricted;
+   siteSelect.innerHTML=siteChoices(clientId);
+  };
+  $("fields").querySelector('[name="clientId"]').onchange=sync;
+  $("fields").querySelector('[name="role"]').onchange=sync;
+  sync();
+ }
+ if(kind==="member"){
+  const roleInput=$("fields").querySelector('[name="role"]');
+  const sync=()=>{const restricted=!privilegedRole(roleInput.value);
+    $("memberSiteWrap").style.display=restricted?"":"none";
+    $("memberSite").required=restricted;};
+  roleInput.onchange=sync;sync();
+ }
  $("dialog").dataset.kind=kind;
  $("dialog").dataset.recordId=id||"";
  $("dialog").showModal();
@@ -458,6 +615,7 @@ function validateDate(v){
 function applyRecord(kind,id,data){
  const name=String(data.name||"").trim(),title=String(data.title||"").trim();
  if(kind==="invitation")return createInvitation(data);
+ if(kind==="member")return saveMemberAccess(id,data);
  if(kind==="client"){
   if(name.length<2||name.length>90||!permitted(data.plan,PLANS)||!permitted(data.status,CLIENT_STATES))return {ok:false,error:"Revisa el nombre, plan y estado."};
   const c={id:makeId("c"),code:"DEMO-"+String(state.seq).padStart(3,"0"),name,plan:data.plan,status:data.status,
