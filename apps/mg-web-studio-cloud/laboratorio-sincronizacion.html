@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="es">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MG WEB STUDIO CLOUD · Laboratorio de sincronización</title>
+<style>
+:root{font-family:Inter,system-ui,Arial,sans-serif;color:#e8f1fb;background:#081523;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top right,#152e4a 0%,#081523 60%);min-height:100vh}
+main{max-width:1140px;margin:auto;padding:34px 24px 70px}h1{font-size:clamp(24px,3vw,36px);letter-spacing:-1px;margin:10px 0 12px}h2{font-size:17px;margin:0 0 12px}p{line-height:1.55;color:#b4c9dc;font-size:13px}
+a{color:#82d7ff}header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap}
+.eyebrow{font-size:11px;color:#5bc8f2;letter-spacing:.12em;font-weight:900}.sub{max-width:740px}.navlinks{display:flex;gap:8px;flex-wrap:wrap}
+.link,.button{border:1px solid #2a4a62;border-radius:10px;padding:11px 14px;background:#13293d;color:#e5f0fd;text-decoration:none;font-weight:750;font-size:12px;cursor:pointer}
+.button.primary{background:linear-gradient(95deg,#067db4,#384eae);border-color:#3e9adb}
+.button.danger{background:#623c1b;border-color:#926544}
+button:disabled{opacity:.5;cursor:not-allowed}
+.panel,.alert{background:rgba(18,36,55,.84);border:1px solid #29435a;border-radius:16px;padding:19px}
+.alert{border-color:#715c33;background:rgba(104,73,21,.18);font-size:12px;line-height:1.6;margin:24px 0}
+label{font-size:12px;font-weight:700;display:grid;gap:8px;color:#b3ccdd}input,select{border-radius:9px;border:1px solid #37536c;background:#081b2c;color:#e6f6ff;padding:11px 10px;font-size:13px;width:100%}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:18px 0}
+.stat{background:#102337;border:1px solid #274155;border-radius:13px;padding:15px}.stat span{font-size:11px;color:#99b5c8;display:block}.stat strong{display:block;font-size:24px;margin-top:5px}
+.row{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin-top:12px}.mini{font-size:11px;color:#a6c2d7}
+.code{font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;color:#89d4f5}
+.status{font-size:12px;font-weight:700;padding:10px;border-radius:9px;background:#0c263b;min-height:38px;margin-top:13px;border:1px solid #294c65}
+.log{list-style:none;padding:0;margin:0;display:grid;gap:8px;max-height:230px;overflow:auto}
+.log li{padding:9px 12px;border-radius:9px;background:#0a2033;color:#bde1f9;font-size:11px;word-break:break-word}
+.releases{display:grid;gap:9px}.releases article{padding:11px;background:#0b2235;border-radius:9px;font-size:12px}
+footer{margin-top:25px;color:#8ba9bc;font-size:11px}
+@media(max-width:790px){main{padding:22px 14px 52px}.grid,.stats{grid-template-columns:1fr}.panel{padding:16px}}
+</style>
+</head><body><main>
+<header><div><div class="eyebrow">MG DIGITAL SOLUTIONS / ARQUITECTURA SIN COSTOS</div>
+<h1>Laboratorio de versiones y sincronización</h1>
+<p class="sub">Prueba dos editores sobre un mismo documento ficticio, detecta conflictos de edición y conserva publicaciones históricas, sin base de datos, cuentas ni despliegues.</p></div>
+<nav class="navlinks"><a class="link" href="./prototipo.html">SUPERADMIN demo</a><a class="link" href="./portal-cliente.html">Portal emprendedor</a></nav></header>
+<div class="alert"><strong>IMPORTANTE:</strong> todos los datos se encuentran en una única instancia JavaScript de este laboratorio. La sincronización aquí solo funciona <strong>dentro de esta página</strong>. No persiste al recargar y no vincula pestañas, la web real ni los otros dos paneles. No introduzcas datos personales reales.</div>
+<section class="panel"><label>Selecciona el negocio ficticio<select id="business"><option value="c1">Café Horizonte · Crece</option><option value="c2">Papelería Nube · Start</option></select></label>
+<div class="stats"><div class="stat"><span>Versión actual en memoria</span><strong id="centralVersion">1</strong></div><div class="stat"><span>Publicaciones del sitio</span><strong id="releasesCount">0</strong></div><div class="stat"><span>Estado</span><strong style="font-size:16px" id="mode">Demo local</strong></div></div>
+<p class="mini" id="businessInfo">El servidor simulado comprobará roles, organización, sitio y versión antes de aceptar cambios.</p></section>
+<div class="grid" style="margin-top:18px">
+<section class="panel"><div class="eyebrow">PANEL A · PROPIETARIO FICTICIO</div><h2>Control editorial</h2>
+<div class="mini">Versión observada: <strong id="ownerVersion">—</strong></div>
+<label style="margin-top:12px">Título de portada<input id="ownerTitle" maxlength="150" value=""></label>
+<div class="row"><button id="ownerRefresh" class="button">Actualizar lectura</button>
+<button id="ownerSave" class="button">Guardar cambios</button>
+<button id="ownerPublish" class="button primary">Publicar versión demo</button></div>
+<div class="status" id="ownerStatus" role="status">Sin operaciones.</div></section>
+<section class="panel"><div class="eyebrow">PANEL B · EDITOR FICTICIO</div><h2>Editor de contenido</h2>
+<div class="mini">Versión observada: <strong id="editorVersion">—</strong></div>
+<label style="margin-top:12px">Título de portada<input id="editorTitle" maxlength="150" value=""></label>
+<div class="row"><button id="editorRefresh" class="button">Actualizar lectura</button>
+<button id="editorSave" class="button primary">Guardar cambios</button>
+<button id="editorPublish" class="button" disabled title="EDITOR no publica">Publicar (bloqueado)</button></div>
+<div class="status" id="editorStatus" role="status">Sin operaciones.</div></section>
+</div>
+<div class="grid" style="margin-top:18px">
+<section class="panel"><h2>Eventos locales</h2><p>Al guardar, se emite un evento interno. La otra pantalla no actualiza su versión observada hasta que pulses «Actualizar lectura», reproduciendo un conflicto de concurrencia.</p>
+<ul id="events" class="log"><li>Sin eventos.</li></ul></section>
+<section class="panel"><h2>Versiones publicadas</h2><p>Publicar copia el documento completo. Las revisiones anteriores no cambian si después editas el borrador.</p>
+<div id="releaseList" class="releases"><p>Sin publicaciones.</p></div></section></div>
+<footer>MG WEB STUDIO CLOUD · Laboratorio puramente local · Los precios, planes y funcionalidades de producción están pendientes de aprobación y pruebas.</footer>
+</main>
+<script src="./shared/mg-persistence-simulator.js"></script>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const api=window.MGWebStudioPersistence;
+if(!api){$("mode").textContent="Módulo no disponible";$("businessInfo").textContent="No se cargó el archivo compartido. Sirve ambos HTML y /shared desde el mismo origen para probarlo.";document.querySelectorAll("button").forEach(b=>b.disabled=true);return;}
+const directory={
+ organizations:[{id:"c1",name:"Café Horizonte"},{id:"c2",name:"Papelería Nube"}],
+ sites:[{id:"s1",clientId:"c1"},{id:"s2",clientId:"c2"}],
+ members:[
+  {id:"owner1",clientId:"c1",status:"Activo (demo)",role:"CLIENT_OWNER",scope:"all",siteIds:[]},
+  {id:"editor1",clientId:"c1",status:"Activo (demo)",role:"CLIENT_EDITOR",scope:"selected",siteIds:["s1"]},
+  {id:"owner2",clientId:"c2",status:"Activo (demo)",role:"CLIENT_OWNER",scope:"all",siteIds:[]},
+  {id:"editor2",clientId:"c2",status:"Activo (demo)",role:"CLIENT_EDITOR",scope:"selected",siteIds:["s2"]}
+ ]};
+const store=api.createRepository({directory:()=>directory,initialDocuments:[
+ {clientId:"c1",siteId:"s1",draft:{pages:[{id:"home",title:"Un café para compartir"}],shared:{brand:"Café Horizonte",products:[{name:"Café",price:2.5}]}}},
+ {clientId:"c2",siteId:"s2",draft:{pages:[{id:"home",title:"Ideas y color para crear"}],shared:{brand:"Papelería Nube",products:[{name:"Cuaderno",price:2.75}]}}}
+]});
+const views={owner:{version:0,draft:null},editor:{version:0,draft:null}};
+let active="c1",unsubscribe=null,serial=0,generation=0;
+const context=role=>({clientId:active,siteId:active==="c1"?"s1":"s2",memberId:(role==="owner"?"owner":"editor")+(active==="c1"?"1":"2")});
+function nextOperation(){return "demo-"+String(++serial).padStart(6,"0");}
+function status(role,message){$(role+"Status").textContent=message;}
+function log(event){let el=$("events");if(el.dataset.empty!=="no"){el.textContent="";el.dataset.empty="no";}
+ let li=document.createElement("li");li.textContent="v"+event.version+" · "+(event.kind==="publish"?"Sitio publicado":"Borrador guardado")+" · "+event.siteId;
+ el.prepend(li);while(el.children.length>14)el.lastElementChild.remove();}
+async function refresh(role,g= generation){
+ const answer=await store.readSite(context(role));if(g!==generation)return;
+ if(!answer.ok){status(role,"Acceso denegado (demo).");return;}
+ views[role].version=answer.version;views[role].draft=answer.draft;
+ $(role+"Version").textContent=answer.version;
+ $(role+"Title").value=answer.draft.pages.find(p=>p.id==="home").title;
+ status(role,"Borrador recuperado del repositorio local. Versión "+answer.version+".");
+ await updateMetrics(g);
+}
+async function updateMetrics(g=generation){
+ const r=await store.readSite(context("owner"));if(g!==generation)return;
+ if(r.ok){$("centralVersion").textContent=r.version;$("releasesCount").textContent=r.releases;}
+ const rel=await store.readReleases(context("owner"));if(g!==generation)return;
+ let list=$("releaseList");list.textContent="";
+ if(!rel.ok||!rel.items.length){list.textContent="Sin publicaciones.";return;}
+ rel.items.slice().reverse().forEach(x=>{
+  const card=document.createElement("article");const title=x.draft.pages.find(p=>p.id==="home");
+  card.textContent="Publicación #"+x.number+" · "+(title?title.title:"") +" · Copia independiente del borrador";
+  list.appendChild(card);
+ });
+}
+async function save(role){
+ let v=views[role];if(!v.draft){status(role,"Actualiza lectura primero.");return;}
+ const text=$(role+"Title").value.trim();if(text.length<2){status(role,"Escribe un título de mínimo 2 caracteres.");return;}
+ const changed=JSON.parse(JSON.stringify(v.draft));changed.pages.find(p=>p.id==="home").title=text;
+ const result=await store.saveDraft({context:context(role),expectedVersion:v.version,draft:changed,operationId:nextOperation()});
+ if(result.status===409){status(role,"CONFLICTO (409): otra pantalla guardó primero. Pulsa «Actualizar lectura» antes de intentar nuevamente.");}
+ else status(role,result.ok?"Guardado en memoria. Versión nueva: "+result.version+".":"No guardado: "+result.error);
+ await updateMetrics();
+}
+async function publish(){
+ const role="owner",v=views.owner;
+ const result=await store.publishSite({context:context(role),expectedVersion:v.version,operationId:nextOperation()});
+ if(result.status===409)status(role,"CONFLICTO (409): primero actualiza lectura y revisa los cambios.");
+ else status(role,result.ok?"Versión publicada SOLO EN DEMO: #"+result.releaseNumber+".":"No se publicó: "+result.error);
+ await updateMetrics();
+}
+async function switchBusiness(){
+ generation++;const g=generation;active=$("business").value;
+ if(unsubscribe)unsubscribe();unsubscribe=null;
+ views.owner={version:0,draft:null};views.editor={version:0,draft:null};
+ $("events").textContent="";$("events").dataset.empty="yes";
+ const sub=store.subscribe(context("owner"),function(e){if(g===generation)log(e);});
+ if(sub.ok)unsubscribe=sub.unsubscribe;
+ await refresh("owner",g);await refresh("editor",g);
+}
+$("business").onchange=()=>{switchBusiness();};
+$("ownerRefresh").onclick=()=>refresh("owner");
+$("editorRefresh").onclick=()=>refresh("editor");
+$("ownerSave").onclick=()=>save("owner");
+$("editorSave").onclick=()=>save("editor");
+$("ownerPublish").onclick=()=>publish();
+switchBusiness();
+})();
+</script>
+</body></html>
