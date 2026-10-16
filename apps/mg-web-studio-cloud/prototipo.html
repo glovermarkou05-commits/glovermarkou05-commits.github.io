@@ -162,6 +162,7 @@ function overview(){
  '<div class="grid kpis">'+metric("Clientes de ejemplo",state.clients.length,"Datos temporales")+
  metric("Clientes activos (demo)",active,"No hay cuentas reales")+
  metric("Sitios de ejemplo",state.sites.length,"Sin despliegues reales")+
+ metric("Incorporaciones listas",state.clients.filter(c=>onboardingSummary(c).ready).length,"Solo revisión ficticia")+
  metric("Tickets pendientes",pending,"No se envían alertas")+'</div>'+
  '<div class="grid split"><section class="card"><div class="section-head"><h2>Clientes y servicios</h2><span class="small">Estado del prototipo</span></div>'+
  table(["NEGOCIO","PLAN","CLIENTE","SUSCRIPCIÓN"],state.clients.map(c=>[clean(c.name),clean(c.plan),status(c.status),status(c.subscription.status)]))+'</section>'+
@@ -281,8 +282,8 @@ function clients(){
  '<section class="card"><div class="filterbar">'+
  '<label class="field">Buscar nombre o código<input id="clientSearch" maxlength="80" value="'+clean(state.filters.clientText)+'" placeholder="Buscar negocios..."></label>'+
  '<label class="field">Estado<select id="clientStateFilter">'+optionList(["Todos",...CLIENT_STATES],filter)+'</select></label></div>'+
- table(["CLIENTE","CÓDIGO","PLAN","ESTADO","SITIOS","ACCIONES"],list.map(c=>[
- clean(c.name),clean(c.code),clean(c.plan),status(c.status),String(state.sites.filter(s=>s.clientId===c.id).length),
+ table(["CLIENTE","CÓDIGO","PLAN","ESTADO","SITIOS","INCORPORACIÓN","ACCIONES"],list.map(c=>[
+ clean(c.name),clean(c.code),clean(c.plan),status(c.status),String(state.sites.filter(s=>s.clientId===c.id).length),status(onboardingSummary(c).status),
  '<button class="secondary" data-edit-client="'+clean(c.id)+'">Administrar</button> <button class="secondary" data-onboard-client="'+clean(c.id)+'">Incorporar</button>'
  ]))+(list.length?"":'<p class="empty">No se encontraron clientes con estos filtros.</p>')+'</section>'+footerNotice();
 }
@@ -461,13 +462,14 @@ function applyRecord(kind,id,data){
   if(name.length<2||name.length>90||!permitted(data.plan,PLANS)||!permitted(data.status,CLIENT_STATES))return {ok:false,error:"Revisa el nombre, plan y estado."};
   const c={id:makeId("c"),code:"DEMO-"+String(state.seq).padStart(3,"0"),name,plan:data.plan,status:data.status,
    subscription:{cycle:"Mensual",status:"No configurada",referenceDate:"",note:""},onboarding:freshOnboarding()};
-  state.clients.unshift(c);logEvent("Cliente de ejemplo creado",c.name);return {ok:true};
+  state.clients.unshift(c);state.selectedOnboardClientId=c.id;logEvent("Cliente de ejemplo creado",c.name);return {ok:true};
  }
  if(kind==="editClient"){
   const c=clientById(id);
   if(!c||name.length<2||name.length>90||!permitted(data.plan,PLANS)||!permitted(data.status,CLIENT_STATES))return {ok:false,error:"Cliente o datos inválidos."};
+  if(c.plan!==data.plan)c.onboarding.steps.plan=false;
   c.name=name;c.plan=data.plan;c.status=data.status;
- adjustOnboarding(c);
+  adjustOnboarding(c);
   logEvent("Cliente actualizado",c.name+" · "+c.plan+" · "+c.status);
   return {ok:true};
  }
@@ -497,6 +499,7 @@ function applyRecord(kind,id,data){
   if(!c||!permitted(data.plan,PLANS)||!permitted(data.cycle,CYCLES)||
     !permitted(data.status,BILLING_STATES)||!validateDate(String(data.referenceDate||""))||
     String(data.note||"").length>400)return {ok:false,error:"Revisa plan, fechas y estado de la suscripción."};
+  if(c.plan!==data.plan)c.onboarding.steps.plan=false;
   c.plan=data.plan;
   c.subscription={cycle:data.cycle,status:data.status,referenceDate:String(data.referenceDate||""),
     note:String(data.note||"").trim()};
