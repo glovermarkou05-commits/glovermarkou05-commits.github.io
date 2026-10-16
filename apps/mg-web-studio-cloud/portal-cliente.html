@@ -170,6 +170,7 @@ footer{padding-top:35px;color:#7794a9;font-size:11px}
 <div role="status" aria-live="polite" id="toast" class="toast"></div>
 <script src="./shared/mg-web-studio-services.js"></script>
 <script src="./shared/mg-ai-web-assistant-demo.js"></script>
+<script src="./shared/mg-proposal-exchange-demo.js"></script>
 <script>
 (function(){
 "use strict";
@@ -646,6 +647,11 @@ function aiWizardPage(){
  '<button class="secondary" data-ai-discard="true">Descartar propuesta</button></div>':
  '<div class="empty">Completa el formulario para obtener una propuesta de páginas, portada, contenido y SEO que podrás revisar antes de aplicar.</div>')+
  '</section></div>'+
+ '<section class="card" style="margin-top:18px"><h2>Recibir propuesta desde SUPERADMIN (manual · demo)</h2>'+
+ '<p class="hint">Pega aquí el paquete JSON de muestra entregado por la agencia. Se validarán empresa, sitio, plan y estructura antes de mostrarlo. No se aplicará automáticamente.</p>'+
+ '<form id="aiImportForm"><label class="field full">Paquete de propuesta ficticia<textarea id="aiImportText" name="packet" required maxlength="40000" rows="5" placeholder="Pega el JSON generado en SUPERADMIN; nunca incluyas datos reales."></textarea></label>'+
+ '<div class="sectionactions"><button type="submit" class="secondary">Validar y revisar propuesta</button></div></form>'+
+ '<div class="hint">El JSON no está firmado: este proceso NO certifica identidad ni autorización. No compartas información sensible.</div></section>'+
  '<div class="note warnnote">El texto es una plantilla orientativa generada mediante reglas. Utiliza datos ficticios. La propuesta nunca publica sitios, no altera productos o precios ni transmite información a terceros. Si aceptas, solo cambia los borradores de este negocio.</div>'+banner();
 }
 function createAIProposal(formData){
@@ -660,6 +666,17 @@ function createAIProposal(formData){
  aiProposalByOrg[activeOrg]={proposal:generated.proposal,signature:aiDraftSignature(),siteId:site().id};
  return {ok:true,proposal:generated.proposal};
 }
+
+function receiveAIProposalPackage(json){
+ const exchange=typeof window!=="undefined"&&window.MGWebProposalExchange;
+ if(!exchange)return {ok:false,error:"No está disponible el validador local de V10."};
+ const s=site();
+ const received=exchange.parsePackage(json,{clientId:activeOrg,siteId:s.id,plan:s.plan});
+ if(!received.ok)return received;
+ aiProposalByOrg[activeOrg]={proposal:received.data.proposal,signature:aiDraftSignature(),
+  siteId:s.id,origin:"manual-package"};
+ return {ok:true,proposal:received.data.proposal};
+}
 function applyAIProposal(){
  var entry=aiProposalByOrg[activeOrg],s=site();
  if(!entry||!entry.proposal)return {ok:false,error:"Primero prepara una propuesta."};
@@ -670,7 +687,9 @@ function applyAIProposal(){
  if(proposal.plan!==s.plan||proposal.pages.length>rule.pages)return {ok:false,error:"El plan o el límite de páginas ya no coincide."};
  var home=s.pages.find(function(pg){return pg.id==="home";});
  if(!home)return {ok:false,error:"No se encontró la página de inicio."};
- var newPages=proposal.pages.slice(1).filter(function(pg){return !s.pages.some(function(existing){return existing.slug===pg.slug;});});
+ var collision=proposal.pages.slice(1).find(function(pg){return s.pages.some(function(existing){return existing.slug===pg.slug;});});
+ if(collision)return {ok:false,error:"Ya existe una página con la ruta /"+collision.slug+". Revisa la propuesta antes de aplicarla."};
+ var newPages=proposal.pages.slice(1);
  if(s.pages.length+newPages.length>rule.pages)return {ok:false,error:"No hay suficientes páginas disponibles en este plan de demostración. Revisa páginas existentes."};
  // Validar ANTES de modificar cualquier borrador.
  if(!proposal.pages.every(function(pg){return pg.blocks.length<=rule.sections&&
@@ -694,6 +713,13 @@ function applyAIProposal(){
 }
 function bindAIWizard(){
  var form=$("aiWizardForm");
+ var inbound=$("aiImportForm");
+ if(inbound)inbound.onsubmit=function(e){
+  e.preventDefault();var typed=$("aiImportText").value;
+  var received=receiveAIProposalPackage(typed);
+  if(!received.ok){notice(received.error);return;}
+  render();notice("Paquete ficticio validado. Revisa las páginas antes de aplicar al borrador.");
+ };
  if(form)form.onsubmit=function(e){
   e.preventDefault();
   var info=Object.fromEntries(new FormData(form).entries());
