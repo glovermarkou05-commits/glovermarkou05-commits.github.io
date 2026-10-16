@@ -9,7 +9,7 @@
 *{box-sizing:border-box}body{margin:0;color:var(--text);font:14px/1.55 Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:radial-gradient(ellipse at 100% 0,rgba(68,139,207,.07),transparent 34%),var(--bg)}
 a{color:inherit;text-decoration:none}button,input,select,textarea{font:inherit}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
 .app{display:grid;grid-template-columns:265px 1fr;min-height:100vh}
-aside{border-right:1px solid var(--edge);background:var(--side);padding:28px 18px;display:flex;flex-direction:column;gap:20px}
+aside{border-right:1px solid var(--edge);background:var(--side);padding:28px 18px;display:flex;flex-direction:column;gap:20px;overflow-y:auto;max-height:100vh;position:sticky;top:0}
 .brand{display:flex;align-items:center;gap:11px;padding:0 11px 14px}.mark{background:linear-gradient(135deg,var(--cyan),var(--violet));color:#07111f;font-weight:1000;border-radius:13px;width:44px;height:44px;display:grid;place-items:center;letter-spacing:-2px}
 .brand b{font-size:13px;line-height:1.15;display:block;letter-spacing:.09em}.brand small{font-size:10px;color:#8da6bf}
 .menu-label{font-size:10px;letter-spacing:.17em;font-weight:800;color:#6f8da6;padding:7px 14px}
@@ -56,6 +56,16 @@ footer{margin-top:45px;font-size:11px;color:#6888a2}.mobile-toggle{display:none}
 .note.warning{border-color:var(--warn);color:#f3d7a5;background:rgba(255,204,122,.025)}
 @media(max-width:1050px){.admin-kpis{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:650px){.filterbar .field{width:100%;flex:1 1 100%}.admin-kpis{grid-template-columns:1fr}.audit-entry{flex-direction:column}}
+
+/* Incorporación de emprendedores e invitaciones ficticias */
+.onboard-steps{display:grid;gap:10px;margin:12px 0}
+.onboard-step{display:flex;align-items:flex-start;gap:13px;padding:13px;border:1px solid var(--edge);border-radius:12px;background:rgba(255,255,255,.018);cursor:pointer}
+.onboard-step input{accent-color:var(--cyan);width:19px;height:19px;margin:1px 0 0;flex-shrink:0}
+.onboard-step strong{font-size:12px;display:block}.onboard-step small{font-size:10px;display:block;color:var(--muted);margin-top:3px}
+.onboard-badge{display:flex;flex-direction:column;gap:7px}.onboard-badge small{color:var(--muted);font-size:11px}
+.progress-demo{height:10px;background:#061726;border-radius:20px;overflow:hidden}
+.progress-demo span{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--violet));border-radius:20px;transition:width .15s}
+.primary:disabled,.secondary:disabled,.danger:disabled{opacity:.45;cursor:not-allowed}
 </style>
 </head>
 <body>
@@ -84,12 +94,12 @@ const BILLING_STATES=["No configurada","Pendiente","Activa","En pausa","Cancelad
 const CYCLES=["Mensual","Anual"];
 const TICKET_STATES=["Abierto","En seguimiento","Resuelto","Cerrado"];
 const PRIORITIES=["Baja","Media","Alta"];
-const NAV=[["dashboard","▦","Dashboard"],["clientes","♧","Clientes"],["sitios","▣","Sitios web"],
+const NAV=[["dashboard","▦","Dashboard"],["clientes","♧","Clientes"],["incorporacion","✓","Incorporación"],["invitaciones","✉","Invitaciones"],["sitios","▣","Sitios web"],
  ["plantillas","▤","Plantillas"],["dominios","◎","Dominios y hosting"],
  ["suscripciones","▥","Suscripciones"],["soporte","◇","Soporte"],
  ["reportes","↗","Reportes"],["auditoria","◷","Actividad demo"],["ajustes","⚙","Configuración"]];
 const state={
- section:"dashboard",filters:{clientText:"",clientState:"Todos",ticketState:"Todos"},
+ section:"dashboard",filters:{clientText:"",clientState:"Todos",ticketState:"Todos",inviteStatus:"Todos"},selectedOnboardClientId:"c1",invitations:[],
  clients:[
   {id:"c1",code:"CLI-001",name:"Panadería Horizonte (ejemplo)",plan:"Crece",status:"Activo",
    subscription:{cycle:"Mensual",status:"No configurada",referenceDate:"",note:""}},
@@ -109,6 +119,18 @@ const state={
  templates:["Emprendedores","Corporativa","Portafolio","Restaurante","Catálogo","Tienda online"],
  audit:[],seq:10
 };
+const ONBOARDING_STEPS=[
+ {id:"perfil",label:"Información del negocio revisada",description:"Revisión administrativa ficticia de datos comerciales"},
+ {id:"plan",label:"Plan y condiciones revisados",description:"No crea contratos ni implica cobros"},
+ {id:"contenido",label:"Contenido inicial revisado",description:"La revisión editorial no publica ningún sitio"},
+ {id:"dominio",label:"Estrategia de dominio definida",description:"No verifica titularidad, DNS ni certificados"},
+ {id:"privacidad",label:"Privacidad y proceso comercial revisados",description:"No acredita consentimiento legal ni cumplimiento normativo"}
+];
+const INVITATION_ROLES=["CLIENT_OWNER","CLIENT_ADMIN","CLIENT_EDITOR","CLIENT_VIEWER"];
+const INVITATION_STATES=["Preparada","Aceptada (demo)","Revocada"];
+function freshOnboarding(){return {steps:{perfil:false,plan:false,contenido:false,dominio:false,privacidad:false},activated:false};}
+state.clients.forEach(c=>{c.onboarding=freshOnboarding();});
+
 const $=id=>document.getElementById(id), nav=$("nav"),view=$("view");
 const clean=x=>String(x??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const permitted=(val,list)=>list.includes(val);
@@ -147,6 +169,111 @@ function overview(){
  [["Autenticación y MFA","Pendiente"],["Base independiente y RLS","Pendiente"],["Pagos / facturación","Sin integración"],["Soporte real","Sin integración"],["Publicación / DNS","Sin integración"]].map(([a,b])=>
  '<div class="summary-line"><span>'+a+'</span>'+status(b)+'</div>').join("")+'</section></div>'+footerNotice();
 }
+function onboardingSummary(c){
+ const linkedSites=state.sites.filter(s=>s.clientId===c.id);
+ const acceptedOwner=state.invitations.some(i=>i.clientId===c.id&&i.role==="CLIENT_OWNER"&&i.status==="Aceptada (demo)");
+ const flags=ONBOARDING_STEPS.map(x=>Boolean(c.onboarding.steps[x.id]));
+ const completed=flags.filter(Boolean).length+Number(linkedSites.length>0)+Number(acceptedOwner);
+ const total=ONBOARDING_STEPS.length+2;
+ return {completed,total,ready:completed===total,siteCount:linkedSites.length,ownerAccepted:acceptedOwner,
+  status:c.onboarding.activated&&completed===total?"Incorporado (demo)":completed===total?"Listo para simular":
+   completed===0?"Sin iniciar":"En preparación"};
+}
+function adjustOnboarding(c){
+ if(c.onboarding.activated&&!onboardingSummary(c).ready){
+  c.onboarding.activated=false;
+  logEvent("Incorporación demo requiere revisión",c.name+" · Se modificaron requisitos.");
+ }
+}
+function applyOnboardingStep(clientId,step,checked){
+ const c=clientById(clientId);
+ if(!c||!ONBOARDING_STEPS.some(x=>x.id===step)||typeof checked!=="boolean")return {ok:false,error:"Paso, cliente o valor inválidos."};
+ c.onboarding.steps[step]=checked;
+ adjustOnboarding(c);
+ logEvent("Paso de incorporación actualizado",c.name+" · "+step+": "+(checked?"revisado":"pendiente"));
+ return {ok:true};
+}
+function activateOnboarding(clientId){
+ const c=clientById(clientId);if(!c)return {ok:false,error:"El cliente de demostración no existe."};
+ const summary=onboardingSummary(c);
+ if(!summary.ready)return {ok:false,error:"Faltan pasos de incorporación, un sitio o la aceptación ficticia del propietario."};
+ if(c.onboarding.activated)return {ok:false,error:"Este cliente ya aparece como incorporado en la demo."};
+ c.onboarding.activated=true;
+ logEvent("Incorporación simulada completada",c.name+" · Sin usuarios, sitios ni DNS reales.");
+ return {ok:true};
+}
+function validateDemoEmail(value){
+ const email=String(value||"").trim().toLowerCase();
+ return email.length>=8&&email.length<=150&&/^[a-z0-9._%+-]+@[a-z0-9.-]+\.invalid$/.test(email)&&
+  !email.includes("..")&&!email.endsWith("@.invalid");
+}
+function createInvitation(info){
+ const c=clientById(info&&info.clientId),role=String(info&&info.role||""),email=String(info&&info.email||"").trim().toLowerCase();
+ if(!c||!permitted(role,INVITATION_ROLES))return {ok:false,error:"Cliente o rol no válido."};
+ if(!validateDemoEmail(email))return {ok:false,error:"Utiliza un correo ficticio terminado en .invalid. No introduzcas direcciones reales."};
+ if(state.invitations.some(i=>i.clientId===c.id&&i.email===email&&i.status!=="Revocada"))
+  return {ok:false,error:"Ya existe una invitación no revocada para ese correo de ejemplo."};
+ if(role==="CLIENT_OWNER"&&state.invitations.some(i=>i.clientId===c.id&&i.role===role&&i.status!=="Revocada"))
+  return {ok:false,error:"Este cliente ya tiene una invitación de propietario pendiente o aceptada en la demo."};
+ const invite={id:makeId("i"),clientId:c.id,email,role,status:"Preparada",createdAt:new Date().toLocaleString("es-EC")};
+ state.invitations.unshift(invite);
+ logEvent("Invitación ficticia preparada",c.name+" · "+email+" · "+role+" (sin envío)");
+ return {ok:true,invite};
+}
+function setInvitationStatus(id,next){
+ const invitation=state.invitations.find(i=>i.id===id);
+ if(!invitation||!permitted(next,["Aceptada (demo)","Revocada"]))return {ok:false,error:"Invitación o estado inválidos."};
+ if(invitation.status!=="Preparada")return {ok:false,error:"Solo se pueden simular respuestas sobre invitaciones preparadas."};
+ invitation.status=next;
+ const c=clientById(invitation.clientId);if(c)adjustOnboarding(c);
+ logEvent("Invitación ficticia actualizada",clientName(invitation.clientId)+" · "+next+" · sin correo enviado");
+ return {ok:true};
+}
+function onboarding(){
+ const c=clientById(state.selectedOnboardClientId)||state.clients[0];
+ if(!c)return header("Incorporación de clientes","No hay clientes de demostración.");
+ const x=onboardingSummary(c);
+ const options=state.clients.map(v=>'<option value="'+clean(v.id)+'" '+(c.id===v.id?"selected":"")+'>'+clean(v.name)+'</option>').join("");
+ const checks=ONBOARDING_STEPS.map(item=>{
+  const checked=Boolean(c.onboarding.steps[item.id]);
+  return '<label class="onboard-step"><input data-onboard-step="'+clean(item.id)+'" type="checkbox" '+(checked?"checked":"")+
+   '><span><strong>'+clean(item.label)+'</strong><small>'+clean(item.description)+'</small></span></label>';
+ }).join("");
+ const sites=state.sites.filter(v=>v.clientId===c.id);
+ const owners=state.invitations.filter(v=>v.clientId===c.id&&v.role==="CLIENT_OWNER");
+ return header("Incorporación de emprendedores","Verifica requisitos comerciales, asignación de sitio e invitación ficticia. Ningún paso crea acceso real.")+
+ '<div class="card"><div class="filterbar"><label class="field">Negocio ficticio<select id="onboardClient">'+options+'</select></label>'+
+ '<div class="onboard-badge">'+status(x.status)+'<small>'+x.completed+' de '+x.total+' criterios de demostración</small></div></div>'+
+ '<div class="progress-demo" role="progressbar" aria-label="Progreso de demostración" aria-valuemin="0" aria-valuemax="'+x.total+'" aria-valuenow="'+x.completed+'"><span style="width:'+(x.completed/x.total*100)+'%"></span></div></div>'+
+ '<div class="grid split" style="margin-top:16px"><section class="card"><h2>Checklist administrativo (solo demo)</h2>'+
+ '<div class="onboard-steps">'+checks+'</div>'+
+ '<p class="small">Marcar un paso significa únicamente que se revisó dentro de esta maqueta; no comprueba identidad, pagos, documentos ni permisos.</p></section>'+
+ '<section class="card"><h2>Requisitos adicionales</h2>'+
+ '<div class="summary-line"><span>Sitio asociado</span>'+status(sites.length?"Asignado (demo)":"Pendiente")+'</div>'+
+ '<div class="small">'+(sites.length?sites.map(s=>clean(s.title)).join(" · "):"Crea un sitio ficticio asociado a este negocio.")+'</div>'+
+ '<div class="summary-line"><span>Invitación CLIENT_OWNER aceptada</span>'+status(x.ownerAccepted?"Simulada":"Pendiente")+'</div>'+
+ '<div class="small">'+(owners.length?owners.map(i=>clean(i.email)+" · "+clean(i.status)).join(" · "):"Prepara una invitación ficticia de propietario.")+'</div>'+
+ '<div class="dialog-actions"><button class="secondary" type="button" data-jump="sitios">Ver sitios</button>'+
+ '<button class="secondary" type="button" data-jump="invitaciones">Gestionar invitaciones</button></div>'+
+ '<div class="dialog-actions"><button class="primary" data-activate-demo="'+clean(c.id)+'" '+(!x.ready||c.onboarding.activated?"disabled":"")+
+ '>Simular incorporación completada</button></div></section></div>'+
+ tip("Aunque aparezca «Incorporado (demo)», nadie podrá iniciar sesión ni acceder a un sitio real. MFA, verificación de correo y contratación no existen en esta pantalla.",true);
+}
+function invitations(){
+ const f=state.filters.inviteStatus,items=state.invitations.filter(i=>f==="Todos"||i.status===f);
+ return header("Invitaciones de acceso (simuladas)","Prepara roles de propietario, administración, edición y consulta para usuarios completamente ficticios.","Preparar invitación demo","invitation")+
+ '<div class="grid admin-kpis">'+metric("Invitaciones ficticias",state.invitations.length,"Sin correos enviados")+
+ metric("Preparadas",state.invitations.filter(i=>i.status==="Preparada").length,"Sin tokens ni enlaces")+
+ metric("Aceptadas (simuladas)",state.invitations.filter(i=>i.status==="Aceptada (demo)").length,"Sin cuentas creadas")+'</div>'+
+ '<section class="card"><div class="filterbar"><label class="field">Estado<select id="inviteFilter">'+optionList(["Todos",...INVITATION_STATES],f)+'</select></label></div>'+
+ table(["EMPRESA","CORREO FICTICIO","ROL","ESTADO","ACCIONES"],items.map(i=>[
+ clean(clientName(i.clientId)),clean(i.email),clean(i.role),status(i.status),
+ i.status==="Preparada"?'<button class="secondary" data-accept-invite="'+clean(i.id)+'">Simular aceptación</button> '+
+ '<button class="danger" data-revoke-invite="'+clean(i.id)+'">Revocar</button>':
+ '<span class="small">Sin acciones</span>'
+ ]))+(items.length?"":'<div class="empty">No hay invitaciones ficticias con ese filtro.</div>')+'</section>'+
+ tip("Este módulo jamás envía emails, SMS o enlaces ni genera sesiones. Para usuarios reales será obligatorio un sistema de invitaciones firmado, expiración, verificación de correo, MFA y permisos por organización en servidor.",true);
+}
 function clients(){
  const q=state.filters.clientText.toLowerCase(),filter=state.filters.clientState;
  const list=state.clients.filter(c=>(c.name.toLowerCase().includes(q)||c.code.toLowerCase().includes(q))&&(filter==="Todos"||c.status===filter));
@@ -156,7 +283,7 @@ function clients(){
  '<label class="field">Estado<select id="clientStateFilter">'+optionList(["Todos",...CLIENT_STATES],filter)+'</select></label></div>'+
  table(["CLIENTE","CÓDIGO","PLAN","ESTADO","SITIOS","ACCIONES"],list.map(c=>[
  clean(c.name),clean(c.code),clean(c.plan),status(c.status),String(state.sites.filter(s=>s.clientId===c.id).length),
- '<button class="secondary" data-edit-client="'+clean(c.id)+'">Administrar</button>'
+ '<button class="secondary" data-edit-client="'+clean(c.id)+'">Administrar</button> <button class="secondary" data-onboard-client="'+clean(c.id)+'">Incorporar</button>'
  ]))+(list.length?"":'<p class="empty">No se encontraron clientes con estos filtros.</p>')+'</section>'+footerNotice();
 }
 function sites(){
@@ -208,7 +335,7 @@ function generic(title,desc,items,note){
 }
 function pageForSection(){
  return {
- dashboard:overview,clientes:clients,sitios:sites,plantillas:templates,
+ dashboard:overview,clientes:clients,incorporacion:onboarding,invitaciones:invitations,sitios:sites,plantillas:templates,
  dominios:()=>generic("Dominios y hosting","Servicios técnicos para los sitios de clientes.",
  [["DOMINIOS","Propiedad","Verificar titularidad y autorización antes de cualquier conexión."],
  ["ALOJAMIENTO","Recursos","Consumo y alojamiento de cada sitio, aún sin proveedor."],
@@ -232,6 +359,25 @@ function render(){
  navDraw();view.innerHTML=pageForSection()();
  view.querySelectorAll("[data-create]").forEach(b=>b.onclick=()=>openModal(b.dataset.create));
  view.querySelectorAll("[data-edit-client]").forEach(b=>b.onclick=()=>openModal("editClient",b.dataset.editClient));
+ view.querySelectorAll("[data-onboard-client]").forEach(b=>b.onclick=()=>{
+  state.selectedOnboardClientId=b.dataset.onboardClient;state.section="incorporacion";render();
+ });
+ view.querySelectorAll("[data-jump]").forEach(b=>b.onclick=()=>{state.section=b.dataset.jump;render();});
+ const oc=$("onboardClient");if(oc)oc.onchange=()=>{state.selectedOnboardClientId=oc.value;render();};
+ view.querySelectorAll("[data-onboard-step]").forEach(b=>b.onchange=()=>{
+  const r=applyOnboardingStep(state.selectedOnboardClientId,b.dataset.onboardStep,b.checked);
+  if(!r.ok)toast(r.error);render();
+ });
+ view.querySelectorAll("[data-activate-demo]").forEach(b=>b.onclick=()=>{
+  const r=activateOnboarding(b.dataset.activateDemo);if(!r.ok)toast(r.error);else toast("Incorporación completada solo en la demo.");render();
+ });
+ view.querySelectorAll("[data-accept-invite]").forEach(b=>b.onclick=()=>{
+  const r=setInvitationStatus(b.dataset.acceptInvite,"Aceptada (demo)");if(!r.ok)toast(r.error);render();
+ });
+ view.querySelectorAll("[data-revoke-invite]").forEach(b=>b.onclick=()=>{
+  const r=setInvitationStatus(b.dataset.revokeInvite,"Revocada");if(!r.ok)toast(r.error);render();
+ });
+ const invFilter=$("inviteFilter");if(invFilter)invFilter.onchange=()=>{state.filters.inviteStatus=invFilter.value;render();};
  view.querySelectorAll("[data-edit-ticket]").forEach(b=>b.onclick=()=>openModal("editTicket",b.dataset.editTicket));
  view.querySelectorAll("[data-edit-sub]").forEach(b=>b.onclick=()=>openModal("subscription",b.dataset.editSub));
  view.querySelectorAll("[data-inspect-site]").forEach(b=>b.onclick=()=>{
@@ -260,7 +406,7 @@ function openModal(kind,id){
  kind==="editTicket"?state.tickets.find(t=>t.id===id):null;
  if(["editClient","subscription","editTicket"].includes(kind)&&!item){toast("No se encontró el registro.");return;}
  const titles={client:"Nuevo cliente",editClient:"Administrar cliente",site:"Nuevo sitio",
- ticket:"Nuevo ticket de soporte",editTicket:"Gestionar ticket",subscription:"Configurar suscripción"};
+ ticket:"Nuevo ticket de soporte",editTicket:"Gestionar ticket",subscription:"Configurar suscripción",invitation:"Preparar invitación ficticia"};
  $("dialogTitle").textContent=titles[kind];
  $("dialogLead").textContent="Datos ficticios. No se modificarán cuentas, contratos ni suscripciones reales.";
  let fields="";
@@ -268,6 +414,12 @@ function openModal(kind,id){
   fields=input("name","Nombre comercial",item?.name)+
    select("plan","Plan (demo)",PLANS,item?.plan||"Start")+
    select("status","Estado del cliente",CLIENT_STATES,item?.status||"Propuesta");
+ }
+ if(kind==="invitation"){
+  fields='<label class="field">Cliente ficticio<select required name="clientId">'+clientOptions(state.selectedOnboardClientId)+'</select></label>'+
+   select("role","Rol de ejemplo",INVITATION_ROLES,"CLIENT_OWNER")+
+   '<label class="field full">Correo de ejemplo (.invalid)<input name="email" type="email" required maxlength="150" placeholder="persona@empresa.invalid" autocomplete="off"></label>'+
+   '<p class="small field full">No utilices correos reales. Se creará un registro de invitación, sin enviar ningún mensaje.</p>';
  }
  if(kind==="site"){
   fields=input("title","Nombre del sitio","")+
@@ -304,23 +456,26 @@ function validateDate(v){
 }
 function applyRecord(kind,id,data){
  const name=String(data.name||"").trim(),title=String(data.title||"").trim();
+ if(kind==="invitation")return createInvitation(data);
  if(kind==="client"){
   if(name.length<2||name.length>90||!permitted(data.plan,PLANS)||!permitted(data.status,CLIENT_STATES))return {ok:false,error:"Revisa el nombre, plan y estado."};
   const c={id:makeId("c"),code:"DEMO-"+String(state.seq).padStart(3,"0"),name,plan:data.plan,status:data.status,
-   subscription:{cycle:"Mensual",status:"No configurada",referenceDate:"",note:""}};
+   subscription:{cycle:"Mensual",status:"No configurada",referenceDate:"",note:""},onboarding:freshOnboarding()};
   state.clients.unshift(c);logEvent("Cliente de ejemplo creado",c.name);return {ok:true};
  }
  if(kind==="editClient"){
   const c=clientById(id);
   if(!c||name.length<2||name.length>90||!permitted(data.plan,PLANS)||!permitted(data.status,CLIENT_STATES))return {ok:false,error:"Cliente o datos inválidos."};
   c.name=name;c.plan=data.plan;c.status=data.status;
+ adjustOnboarding(c);
   logEvent("Cliente actualizado",c.name+" · "+c.plan+" · "+c.status);
   return {ok:true};
  }
  if(kind==="site"){
   if(!clientById(data.clientId)||title.length<2||title.length>90)return {ok:false,error:"Selecciona un cliente y un nombre válido."};
   const s={id:makeId("s"),title,clientId:data.clientId,type:"Corporativa",status:"Borrador",domain:"sin-dominio"};
-  state.sites.unshift(s);logEvent("Sitio de ejemplo registrado",s.title+" · "+clientName(s.clientId));return {ok:true};
+  state.sites.unshift(s);const owner=clientById(s.clientId);if(owner)adjustOnboarding(owner);
+  logEvent("Sitio de ejemplo registrado",s.title+" · "+clientName(s.clientId));return {ok:true};
  }
  if(kind==="ticket"){
   if(!clientById(data.clientId)||title.length<2||title.length>90||
