@@ -171,6 +171,7 @@ footer{padding-top:35px;color:#7794a9;font-size:11px}
 <script src="./shared/mg-web-studio-services.js"></script>
 <script src="./shared/mg-ai-web-assistant-demo.js"></script>
 <script src="./shared/mg-proposal-exchange-demo.js"></script>
+<script src="./shared/mg-proposal-review-demo.js"></script>
 <script>
 (function(){
 "use strict";
@@ -640,10 +641,18 @@ function aiWizardPage(){
  '<div class="sectionactions full"><button class="primary" type="submit">Preparar propuesta gratuita</button></div></form></section>'+
  '<section class="card"><h2>Revisión de la propuesta</h2>'+
  (prev?'<div class="tile"><b>'+esc(prev.businessName)+'</b><small>'+esc(prev.summary)+'</small></div>'+
+ (pending&&pending.origin==="manual-package"?'<div class="note warnnote"><strong>Estado de revisión:</strong> '+esc(pending.review&&pending.review.status==="approved"?"Aprobada (demo)":pending.review&&pending.review.status==="changes"?"Cambios solicitados (demo)":pending.review&&pending.review.status==="rejected"?"Rechazada (demo)":"En revisión")+
+ ' · Revisión #'+esc(pending.review?.revision||1)+'. No implica aprobación real.</div>'+
+ (pending.review?.status==="pending"?'<form id="aiReviewForm"><label class="field">Decisión<select name="decision">'+
+ '<option value="approved">Aprobar propuesta (demo)</option><option value="changes">Solicitar cambios</option><option value="rejected">Rechazar propuesta</option></select></label>'+
+ '<label class="field full">Observación de revisión (obligatoria al solicitar cambios o rechazar)<textarea name="note" maxlength="500" rows="3" placeholder="Usa comentarios ficticios, no datos personales."></textarea></label>'+
+ '<div class="sectionactions"><button class="secondary" type="submit">Registrar decisión y preparar respuesta</button></div></form>':
+ '<label class="field full">Respuesta para la agencia (JSON ficticio)<textarea id="clientReviewJSON" readonly rows="6">'+esc(pending.review?.responseJson||"")+'</textarea></label>'+
+ '<button type="button" class="secondary" id="copyClientReview">Copiar respuesta</button>'):'')+
  '<div class="hint" style="margin:10px 0">Color sugerido: <span class="aiColorSwatch" style="background:'+prev.color+'"></span> '+esc(prev.color)+'</div>'+
  '<div class="aiPages">'+prev.pages.map(function(pg,i){return '<article class="aiPagePreview"><strong>'+esc((i+1)+". "+pg.name)+'</strong>'+
  '<small>'+esc(pg.title)+'</small><p>'+esc(pg.description)+'</p><span>'+pg.blocks.length+' secciones sugeridas · '+esc(pg.cta)+'</span></article>';}).join("")+'</div>'+
- '<div class="sectionactions"><button class="primary" data-ai-apply="true" '+(!canEdit()?"disabled":"")+'>Aplicar al borrador (demo)</button>'+
+ '<div class="sectionactions"><button class="primary" data-ai-apply="true" '+(!canEdit()||(pending.origin==="manual-package"&&pending.review?.status!=="approved")?"disabled":"")+'>Aplicar al borrador (demo)</button>'+
  '<button class="secondary" data-ai-discard="true">Descartar propuesta</button></div>':
  '<div class="empty">Completa el formulario para obtener una propuesta de páginas, portada, contenido y SEO que podrás revisar antes de aplicar.</div>')+
  '</section></div>'+
@@ -673,14 +682,40 @@ function receiveAIProposalPackage(json){
  const s=site();
  const received=exchange.parsePackage(json,{clientId:activeOrg,siteId:s.id,plan:s.plan});
  if(!received.ok)return received;
+ const reviewModule=typeof window!=="undefined"&&window.MGWebProposalReview;
+ if(!reviewModule)return {ok:false,error:"No se cargó la revisión V11."};
+ const review=reviewModule.readProposalMetadata(json,received.data.proposal);
+ if(!review.ok)return review;
+ const prior=aiProposalByOrg[activeOrg];
+ if(prior&&prior.origin==="manual-package"&&prior.review?.revision===review.review.revision&&
+    prior.review?.fingerprint===review.review.fingerprint&&prior.review.status!=="pending")
+  return {ok:false,error:"Esta revisión ya tiene una decisión. La agencia debe preparar una revisión nueva."};
  aiProposalByOrg[activeOrg]={proposal:received.data.proposal,signature:aiDraftSignature(),
-  siteId:s.id,origin:"manual-package"};
+  siteId:s.id,origin:"manual-package",
+  review:{revision:review.review.revision,fingerprint:review.review.fingerprint,status:"pending",responseJson:null}};
  return {ok:true,proposal:received.data.proposal};
+}
+function decideClientProposal(decision,note){
+ const entry=aiProposalByOrg[activeOrg],reviewModule=typeof window!=="undefined"&&window.MGWebProposalReview;
+ if(!reviewModule||!entry||entry.origin!=="manual-package"||entry.review?.status!=="pending")
+  return {ok:false,error:"No hay una revisión externa pendiente."};
+ if(activeRole==="CLIENT_VIEWER")return {ok:false,error:"VIEWER no puede tomar decisiones de revisión."};
+ if((decision==="approved"||decision==="rejected")&&!["CLIENT_OWNER","CLIENT_ADMIN"].includes(activeRole))
+  return {ok:false,error:"Solo OWNER o ADMIN pueden aprobar o rechazar propuestas."};
+ if(entry.siteId!==site().id||entry.signature!==aiDraftSignature())
+  return {ok:false,error:"Cambió el borrador o el sitio. Valida la propuesta nuevamente."};
+ const result=reviewModule.packReview({target:{clientId:activeOrg,siteId:site().id,plan:site().plan},
+  revision:entry.review.revision,proposal:entry.proposal,decision,note});
+ if(!result.ok)return result;
+ entry.review.status=decision;entry.review.responseJson=result.json;
+ return {ok:true,json:result.json,decision};
 }
 function applyAIProposal(){
  var entry=aiProposalByOrg[activeOrg],s=site();
  if(!entry||!entry.proposal)return {ok:false,error:"Primero prepara una propuesta."};
  if(!canEdit())return {ok:false,error:"El rol de demostración no puede editar borradores."};
+ if(entry.origin==="manual-package"&&entry.review?.status!=="approved")
+  return {ok:false,error:"La propuesta de agencia requiere aprobación de revisión antes de aplicarse."};
  if(entry.siteId!==s.id||entry.signature!==aiDraftSignature())
   return {ok:false,error:"El sitio cambió desde la creación de la propuesta. Genera una nueva antes de aplicar."};
  var proposal=entry.proposal,rule=PLAN_RULES[s.plan]||PLAN_RULES.Start;
@@ -713,6 +748,23 @@ function applyAIProposal(){
 }
 function bindAIWizard(){
  var form=$("aiWizardForm");
+ var reviewForm=$("aiReviewForm");
+ if(reviewForm)reviewForm.onsubmit=function(e){
+  e.preventDefault();const data=new FormData(reviewForm);
+  const result=decideClientProposal(String(data.get("decision")||""),String(data.get("note")||""));
+  if(!result.ok){notice(result.error);return;}
+  render();notice("Decisión ficticia registrada. Copia la respuesta JSON para comunicarla manualmente a la agencia.");
+ };
+ const copyReview=$("copyClientReview");
+ if(copyReview)copyReview.onclick=async function(){
+  const json=aiProposalByOrg[activeOrg]?.review?.responseJson;
+  if(!json)return;
+  if(typeof navigator!=="undefined"&&navigator.clipboard&&navigator.clipboard.writeText){
+   try{await navigator.clipboard.writeText(json);notice("Respuesta de prueba copiada.");return;}catch(e){}
+  }
+  const field=$("clientReviewJSON");field.focus();field.select();
+  notice("Selecciona el texto de respuesta y cópialo con Ctrl+C.");
+ };
  var inbound=$("aiImportForm");
  if(inbound)inbound.onsubmit=function(e){
   e.preventDefault();var typed=$("aiImportText").value;
