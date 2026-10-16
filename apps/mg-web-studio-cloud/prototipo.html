@@ -70,6 +70,10 @@ footer{margin-top:45px;font-size:11px;color:#6888a2}.mobile-toggle{display:none}
 .bridgeLink{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;padding:8px 10px;font-size:11px;border-radius:9px;margin:2px}
 #bridgeResult a{margin:8px 5px}
 #bridgeResult small{display:block;margin-top:9px;color:var(--muted)}
+
+.aiAgencyPages{display:grid;gap:10px;margin:12px 0}
+.aiAgencyPage{padding:12px;border:1px solid var(--edge);border-radius:10px;background:rgba(70,140,190,.035)}
+.aiAgencyPage strong{display:block;font-size:12px}.aiAgencyPage small{display:block;font-size:10px;color:var(--muted);margin:5px 0}.aiAgencyPage p{font-size:11px;color:#c5dbef}
 </style>
 </head>
 <body>
@@ -89,6 +93,7 @@ footer{margin-top:45px;font-size:11px;color:#6888a2}.mobile-toggle{display:none}
 <dialog class="dialog" id="dialog"><h2 id="dialogTitle">Nuevo registro</h2><p id="dialogLead">Simulación local.</p><form id="dialogForm"><div class="formgrid" id="fields"></div><div class="dialog-actions"><button type="button" class="secondary" id="cancel">Cancelar</button><button type="submit" class="primary">Crear en demostración</button></div></form></dialog>
 <div class="toast" role="status" id="toast" aria-live="polite"></div>
 <script src="./shared/mg-web-studio-services.js"></script>
+<script src="./shared/mg-ai-web-assistant-demo.js"></script>
 <script>
 (function(){
 "use strict";
@@ -99,12 +104,12 @@ const BILLING_STATES=["No configurada","Pendiente","Activa","En pausa","Cancelad
 const CYCLES=["Mensual","Anual"];
 const TICKET_STATES=["Abierto","En seguimiento","Resuelto","Cerrado"];
 const PRIORITIES=["Baja","Media","Alta"];
-const NAV=[["dashboard","▦","Dashboard"],["clientes","♧","Clientes"],["incorporacion","✓","Incorporación"],["invitaciones","✉","Invitaciones"],["usuarios","♙","Usuarios y permisos"],["conexion","⇄","Conexión de paneles"],["sitios","▣","Sitios web"],
+const NAV=[["dashboard","▦","Dashboard"],["clientes","♧","Clientes"],["incorporacion","✓","Incorporación"],["invitaciones","✉","Invitaciones"],["usuarios","♙","Usuarios y permisos"],["conexion","⇄","Conexión de paneles"],["asistente-ia","✦","Asistente web IA (demo)"],["sitios","▣","Sitios web"],
  ["plantillas","▤","Plantillas"],["dominios","◎","Dominios y hosting"],
  ["suscripciones","▥","Suscripciones"],["soporte","◇","Soporte"],
  ["reportes","↗","Reportes"],["auditoria","◷","Actividad demo"],["ajustes","⚙","Configuración"]];
 const state={
- section:"dashboard",filters:{clientText:"",clientState:"Todos",ticketState:"Todos",inviteStatus:"Todos",memberClientId:"Todos",memberStatus:"Activo (demo)"},selectedOnboardClientId:"c1",invitations:[],members:[],
+ section:"dashboard",filters:{clientText:"",clientState:"Todos",ticketState:"Todos",inviteStatus:"Todos",memberClientId:"Todos",memberStatus:"Activo (demo)"},selectedOnboardClientId:"c1",invitations:[],members:[],aiProposals:{},aiSiteId:"s1",
  clients:[
   {id:"c1",code:"CLI-001",name:"Café Horizonte (ejemplo)",plan:"Crece",status:"Activo",
    subscription:{cycle:"Mensual",status:"No configurada",referenceDate:"",note:""}},
@@ -496,6 +501,68 @@ function panelBridge(){
  tip("La navegación puede funcionar cuando las dos páginas HTML se sirven desde la misma carpeta y origen. Algunos visores HTML externos no conservan la ruta ni los parámetros. Esta vinculación NO comparte estado en tiempo real: los cambios que hagas en SUPERADMIN no aparecerán automáticamente en el portal. Manipular ?mgdemo= nunca debe conceder permisos reales.",true);
 }
 
+
+/* Asistente comercial SUPERADMIN solo para datos de demostración.
+   La propuesta no se transmite al portal cliente; ambos HTML no comparten estado. */
+function agencyAIPage(){
+ const helper=typeof window!=="undefined"&&window.MGAIWebAssistant;
+ if(!helper)return header("MG AI WEB ASSISTANT","No se cargó el generador local. Sirve los HTML y shared desde el mismo origen.")+footerNotice();
+ const current=state.sites.find(s=>s.id===state.aiSiteId)||state.sites[0];
+ const client=current?clientById(current.clientId):null;
+ const saved=current?state.aiProposals[current.id]:null;
+ const opts=(xs,defaultId)=>xs.map(x=>'<option value="'+clean(x.id)+'" '+(defaultId===x.id?"selected":"")+'>'+clean(x.label)+'</option>').join("");
+ return header("MG AI WEB ASSISTANT · Agencia","Prepara una propuesta orientativa de sitio para un cliente ficticio. Funciona con plantillas, NO con un modelo de IA real.")+
+ '<div class="grid split"><section class="card"><h2>Crear propuesta de sitio</h2>'+
+ (current?'<form id="agencyAIForm" class="formgrid">'+
+ '<label class="field full">Sitio del cliente<select id="agencyAISite" name="siteId">'+
+ state.sites.map(x=>'<option value="'+clean(x.id)+'" '+(x.id===current.id?"selected":"")+'>'+clean(clientName(x.clientId)+" · "+x.title)+'</option>').join("")+'</select></label>'+
+ '<label class="field full">Nombre comercial de ejemplo<input name="brand" required maxlength="65" value="'+clean(current.title)+'"></label>'+
+ '<label class="field">Sector<select name="type">'+opts(helper.sectors,"tienda")+'</select></label>'+
+ '<label class="field">Estilo<select name="style">'+opts(helper.styles,"moderno")+'</select></label>'+
+ '<label class="field">Objetivo<select name="goal">'+opts(helper.goals,"contacto")+'</select></label>'+
+ '<label class="field">Plan asignado<input value="'+clean(client?client.plan:"Sin plan")+'" disabled></label>'+
+ '<label class="field full">Productos o servicios ficticios<textarea name="offering" required maxlength="170" placeholder="Ej.: productos escolares, pinturas y papelería"></textarea></label>'+
+ '<label class="field full">Público objetivo<input name="audience" required maxlength="100" placeholder="Ej.: estudiantes, profesionales y familias"></label>'+
+ '<div class="dialog-actions full"><button class="primary" type="submit">Preparar propuesta (demo)</button></div></form>':
+ '<div class="empty">Registra primero un sitio de ejemplo para este cliente.</div>')+
+ '</section><section class="card"><h2>Propuesta para revisión</h2>'+
+ (saved?'<div class="summary-line"><span>Negocio</span><b>'+clean(saved.proposal.businessName)+'</b></div>'+
+ '<div class="summary-line"><span>Plan</span><b>'+clean(saved.plan)+'</b></div>'+
+ (saved.plan!==(client?.plan)?'<div class="note warning">El plan del cliente cambió. Prepara una nueva propuesta antes de aplicarla en el futuro.</div>':'')+
+ '<div class="aiAgencyPages">'+saved.proposal.pages.map((page,i)=>'<article class="aiAgencyPage"><strong>'+(i+1)+'. '+clean(page.name)+'</strong>'+
+ '<small>'+clean(page.title)+'</small><p>'+clean(page.description)+'</p>'+
+ '<small>'+page.blocks.length+' secciones · '+clean(page.cta)+'</small></article>').join("")+'</div>'+
+ '<div class="dialog-actions"><button class="secondary" data-discard-agency-ai="'+clean(current.id)+'">Descartar propuesta</button></div>'+
+ '<p class="small">Propuesta preparada, sin aprobación ni traspaso automático al portal del emprendedor.</p>':
+ '<div class="empty">Todavía no hay propuesta para el sitio seleccionado.</div>')+
+ '</section></div>'+
+ tip("Modo V9 sin IA real: los textos son sugerencias calculadas por plantillas. No envía solicitudes a OpenAI ni genera costos. No agrega registros, DNS o páginas en el portal del cliente; la futura transferencia requiere una API autenticada con control de permisos.",true);
+}
+function prepareAgencyAI(data){
+ const helper=typeof window!=="undefined"&&window.MGAIWebAssistant;
+ if(!helper)return {ok:false,error:"Generador de prueba no disponible."};
+ const site=state.sites.find(s=>s.id===data.siteId);if(!site)return {ok:false,error:"Selecciona un sitio válido."};
+ const client=clientById(site.clientId);if(!client)return {ok:false,error:"El cliente ya no existe."};
+ const generated=helper.createProposal({...data,plan:client.plan});
+ if(!generated.ok)return generated;
+ state.aiProposals[site.id]={siteId:site.id,clientId:client.id,plan:client.plan,proposal:generated.proposal,status:"Para revisión"};
+ state.aiSiteId=site.id;
+ logEvent("Propuesta web preparada con plantillas",client.name+" · "+site.title+" · Sin IA real");
+ return {ok:true,proposal:generated.proposal};
+}
+function bindAgencyAI(){
+ const siteSelect=$("agencyAISite");
+ if(siteSelect)siteSelect.onchange=()=>{state.aiSiteId=siteSelect.value;render();};
+ const form=$("agencyAIForm");if(form)form.onsubmit=e=>{
+  e.preventDefault();const input=Object.fromEntries(new FormData(form).entries());
+  const r=prepareAgencyAI(input);if(!r.ok){toast(r.error);return;}
+  render();toast("Propuesta simulada creada y pendiente de revisión. No se publicó.");
+ };
+ view.querySelectorAll("[data-discard-agency-ai]").forEach(button=>button.onclick=()=>{
+  delete state.aiProposals[button.dataset.discardAgencyAi];render();toast("Propuesta descartada en esta demostración.");
+ });
+}
+
 function sites(){
  return header("Sitios web","Cada sitio queda asociado a un cliente de demostración. Crear registros no publica páginas.","Nuevo sitio","site")+
  '<div class="grid cards">'+state.sites.map(s=>'<article class="card"><div class="site-thumb"><div></div><div class="site-line w"></div><div class="site-line"></div></div>'+
@@ -546,7 +613,7 @@ function generic(title,desc,items,note){
 }
 function pageForSection(){
  return {
- dashboard:overview,clientes:clients,incorporacion:onboarding,invitaciones:invitations,usuarios:memberPanel,conexion:panelBridge,sitios:sites,plantillas:templates,
+ dashboard:overview,clientes:clients,incorporacion:onboarding,invitaciones:invitations,usuarios:memberPanel,conexion:panelBridge,"asistente-ia":agencyAIPage,sitios:sites,plantillas:templates,
  dominios:()=>generic("Dominios y hosting","Servicios técnicos para los sitios de clientes.",
  [["DOMINIOS","Propiedad","Verificar titularidad y autorización antes de cualquier conexión."],
  ["ALOJAMIENTO","Recursos","Consumo y alojamiento de cada sitio, aún sin proveedor."],
@@ -568,6 +635,7 @@ function pageForSection(){
 }
 function render(){
  navDraw();view.innerHTML=pageForSection()();
+ if(state.section==="asistente-ia")bindAgencyAI();
  view.querySelectorAll("[data-create]").forEach(b=>b.onclick=()=>openModal(b.dataset.create));
  view.querySelectorAll("[data-edit-client]").forEach(b=>b.onclick=()=>openModal("editClient",b.dataset.editClient));
  view.querySelectorAll("[data-onboard-client]").forEach(b=>b.onclick=()=>{
