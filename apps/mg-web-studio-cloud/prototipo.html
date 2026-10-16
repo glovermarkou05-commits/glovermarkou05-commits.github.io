@@ -593,8 +593,11 @@ function registerAgencyReview(siteId,json){
     saved.status!=="Enviada a revisión")return {ok:false,error:"No existe revisión enviada pendiente."};
  const current=clientById(existing.clientId);
  if(!current||current.plan!==saved.plan)return {ok:false,error:"El plan del cliente cambió."};
+ const exchange=typeof window!=="undefined"&&window.MGWebProposalExchange;
+ const normalized=exchange&&exchange.createPackage({clientId:saved.clientId,siteId,plan:saved.plan,proposal:saved.proposal});
+ if(!normalized||!normalized.ok)return {ok:false,error:"No se pudo reconstruir la revisión."};
  const parsed=review.readReview(json,{target:{clientId:saved.clientId,siteId,plan:saved.plan},
-  revision:saved.revision,proposal:saved.proposal});
+  revision:saved.revision,proposal:normalized.packet.proposal});
  if(!parsed.ok)return parsed;
  const labels={approved:"Aprobada (demo)",changes:"Cambios solicitados (demo)",rejected:"Rechazada (demo)"};
  saved.review=parsed.review;
