@@ -448,8 +448,8 @@ function portalDemoLink(siteId,memberId){
   if(!m||!canDemoMember(memberId,siteId,"read"))return null;
   role=m.role;
  }
- const parts=[map.clientId,map.siteId,role];
- return "./portal-cliente.html?mgdemo="+encodeURIComponent(parts.join("."));
+ const parts=[map.clientId,map.siteId,role],plan=clientById(map.clientId)?.plan||"Start";
+ return "./portal-cliente.html?mgdemo="+encodeURIComponent(parts.join("."))+"&mgplan="+encodeURIComponent(plan);
 }
 function panelBridge(){
  const linked=state.sites.filter(s=>linkedPortalFixture(s.id));
