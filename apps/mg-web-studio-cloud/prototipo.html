@@ -503,6 +503,7 @@ function applyRecord(kind,id,data){
   c.plan=data.plan;
   c.subscription={cycle:data.cycle,status:data.status,referenceDate:String(data.referenceDate||""),
     note:String(data.note||"").trim()};
+  adjustOnboarding(c);
   logEvent("Suscripción simulada actualizada",c.name+" · "+c.plan+" · "+c.subscription.status);
   return {ok:true};
  }
