@@ -170,7 +170,7 @@ var seed=[
 {id:"c2",name:"Papelería Nube (ejemplo)",site:{id:"s2",name:"Papelería Nube",slug:"papeleria-nube",plan:"Start",domain:"papeleria-nube.ejemplo.invalid",draft:{title:"Ideas, color y materiales para crear",description:"Encuentra artículos escolares, papelería y materiales artísticos.",cta:"Explorar catálogo",color:"#744db6",phone:"Contacto por configurar",products:[{id:"p1",name:"Cuaderno universitario",price:2.75,visible:true},{id:"p2",name:"Set de marcadores",price:5.95,visible:true}],promos:[]},published:null,history:[],draftRevision:1}}
 ];
 function deepCopy(x){return JSON.parse(JSON.stringify(x));}
-var organizations=deepCopy(seed),activeOrg="c1",activeRole="CLIENT_OWNER",tab="inicio",previewMode="draft",viewPublication=false,selectedCategoryByOrg={},demoBridgeContext=false;
+var organizations=deepCopy(seed),activeOrg="c1",activeRole="CLIENT_OWNER",tab="inicio",previewMode="draft",viewPublication=false,selectedCategoryByOrg={},demoBridgeContext=false,demoBridgePlanApplied=false;
 /* Enlace de navegación entre las dos maquetas (sin permisos ni datos reales).
    Los parámetros de la URL se aceptan únicamente si coinciden con fixtures
    locales conocidos. Manipular la URL NO autentica ni concede acceso. */
@@ -180,7 +180,11 @@ function applyDemoBridgeLocation(search){
  var input;try{input=decodeURIComponent(match[1]);}catch(e){return false;}
  var parts=input.split("."),org=organizations.find(function(o){return o.id===parts[0];});
  if(parts.length!==3||!org||org.site.id!==parts[1]||!["CLIENT_OWNER","CLIENT_ADMIN","CLIENT_EDITOR","CLIENT_VIEWER"].includes(parts[2]))return false;
+ var planMatch=String(search).match(/[?&]mgplan=([^&#]+)/),plan="";
+ if(planMatch){try{plan=decodeURIComponent(planMatch[1]);}catch(e){return false;}
+  if(!["Start","Crece","Pro"].includes(plan))return false;}
  activeOrg=org.id;activeRole=parts[2];demoBridgeContext=true;
+ if(plan){org.site.plan=plan;demoBridgePlanApplied=true;}
  return true;
 }
 if(typeof window!=="undefined"&&window.location)applyDemoBridgeLocation(window.location.search);
@@ -278,7 +282,7 @@ function canPublish(){return activeRole==="CLIENT_OWNER"||activeRole==="CLIENT_A
 function money(v){return new Intl.NumberFormat("es-EC",{style:"currency",currency:"USD"}).format(v);}
 function notice(msg){var t=$("toast");t.textContent=msg;t.style.display="block";clearTimeout(notice.timer);notice.timer=setTimeout(function(){t.style.display="none";},4200);}
 function banner(){return '<div class="note warnnote"><strong>SIMULACIÓN:</strong> sin inicio de sesión, sin base de datos y sin publicación real. Las restricciones de rol que se muestran aquí son únicamente visuales. Nunca introduzcas datos personales reales.'+
- (demoBridgeContext?' El enlace recibido del SUPERADMIN seleccionó un negocio y un rol de muestra, pero NO transportó permisos, sesiones ni datos editados.':'')+
+ (demoBridgeContext?' El enlace recibido del SUPERADMIN seleccionó un negocio y un rol de muestra'+(demoBridgePlanApplied?' y un plan ilustrativo':'')+', pero NO transportó permisos, sesiones ni datos editados.':'')+
  '</div>';}
 
 function pageSelector(){
@@ -1227,7 +1231,7 @@ function render(){
 navDraw();
 var pages={inicio:intro,identidad:identity,configuracion:businessConfig,seo:siteSEO,medios:mediaLibrary,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,consultas:inquiryInbox,vista:preview,revision:preflightPanel,publicaciones:sitePublications,historial:history,dominio:domain,soporte:support};
 $("content").innerHTML='<div class="card" style="margin-bottom:20px"><div class="row" style="justify-content:space-between;align-items:end"><div><div class="eyebrow">SESIÓN DE PRUEBA</div><p style="margin:5px 0 0;color:var(--muted)">Alterna negocios y roles ficticios para revisar el diseño. Esta selección NO es autenticación.'+
- (demoBridgeContext?' · Contexto cargado desde el enlace del SUPERADMIN; los cambios de otros paneles no se sincronizan.':'')+'</p></div><div class="row">'+
+ (demoBridgeContext?' · Contexto de navegación de SUPERADMIN cargado'+(demoBridgePlanApplied?' (incluye plan de muestra)':'')+'. Los demás cambios no se sincronizan.':'')+'</p></div><div class="row">'+
  (demoBridgeContext?'<a class="secondary" href="./prototipo.html" target="_blank" rel="noopener noreferrer">↩ Panel SUPERADMIN demo</a>':'')+
  dropdown()+'</div></div></div>'+pages[tab]();
 $("orgSwitch").onchange=function(){activeOrg=this.value;previewMode="draft";render();};
