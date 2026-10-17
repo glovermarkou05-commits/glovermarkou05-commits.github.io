@@ -106,7 +106,7 @@ const BILLING_STATES=["No configurada","Pendiente","Activa","En pausa","Cancelad
 const CYCLES=["Mensual","Anual"];
 const TICKET_STATES=["Abierto","En seguimiento","Resuelto","Cerrado"];
 const PRIORITIES=["Baja","Media","Alta"];
-const NAV=[["dashboard","▦","Dashboard"],["clientes","♧","Clientes"],["incorporacion","✓","Incorporación"],["invitaciones","✉","Invitaciones"],["usuarios","♙","Usuarios y permisos"],["conexion","⇄","Conexión de paneles"],["asistente-ia","✦","Asistente web IA (demo)"],["sitios","▣","Sitios web"],
+const NAV=[["dashboard","▦","Dashboard"],["clientes","♧","Clientes"],["incorporacion","✓","Incorporación"],["invitaciones","✉","Invitaciones"],["usuarios","♙","Usuarios y permisos"],["conexion","⇄","Conexión de paneles"],["asistente-ia","✦","Asistente web IA (demo)"],["bandeja","▤","Bandeja de propuestas"],["sitios","▣","Sitios web"],
  ["plantillas","▤","Plantillas"],["dominios","◎","Dominios y hosting"],
  ["suscripciones","▥","Suscripciones"],["soporte","◇","Soporte"],
  ["reportes","↗","Reportes"],["auditoria","◷","Actividad demo"],["ajustes","⚙","Configuración"]];
@@ -644,6 +644,13 @@ function bindAgencyAI(){
  });
 }
 
+function inboxDemoLaunch(){
+ return header("Bandeja central de propuestas","Laboratorio V12: creación, aprobaciones, solicitudes de cambios y notificaciones sin copiar JSON, dentro de UNA misma página ficticia.")+
+ '<section class="card"><h2>Probar flujo centralizado</h2>'+
+ '<p class="small">Alterna SUPERADMIN y emprendedores ficticios, crea una propuesta y recibe notificaciones internas. Este laboratorio no sincroniza los cambios de los otros paneles, no guarda datos al recargar y no autentica usuarios.</p>'+
+ '<p><a class="secondary bridgeLink" href="./bandeja-propuestas-demo.html" target="_blank" rel="noopener noreferrer">Abrir bandeja central de demostración ↗</a></p></section>'+
+ tip("En producción hará falta API segura, roles validados en servidor, RLS por sitio y una bandeja persistente. Aquí no hay correo, cobros ni publicación.",true);
+}
 function sites(){
  return header("Sitios web","Cada sitio queda asociado a un cliente de demostración. Crear registros no publica páginas.","Nuevo sitio","site")+
  '<div class="grid cards">'+state.sites.map(s=>'<article class="card"><div class="site-thumb"><div></div><div class="site-line w"></div><div class="site-line"></div></div>'+
@@ -694,7 +701,7 @@ function generic(title,desc,items,note){
 }
 function pageForSection(){
  return {
- dashboard:overview,clientes:clients,incorporacion:onboarding,invitaciones:invitations,usuarios:memberPanel,conexion:panelBridge,"asistente-ia":agencyAIPage,sitios:sites,plantillas:templates,
+ dashboard:overview,clientes:clients,incorporacion:onboarding,invitaciones:invitations,usuarios:memberPanel,conexion:panelBridge,"asistente-ia":agencyAIPage,bandeja:inboxDemoLaunch,sitios:sites,plantillas:templates,
  dominios:()=>generic("Dominios y hosting","Servicios técnicos para los sitios de clientes.",
  [["DOMINIOS","Propiedad","Verificar titularidad y autorización antes de cualquier conexión."],
  ["ALOJAMIENTO","Recursos","Consumo y alojamiento de cada sitio, aún sin proveedor."],
