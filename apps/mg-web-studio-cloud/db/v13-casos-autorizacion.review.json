@@ -1,0 +1,296 @@
+{
+  "version": "v13-review-1",
+  "purpose": "Casos de autorización ESPERADOS para futuras pruebas pgTAP; no se han ejecutado en PostgreSQL",
+  "organizations": [
+    {
+      "id": "a",
+      "status": "active"
+    },
+    {
+      "id": "b",
+      "status": "active"
+    },
+    {
+      "id": "suspended",
+      "status": "suspended"
+    }
+  ],
+  "sites": [
+    {
+      "id": "a1",
+      "organization": "a"
+    },
+    {
+      "id": "a2",
+      "organization": "a"
+    },
+    {
+      "id": "b1",
+      "organization": "b"
+    },
+    {
+      "id": "s1",
+      "organization": "suspended"
+    }
+  ],
+  "members": [
+    {
+      "id": "ownerA",
+      "organization": "a",
+      "role": "CLIENT_OWNER",
+      "status": "active",
+      "siteIds": []
+    },
+    {
+      "id": "adminA",
+      "organization": "a",
+      "role": "CLIENT_ADMIN",
+      "status": "active",
+      "siteIds": []
+    },
+    {
+      "id": "editorA1",
+      "organization": "a",
+      "role": "CLIENT_EDITOR",
+      "status": "active",
+      "siteIds": [
+        "a1"
+      ]
+    },
+    {
+      "id": "viewerA1",
+      "organization": "a",
+      "role": "CLIENT_VIEWER",
+      "status": "active",
+      "siteIds": [
+        "a1"
+      ]
+    },
+    {
+      "id": "editorA2",
+      "organization": "a",
+      "role": "CLIENT_EDITOR",
+      "status": "active",
+      "siteIds": [
+        "a2"
+      ]
+    },
+    {
+      "id": "ownerB",
+      "organization": "b",
+      "role": "CLIENT_OWNER",
+      "status": "active",
+      "siteIds": []
+    },
+    {
+      "id": "revokedA",
+      "organization": "a",
+      "role": "CLIENT_OWNER",
+      "status": "revoked",
+      "siteIds": []
+    },
+    {
+      "id": "ownerSuspended",
+      "organization": "suspended",
+      "role": "CLIENT_OWNER",
+      "status": "active",
+      "siteIds": []
+    }
+  ],
+  "actions": [
+    "read",
+    "edit",
+    "publish",
+    "members",
+    "billing",
+    "support"
+  ],
+  "cases": [
+    [
+      "ownerA",
+      "a1",
+      "read",
+      true
+    ],
+    [
+      "ownerA",
+      "a2",
+      "edit",
+      true
+    ],
+    [
+      "ownerA",
+      "b1",
+      "read",
+      false
+    ],
+    [
+      "ownerA",
+      "a1",
+      "publish",
+      true
+    ],
+    [
+      "ownerA",
+      "a1",
+      "billing",
+      true
+    ],
+    [
+      "adminA",
+      "a1",
+      "edit",
+      true
+    ],
+    [
+      "adminA",
+      "a2",
+      "publish",
+      true
+    ],
+    [
+      "adminA",
+      "a2",
+      "billing",
+      false
+    ],
+    [
+      "editorA1",
+      "a1",
+      "read",
+      true
+    ],
+    [
+      "editorA1",
+      "a1",
+      "edit",
+      true
+    ],
+    [
+      "editorA1",
+      "a1",
+      "publish",
+      false
+    ],
+    [
+      "editorA1",
+      "a1",
+      "members",
+      false
+    ],
+    [
+      "editorA1",
+      "a2",
+      "read",
+      false
+    ],
+    [
+      "editorA1",
+      "a2",
+      "edit",
+      false
+    ],
+    [
+      "editorA1",
+      "b1",
+      "read",
+      false
+    ],
+    [
+      "viewerA1",
+      "a1",
+      "read",
+      true
+    ],
+    [
+      "viewerA1",
+      "a1",
+      "edit",
+      false
+    ],
+    [
+      "viewerA1",
+      "a1",
+      "publish",
+      false
+    ],
+    [
+      "viewerA1",
+      "a2",
+      "read",
+      false
+    ],
+    [
+      "viewerA1",
+      "b1",
+      "read",
+      false
+    ],
+    [
+      "editorA2",
+      "a2",
+      "edit",
+      true
+    ],
+    [
+      "editorA2",
+      "a1",
+      "read",
+      false
+    ],
+    [
+      "ownerB",
+      "b1",
+      "read",
+      true
+    ],
+    [
+      "ownerB",
+      "a1",
+      "read",
+      false
+    ],
+    [
+      "revokedA",
+      "a1",
+      "read",
+      false
+    ],
+    [
+      "revokedA",
+      "a1",
+      "publish",
+      false
+    ],
+    [
+      "ownerSuspended",
+      "s1",
+      "read",
+      false
+    ],
+    [
+      "ownerSuspended",
+      "s1",
+      "edit",
+      false
+    ],
+    [
+      "unknown",
+      "a1",
+      "read",
+      false
+    ],
+    [
+      "editorA1",
+      "missing",
+      "read",
+      false
+    ],
+    [
+      "ownerA",
+      "a1",
+      "delete",
+      false
+    ]
+  ]
+}
