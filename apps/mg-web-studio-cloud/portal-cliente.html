@@ -297,7 +297,7 @@ function templateDraft(t,source){
 }
 function pageAddress(page){return site().domain+(page.id==="home"?"":"/"+page.slug);}
 
-var navItems=[["inicio","▦","Inicio"],["identidad","◉","Mi negocio"],["configuracion","⌂","Datos y horarios"],["seo","⌕","SEO de páginas"],["medios","▧","Biblioteca multimedia"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["asistente-ia","✦","Asistente web IA (demo)"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["consultas","✉","Solicitudes"],["vista","▣","Vista previa"],["revision","✓","Revisión previa"],["publicaciones","⇄","Publicaciones"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
+var navItems=[["inicio","▦","Inicio"],["identidad","◉","Mi negocio"],["configuracion","⌂","Datos y horarios"],["seo","⌕","SEO de páginas"],["medios","▧","Biblioteca multimedia"],["paginas","☷","Mis páginas"],["plantillas","▤","Plantillas"],["contenido","✎","Editar página"],["visual","▥","Editor visual"],["asistente-ia","✦","Asistente web IA (demo)"],["bandeja","▤","Bandeja de propuestas"],["catalogo","▤","Catálogo"],["promociones","✧","Promociones"],["consultas","✉","Solicitudes"],["vista","▣","Vista previa"],["revision","✓","Revisión previa"],["publicaciones","⇄","Publicaciones"],["historial","◷","Historial"],["dominio","◎","Dominio y plan"],["soporte","◇","Ayuda"]];
 var $=function(id){return document.getElementById(id);};
 function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
 function getOrg(){return organizations.find(function(x){return x.id===activeOrg;});}
@@ -789,6 +789,11 @@ function bindAIWizard(){
  };});
 }
 
+function inboxDemoLaunch(){
+ return head("Bandeja central de propuestas (demo)","Simula la comunicación entre MG Digital Solutions y el cliente dentro de una sola página de laboratorio.")+
+ '<section class="card"><h2>Propuestas y notificaciones</h2><p>Abre la bandeja para cambiar entre perfiles ficticios y probar revisión, aprobación, nuevas versiones y mensajes no leídos. No utiliza datos de esta sesión de muestra; ambas demostraciones tienen estados en memoria independientes.</p>'+
+ '<a class="secondary" href="./bandeja-propuestas-demo.html" target="_blank" rel="noopener noreferrer">Abrir bandeja central de demostración ↗</a></section>'+banner();
+}
 function intro(){
 var s=site(),draft=s.draft,shared=s.sharedDraft;
 return head("Bienvenido a tu espacio","Administra tu página web de forma sencilla: personaliza, agrega productos y revisa antes de publicar.",'<button class="primary" data-go="contenido">Editar mi página →</button>')+
@@ -1430,7 +1435,7 @@ function bindPageManager(){
 
 function render(){
 navDraw();
-var pages={inicio:intro,identidad:identity,configuracion:businessConfig,seo:siteSEO,medios:mediaLibrary,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,consultas:inquiryInbox,"asistente-ia":aiWizardPage,vista:preview,revision:preflightPanel,publicaciones:sitePublications,historial:history,dominio:domain,soporte:support};
+var pages={inicio:intro,identidad:identity,configuracion:businessConfig,seo:siteSEO,medios:mediaLibrary,paginas:managePages,plantillas:manageTemplates,contenido:editor,visual:visualBuilder,catalogo:catalog,promociones:promotions,consultas:inquiryInbox,"asistente-ia":aiWizardPage,bandeja:inboxDemoLaunch,vista:preview,revision:preflightPanel,publicaciones:sitePublications,historial:history,dominio:domain,soporte:support};
 $("content").innerHTML='<div class="card" style="margin-bottom:20px"><div class="row" style="justify-content:space-between;align-items:end"><div><div class="eyebrow">SESIÓN DE PRUEBA</div><p style="margin:5px 0 0;color:var(--muted)">Alterna negocios y roles ficticios para revisar el diseño. Esta selección NO es autenticación.'+
  (demoBridgeContext?' · Contexto de navegación de SUPERADMIN cargado'+(demoBridgePlanApplied?' (incluye plan de muestra)':'')+'. Los demás cambios no se sincronizan.':'')+(sharedService?' · Servicio común en memoria V1 activo.':' · Servicio autónomo de reserva.')+'</p></div><div class="row">'+
  (demoBridgeContext?'<a class="secondary" href="./prototipo.html" target="_blank" rel="noopener noreferrer">↩ Panel SUPERADMIN demo</a>':'')+
