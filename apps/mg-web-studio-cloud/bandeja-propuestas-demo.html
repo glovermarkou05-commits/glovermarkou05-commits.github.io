@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MG WEB STUDIO CLOUD · Bandeja de propuestas V12</title>
+<style>
+:root{font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#eff6fc;background:#071625}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 90% 0,#153854,transparent 52%),#071625}
+main{max-width:1250px;margin:auto;padding:30px 24px 65px}h1{font-size:clamp(25px,3.5vw,39px);letter-spacing:-.04em;margin:8px 0}
+h2{font-size:18px;margin:0 0 13px}h3{font-size:14px;margin:8px 0}
+p{font-size:12px;line-height:1.55;color:#b0c6db}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;flex-wrap:wrap}
+.eyebrow{font-size:11px;letter-spacing:.11em;font-weight:800;color:#6fd0f9}
+.sub{max-width:800px}.nav{display:flex;gap:8px;flex-wrap:wrap}
+a{color:#8ed8ff}.button,a.button{background:#18324b;border:1px solid #2e516b;color:#e9f5ff;padding:10px 13px;display:inline-flex;align-items:center;justify-content:center;border-radius:10px;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;min-height:39px}
+.button.primary{background:linear-gradient(110deg,#0880b4,#394faf);border-color:#278dc6}.button.warn{border-color:#7c7148;background:#3c321c}
+.button.danger{background:#3d293b;border-color:#93536b}.button:disabled{opacity:.42;cursor:not-allowed}
+.card,.banner{border:1px solid #2e4b61;background:rgba(15,34,52,.89);padding:19px;border-radius:16px}
+.banner{border-color:#735d31;background:rgba(88,61,20,.20);margin:20px 0;color:#ecdbb4;line-height:1.6;font-size:12px}
+.layout{display:grid;grid-template-columns:minmax(0,.93fr) minmax(0,1.07fr);gap:16px}
+.section{margin-top:16px}.grid{display:grid;gap:12px}.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+label{font-weight:700;color:#c5d9ec;font-size:12px;display:grid;gap:7px}
+input,select,textarea{border:1px solid #36566d;background:#091d2e;color:#f0f9ff;border-radius:9px;padding:10px 11px;font:inherit;font-size:12px;width:100%}
+textarea{resize:vertical;min-height:75px}small,.muted{font-size:11px;color:#91adc1}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:15px 0}
+.stat{padding:14px;background:#0b263b;border-radius:12px;border:1px solid #254964}
+.stat small{display:block}.stat strong{display:block;font-size:24px;margin-top:5px}
+.table{display:grid;gap:9px}.entry{border:1px solid #304b62;background:#0d2539;padding:13px;border-radius:11px}
+.entry strong{font-size:13px}.entry p{margin:6px 0 9px}.entry .controls{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+.pill{font-size:10px;border:1px solid #446780;border-radius:20px;padding:4px 9px;color:#b7e4f8;display:inline-block}
+.pill.unread{color:#ffd68e;border-color:#85642d}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:10px 0}
+.status{min-height:41px;border:1px solid #285674;background:#09263e;padding:11px;font-size:12px;color:#aadcf7;border-radius:10px}
+.detail-page{border-left:3px solid #3d8fb4;padding:9px 13px;margin:8px 0;background:#0b293d;border-radius:5px}
+.detail-page strong{font-size:12px}.detail-page p{margin:4px 0}
+.history{list-style:none;padding:0;margin:0;display:grid;gap:7px;max-height:220px;overflow:auto}
+.history li{background:#0c263b;border-radius:8px;font-size:11px;color:#c0d8e8;padding:9px}
+.empty{padding:18px;background:#10283a;border:1px dashed #3b5969;border-radius:10px;color:#97b2c6;font-size:12px;text-align:center}
+.field-info{font-size:11px;color:#8db6cc;margin-top:5px}
+@media(max-width:820px){main{padding:19px 12px 45px}.layout,.two,.stats{grid-template-columns:1fr}.card{padding:15px}}
+</style></head>
+<body><main>
+<header>
+<div><div class="eyebrow">MG DIGITAL SOLUTIONS / CONTROL DE PROPUESTAS / V12</div>
+<h1>Bandeja central de propuestas</h1>
+<p class="sub">Simula cómo MG Digital Solutions y sus clientes podrían recibir propuestas, solicitar cambios, aprobarlas y consultar notificaciones desde una sola fuente de información.</p></div>
+<nav class="nav"><a class="button" href="./prototipo.html">SUPERADMIN</a><a class="button" href="./portal-cliente.html">Portal emprendedor</a><a class="button" href="./laboratorio-sincronizacion.html">Laboratorio de versiones</a></nav>
+</header>
+<div class="banner"><b>DEMOSTRACIÓN LOCAL SIN DATOS REALES.</b> Alternar usuarios en esta página no autentica a nadie. Esta bandeja funciona únicamente <b>dentro de este documento y hasta recargar</b>. No sincroniza los otros paneles, no envía notificaciones externas, no ejecuta IA real, no publica sitios y no cobra servicios.</div>
+<div class="card">
+<div class="grid two">
+<label>Perfil ficticio de prueba<select id="actor">
+<option value="super">MG Digital Solutions · SUPERADMIN</option>
+<option value="owner1">Café Horizonte · Propietario</option>
+<option value="editor1">Café Horizonte · Editor sitio principal</option>
+<option value="viewer1">Café Horizonte · Solo consulta</option>
+<option value="owner2">Papelería Nube · Propietario</option>
+<option value="editor3">Café Horizonte · Editor de otro sitio</option>
+</select></label>
+<label>Filtrar por estado<select id="statusFilter">
+<option value="">Todos los estados</option><option>Borrador</option><option>En revisión</option>
+<option>Cambios solicitados</option><option>Rechazada</option><option>Aprobada</option>
+<option>Aplicada al borrador</option></select></label>
+</div>
+<div class="stats">
+<div class="stat"><small>Propuestas visibles</small><strong id="proposalCount">0</strong></div>
+<div class="stat"><small>Notificaciones sin leer</small><strong id="unreadCount">0</strong></div>
+<div class="stat"><small>Estado de conexión</small><strong style="font-size:16px" id="connection">En memoria</strong></div>
+</div>
+<div class="status" id="message" role="status">Selecciona una empresa o un perfil para comenzar.</div>
+</div>
+<div class="layout section">
+<section class="grid">
+<div class="card" id="agencyCreateArea">
+<h2>Preparar propuesta web</h2>
+<p>SOLO SUPERADMIN (demo): completa los datos de ejemplo y genera un borrador mediante plantillas locales, sin modelos de IA.</p>
+<form id="agencyForm" class="grid">
+<label>Sitio del cliente<select id="siteId" name="siteId">
+<option value="s1">Café Horizonte · Web principal</option>
+<option value="s2">Papelería Nube · Tienda online</option>
+<option value="s3">Café Horizonte · Web corporativa</option></select></label>
+<label>Nombre comercial ficticio<input name="brand" value="Café Horizonte" required maxlength="65"></label>
+<div class="grid two"><label>Sector<select name="type">
+<option value="restaurante">Café / restaurante</option><option value="tienda">Tienda / catálogo</option>
+<option value="servicios">Servicios</option><option value="portafolio">Portafolio</option>
+<option value="educacion">Talleres / educación</option></select></label>
+<label>Estilo<select name="style">
+<option value="natural">Natural</option><option value="moderno">Moderno</option>
+<option value="elegante">Elegante</option><option value="creativo">Creativo</option></select></label></div>
+<label>Productos o servicios ficticios<input name="offering" required maxlength="170" value="café, postres y meriendas de especialidad"></label>
+<label>Público objetivo ficticio<input name="audience" required maxlength="100" value="familias, estudiantes y profesionales"></label>
+<button class="button primary" type="submit" id="generate">Crear propuesta o nueva revisión</button>
+</form>
+</div>
+<div class="card"><h2>Bandeja de propuestas</h2><p>La lista cambia al seleccionar otro usuario. Una propuesta de una empresa no aparece en la bandeja de otra.</p>
+<div class="table" id="proposalList"></div></div>
+</section>
+<section class="grid">
+<div class="card"><h2>Revisión seleccionada</h2><div id="proposalDetail" class="empty">Selecciona una propuesta de la bandeja.</div></div>
+<div class="card"><h2>Notificaciones internas</h2>
+<p>Abrir una notificación la marca como leída y reduce el contador del usuario seleccionado, solo dentro de esta demo.</p>
+<div id="notificationList" class="table"></div></div>
+</section></div>
+<p class="muted" style="margin-top:20px">Este prototipo no sustituye un servidor real. Cuando se autorice la infraestructura, las bandejas utilizarán sesiones verificadas, MFA, RLS por sitio, almacenamiento versionado y notificaciones autorizadas.</p>
+</main>
+<script src="./shared/mg-ai-web-assistant-demo.js"></script>
+<script src="./shared/mg-proposal-exchange-demo.js"></script>
+<script src="./shared/mg-proposal-inbox-demo.js"></script>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=x=>String(x==null?"":x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const actors={
+ super:{kind:"staff",userId:"super1",aal:"aal2"},
+ owner1:{kind:"client",userId:"owner1"},editor1:{kind:"client",userId:"editor1"},
+ viewer1:{kind:"client",userId:"viewer1"},owner2:{kind:"client",userId:"owner2"},
+ editor3:{kind:"client",userId:"editor3"}
+};
+const dir={organizations:[{id:"c1",name:"Café Horizonte",plan:"Crece"},{id:"c2",name:"Papelería Nube",plan:"Start"}],
+sites:[{id:"s1",clientId:"c1",name:"Web principal"},{id:"s2",clientId:"c2",name:"Tienda online"},{id:"s3",clientId:"c1",name:"Web corporativa"}],
+staff:[{userId:"super1",role:"SUPERADMIN",active:true}],
+members:[
+{id:"m1",userId:"owner1",clientId:"c1",role:"CLIENT_OWNER",status:"Activo (demo)",scope:"all",siteIds:[]},
+{id:"m2",userId:"editor1",clientId:"c1",role:"CLIENT_EDITOR",status:"Activo (demo)",scope:"selected",siteIds:["s1"]},
+{id:"m3",userId:"viewer1",clientId:"c1",role:"CLIENT_VIEWER",status:"Activo (demo)",scope:"selected",siteIds:["s1"]},
+{id:"m4",userId:"owner2",clientId:"c2",role:"CLIENT_OWNER",status:"Activo (demo)",scope:"all",siteIds:[]},
+{id:"m5",userId:"editor3",clientId:"c1",role:"CLIENT_EDITOR",status:"Activo (demo)",scope:"selected",siteIds:["s3"]}
+]};
+const source=window.MGWebProposalInbox&&window.MGAIWebAssistant&&window.MGWebProposalExchange;
+if(!source){$("connection").textContent="Módulo no disponible";$("message").textContent="No se cargaron los módulos locales. Sirve el archivo y la carpeta shared desde el mismo origen.";document.querySelectorAll("button,input,select").forEach(x=>x.disabled=true);return;}
+const inbox=window.MGWebProposalInbox.createDemoInbox({directory:()=>dir,exchange:window.MGWebProposalExchange});
+const drafts=[["c1","s1"],["c1","s3"],["c2","s2"]];
+drafts.forEach(pair=>inbox.initDraft(pair[0],pair[1]));
+let currentActor="super",selected=null;
+const actor=()=>actors[currentActor];
+function say(message){$("message").textContent=message;}
+function orgName(id){return dir.organizations.find(o=>o.id===id)?.name||id;}
+function siteName(id){return dir.sites.find(s=>s.id===id)?.name||id;}
+function optionsOf(clientId){return dir.sites.filter(s=>s.clientId===clientId);}
+function render(){
+ const identity=actor(),staff=identity.kind==="staff";
+ $("agencyCreateArea").style.display=staff?"":"none";
+ const status=$("statusFilter").value;
+ const listed=inbox.listProposals(identity,status?{status}:{});
+ const rows=listed.ok?listed.data:[];
+ $("proposalCount").textContent=rows.length;
+ if(selected&&!rows.some(p=>p.id===selected))selected=null;
+ $("proposalList").innerHTML=rows.length?rows.slice().reverse().map(p=>
+ '<div class="entry"><div class="row"><strong>'+esc(orgName(p.clientId))+'</strong><span class="pill">'+esc(p.status)+'</span></div>'+
+ '<p>'+esc(siteName(p.siteId))+' · Propuesta '+esc(p.id)+' · v'+p.revision+' · '+esc(p.plan)+'</p>'+
+ '<button class="button" data-open="'+esc(p.id)+'">Ver propuesta</button></div>').join(""):
+ '<div class="empty">No hay propuestas visibles para este usuario o filtro.</div>';
+ $("proposalList").querySelectorAll("[data-open]").forEach(button=>button.onclick=()=>{selected=button.dataset.open;render();});
+ const notifications=inbox.listNotifications(identity),unread=notifications.ok?notifications.data.unread:0;
+ $("unreadCount").textContent=unread;
+ $("notificationList").innerHTML=notifications.ok&&notifications.data.items.length?
+ notifications.data.items.slice().reverse().map(n=>
+ '<div class="entry"><span class="pill '+(!n.read?"unread":"")+'">'+(n.read?"Leída":"Sin leer")+'</span>'+
+ '<p>'+esc(n.detail)+' · '+esc(orgName(n.clientId))+' · v'+n.revision+'</p>'+
+ '<button class="button" data-note="'+esc(n.id)+'" data-proposal="'+esc(n.proposalId)+'">'+
+ (n.read?"Abrir propuesta":"Marcar leída y abrir")+'</button></div>').join(""):
+ '<div class="empty">Sin notificaciones para este usuario.</div>';
+ $("notificationList").querySelectorAll("[data-note]").forEach(button=>button.onclick=()=>{
+  const r=inbox.markRead(identity,button.dataset.note);
+  if(!r.ok){say(r.error);return;}selected=button.dataset.proposal;render();say("Notificación abierta y marcada como leída (demo).");
+ });
+ detail();
+}
+function detail(){
+ const el=$("proposalDetail"),identity=actor();
+ if(!selected){el.className="empty";el.textContent="Selecciona una propuesta de la bandeja.";return;}
+ const found=inbox.getProposal(identity,selected);
+ if(!found.ok){selected=null;el.className="empty";el.textContent="La propuesta no está disponible para este usuario.";return;}
+ const p=found.data,staff=identity.kind==="staff";
+ el.className="";
+ const pages=p.proposal.pages.map((page,i)=>'<article class="detail-page"><strong>'+(i+1)+'. '+esc(page.name)+'</strong>'+
+ '<p>'+esc(page.title)+'</p><small>'+esc(page.description)+'</small></article>').join("");
+ const history=p.history.slice().reverse().map(h=>'<li>v'+h.revision+' · '+esc(h.event)+' · '+esc(h.actorKind)+
+ (h.note?' · '+esc(h.note):'')+'</li>').join("");
+ let actions="";
+ if(staff&&p.status==="Borrador")actions='<button class="button primary" id="submitProposal">Enviar a revisión (demo)</button>';
+ if(staff&&["Cambios solicitados","Rechazada"].includes(p.status))
+ actions='<p class="field-info">Para crear una revisión nueva, selecciona el mismo sitio en «Preparar propuesta web» y vuelve a generar.</p>';
+ if(!staff&&p.status==="En revisión"){
+  const member=dir.members.find(m=>m.userId===identity.userId&&m.clientId===p.clientId);
+  if(member&&member.role!=="CLIENT_VIEWER"){
+   const canApprove=["CLIENT_OWNER","CLIENT_ADMIN"].includes(member.role);
+   actions='<label>Observaciones ficticias<textarea id="reviewNote" maxlength="500" placeholder="Escribe el motivo para solicitar cambios o rechazar..."></textarea></label>'+
+   '<div class="row">'+(canApprove?'<button class="button primary" data-decision="approved">Aprobar (demo)</button>':'')+
+   '<button class="button warn" data-decision="changes">Solicitar cambios</button>'+
+   (canApprove?'<button class="button danger" data-decision="rejected">Rechazar</button>':'')+'</div>';
+  }
+ }
+ if(!staff&&p.status==="Aprobada"){
+  const draft=inbox.getDraft(identity,p.clientId,p.siteId);
+  actions='<p class="field-info">Versión actual del borrador: '+(draft.ok?draft.data.version:"Sin permiso")+'</p>'+
+   '<button class="button primary" id="applyProposal" '+(!draft.ok?"disabled":"")+'>Aplicar al borrador (demo)</button>';
+ }
+ el.innerHTML='<div class="row"><span class="pill">'+esc(p.status)+'</span><small>v'+p.revision+' · '+esc(p.id)+' · '+esc(p.plan)+'</small></div>'+
+ '<h3>'+esc(orgName(p.clientId))+' · '+esc(siteName(p.siteId))+'</h3>'+
+ '<p>'+esc(p.proposal.summary)+'</p>'+pages+
+ '<div class="row">'+actions+'</div><h3>Historial ficticio</h3><ul class="history">'+history+'</ul>'+
+ '<p class="field-info">Sin publicación ni transferencia a los otros dos paneles. Las decisiones no prueban identidad real.</p>';
+ const submit=$("submitProposal");if(submit)submit.onclick=()=>{
+  const r=inbox.submit(identity,p.id,p.revision);
+  say(r.ok?"Propuesta enviada a revisión dentro de esta página.":"Error: "+r.error);render();
+ };
+ el.querySelectorAll("[data-decision]").forEach(button=>button.onclick=()=>{
+  const note=$("reviewNote").value;
+  const r=inbox.review(identity,p.id,{decision:button.dataset.decision,note,expectedRevision:p.revision});
+  say(r.ok?"Decisión registrada en la bandeja local. Se generó un aviso al SUPERADMIN ficticio.":"Error: "+r.error);
+  if(r.ok)render();
+ });
+ const apply=$("applyProposal");if(apply)apply.onclick=()=>{
+  const draft=inbox.getDraft(identity,p.clientId,p.siteId);
+  if(!draft.ok){say(draft.error);return;}
+  if(!confirm("¿Aplicar esta propuesta aprobada al BORRADOR ficticio? No publica ninguna web."))return;
+  const r=inbox.applyToDraft(identity,p.id,{expectedRevision:p.revision,expectedDraftVersion:draft.data.version});
+  say(r.ok?"Propuesta aplicada al borrador LOCAL del laboratorio. Versión "+r.data.draft.version+".":"Error: "+r.error);
+  render();
+ };
+}
+$("actor").onchange=()=>{currentActor=$("actor").value;selected=null;render();say("Perfil de prueba cambiado. Esto NO es inicio de sesión.");};
+$("statusFilter").onchange=()=>render();
+$("siteId").onchange=()=>{
+ const site=dir.sites.find(s=>s.id===$("siteId").value);
+ $("agencyForm").elements.brand.value=orgName(site.clientId);
+ $("agencyForm").elements.offering.value=site.clientId==="c2"?"papelería, material de arte y útiles escolares":"café, postres y meriendas de especialidad";
+};
+$("agencyForm").onsubmit=e=>{
+ e.preventDefault();
+ const data=Object.fromEntries(new FormData($("agencyForm")).entries());
+ const site=dir.sites.find(s=>s.id===data.siteId),org=dir.organizations.find(o=>o.id===site?.clientId);
+ if(!site||!org){say("Selecciona un sitio válido.");return;}
+ const generated=window.MGAIWebAssistant.createProposal({...data,plan:org.plan,goal:"contacto"});
+ if(!generated.ok){say(generated.error);return;}
+ const existing=inbox.listProposals(actor(),{siteId:site.id});
+ const revisable=existing.ok?existing.data.find(p=>["Cambios solicitados","Rechazada"].includes(p.status)):null;
+ const result=revisable?
+ inbox.revise(actor(),revisable.id,{expectedRevision:revisable.revision,proposal:generated.proposal}):
+ inbox.createProposal(actor(),{clientId:org.id,siteId:site.id,proposal:generated.proposal});
+ if(!result.ok){say(result.error);return;}
+ selected=result.data.id;render();
+ say(revisable?"Nueva revisión creada. Pulsa «Enviar a revisión» para avisar al cliente ficticio.":
+  "Propuesta creada en memoria. Pulsa «Enviar a revisión» para generar notificaciones internas.");
+};
+render();
+})();
+</script></body></html>
