@@ -80,7 +80,7 @@ noChange("Claim failed business receipt",()=>engine.enqueue(input("event4","owne
 noChange("Claim published business receipt",()=>engine.enqueue(input("event4","ownerA",{...approved,published:true})),"INVALID_ENQUEUE");
 noChange("Claim bogus tenant source",()=>engine.enqueue(input("event4","ownerA",approved,"approve","audit_3",{organizationId:"orgB"})),"COMMIT_EVIDENCE_MISSING");
 noChange("Claim fake revision status",()=>engine.enqueue(input("event4","ownerA",{...approved,state:"draft"})),"INVALID_ENQUEUE");
-noChange("Future timestamp source",()=>engine.enqueue(input("event4","ownerA",approved,"approve","audit_3",{now:1})),"EVENT_TIME_INVALID");
+noChange("Future timestamp source",()=>engine.enqueue(input("event4","ownerA",submitted,"submit","audit_2",{now:1})),"EVENT_TIME_INVALID");
 const first=engine.claim("event1","workerA",111);
 check("First claim",first.ok&&first.attempt===1&&first.token.startsWith("lease_"));
 check("Lease does not send",first.deliveryPerformed===false);
