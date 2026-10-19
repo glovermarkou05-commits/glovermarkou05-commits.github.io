@@ -1,0 +1,85 @@
+"use strict";
+/* node apps/mg-web-studio-cloud/tests/staging-readiness-v17-ui.test.cjs
+ * QA DOM simulado para formulario de evaluación; NO navegador real.
+ */
+const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path");
+const read=f=>fs.readFileSync(path.join(__dirname,"..",f),"utf8");
+const win={};new Function("window",read("shared/mg-staging-readiness-v17.js"))(win);
+let checks=0;const ok=(name,predicate)=>{assert.ok(predicate,name);checks++;console.log("✓ "+name);};
+const el=()=>({innerHTML:"",textContent:"",value:"",style:{},dataset:{},disabled:false,
+ querySelectorAll:()=>[],addEventListener(){},focus(){},select(){}});
+async function main(){
+ const html=read("evaluacion-staging-v17.html");
+ const script=html.match(/<script>\n\(function\(\)\{[\s\S]*?<\/script>/);
+ ok("script principal presente",!!script);
+ let js=script[0].replace(/^<script>/,"").replace(/<\/script>$/,"").trim();
+ const end="\nrenderRows();renderSummary();renderBudget();\n})();";
+ ok("footer verificable",js.endsWith(end));
+ js=js.slice(0,-end.length)+"\nrenderRows();renderSummary();renderBudget();return {state,getRecord,renderRows,renderSummary,renderBudget,makeReport};\n})();";
+ const nodes={};const dom={getElementById(id){return nodes[id]||(nodes[id]=el())},
+  querySelectorAll:()=>[],createElement:()=>el()};
+ nodes.phaseFilter=el();nodes.phaseFilter.value="all";
+ nodes.categoryFilter=el();nodes.categoryFilter.value="all";
+ nodes.budgetScenario=el();nodes.budgetScenario.value="unselected";
+ const app=new Function("document","window","navigator","return "+js)(dom,win,{});
+ const gate=win.MGStageGateV17;
+ ok("UI renderizó total",Number(nodes.totalCount.textContent)===gate.requirements.length);
+ ok("staging pendiente inicial",Number(nodes.stagePending.textContent)>10);
+ ok("producción pendiente inicial",Number(nodes.prodPending.textContent)>8);
+ ok("lista incorpora 32 requisitos",nodes.requirements.innerHTML.includes("MFA obligatorio"));
+ ok("lista no incluye datos reales",!nodes.requirements.innerHTML.includes("marco.garcia@"));
+ ok("fase staging visible",nodes.requirements.innerHTML.includes("Antes de staging"));
+ ok("fase producción visible",nodes.requirements.innerHTML.includes("Antes de producción"));
+ ok("página indica NO GO real",html.includes("NO GO REAL"));
+ ok("estado bloqueado",nodes.realGate.textContent===""&&html.includes("La infraestructura real permanece bloqueada"));
+ ok("presupuesto sin escoger",nodes.budgetAmount.textContent==="Por definir");
+ nodes.budgetScenario.value="free";nodes.budgetScenario.onchange();
+ ok("free indica $0",nodes.budgetAmount.textContent.includes("$0"));
+ ok("free advierte sin respaldos",nodes.budgetDetail.textContent.includes("backups"));
+ nodes.budgetScenario.value="pro_new";nodes.budgetScenario.onchange();
+ ok("pro indica $25",nodes.budgetAmount.textContent.includes("$25"));
+ nodes.budgetScenario.value="pro_extra";nodes.budgetScenario.onchange();
+ ok("extra micro indica $10",nodes.budgetAmount.textContent.includes("$10"));
+ ok("escenario extra no implica contratar",nodes.budgetDetail.textContent.includes("sin cotización"));
+ nodes.phaseFilter.value="stage";nodes.phaseFilter.onchange();
+ ok("filtro de etapa elimina producción",!nodes.requirements.innerHTML.includes("Antes de producción"));
+ nodes.phaseFilter.value="production";nodes.phaseFilter.onchange();
+ ok("filtro de etapa muestra producción",nodes.requirements.innerHTML.includes("Antes de producción"));
+ ok("filtro producción elimina staging",!nodes.requirements.innerHTML.includes("Antes de staging"));
+ nodes.phaseFilter.value="all";
+ nodes.categoryFilter.value="security";nodes.categoryFilter.onchange();
+ ok("filtro categoría seguridad",nodes.requirements.innerHTML.includes("MFA obligatorio"));
+ ok("filtro categoría excluye presupuesto",!nodes.requirements.innerHTML.includes("Presupuesto mensual máximo"));
+ nodes.categoryFilter.value="all";nodes.categoryFilter.onchange();
+ ok("categorías listadas en selector",nodes.categoryFilter.innerHTML.includes('value="security"'));
+ nodes.report.onclick();
+ ok("reporte generado localmente",nodes.reportText.value.includes("REPORTE DE SIMULACIÓN"));
+ ok("reporte NO GO",nodes.reportText.value.includes("Autorización real de infraestructura: NO"));
+ ok("reporte sin fecha inventada",nodes.reportText.value.includes("completar manualmente"));
+ const reqs=gate.requirements.filter(x=>x.gate==="stage");
+ for(const item of reqs)app.state[item.id]={status:"simulated_checked",evidence:"Solo verificación ficticia, no QA real"};
+ app.renderSummary();
+ ok("se puede completar simulación staging",gate.evaluate(app.state).stage.hypothetical);
+ ok("el resumen mantiene advertencia",nodes.summary.textContent.includes("NO habilita infraestructura real"));
+ ok("no hay autorización del motor",!gate.evaluate(app.state).actualAuthorization);
+ ok("producción sigue pendiente",Number(nodes.prodPending.textContent)>0);
+ const item=reqs[0];app.state[item.id].status="pending";app.state[item.id].evidence="";
+ app.renderSummary();
+ ok("simular bloqueo vuelve a pendiente",Number(nodes.stagePending.textContent)===1);
+ ok("bar menos del 100%",nodes.stageBar.style.width!=="100%");
+ nodes.reset.onclick();
+ ok("reset limpia requisitos",Object.keys(app.state).length===0);
+ ok("reset limpia reporte",nodes.reportText.value==="");
+ ok("reset limpia costo",nodes.budgetScenario.value==="unselected");
+ ok("reset restaura fase",nodes.phaseFilter.value==="all");
+ ok("reset restaura categorías",nodes.categoryFilter.value==="all");
+ ok("reset staging completo pendiente",Number(nodes.stagePending.textContent)===reqs.length);
+ ok("ningún fetch/red",!html.includes("fetch("));
+ ok("ningún localStorage",!html.includes("localStorage"));
+ ok("sin credenciales",!html.includes("service_role"));
+ ok("sin ejecución de SQL",!html.includes("CREATE TABLE"));
+ console.log("\n"+checks+" verificaciones de interfaz V17 correctas, DOM simulado.");
+ return checks;
+}
+if(require.main===module)main().catch(e=>{console.error(e);process.exitCode=1;});
+module.exports={main};
