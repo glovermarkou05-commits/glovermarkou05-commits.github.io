@@ -110,10 +110,14 @@ function createWorkflow(config){
    actor={role:membership.role,kind:"client",active:true,aal:"aal1"};
   }
   // The request's actor/role/scope/claims are never read.
-  const signature=JSON.stringify([trustedSession.userId,trustedSession.sessionId,organizationId,
+  // V28 edge case: scope idempotency to tenant + verified mock principal, not
+  // merely the client-supplied operationId, to avoid collisions across tenants.
+  // Session rotation does not alter the identity of an already-authorized actor.
+  const operationKey=organizationId+"|"+trustedSession.userId+"|"+request.operationId;
+  const signature=JSON.stringify([trustedSession.userId,organizationId,
    siteId,proposalId,action,request.expectedRevision,request.expectedDraftVersion??null,
    request.note??null,request.eventId]);
-  const previous=completed.get(request.operationId);
+  const previous=completed.get(operationKey);
   if(previous){
    if(signature!==previous.signature)return reject("IDEMPOTENCY_CONFLICT");
    return {...deep(previous.receipt),replayed:true};
@@ -167,7 +171,7 @@ function createWorkflow(config){
    draftVersion:target.draftVersion,eventSequence:log.length,replayed:false,
    simulationOnly:true,go:false,published:false};
   state=next;
-  completed.set(request.operationId,{signature,receipt:deep(receipt)});
+  completed.set(operationKey,{signature,receipt:deep(receipt)});
   return receipt;
  }
  return Object.freeze({version:VERSION,mode:"memory-demo-only",execute,snapshot});
