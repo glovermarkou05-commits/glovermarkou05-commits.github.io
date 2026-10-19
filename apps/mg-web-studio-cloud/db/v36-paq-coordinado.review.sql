@@ -1,0 +1,95 @@
+-- MG WEB STUDIO CLOUD — V36/C03 — paquete coordinado de migraciones REVISION SOLAMENTE
+-- 2026-10-19 | NO EJECUTAR | CERO DDL/DML ACTIVO | NO ES UNA MIGRACIÓN.
+-- TODA LÍNEA ES COMENTARIO. Esta no es una plantilla lista para aplicar;
+-- requiere DBA, control de versiones, pruebas PostgreSQL reales, autorización.
+--
+-- 0. PRECONDICIONES DE AUTORIZACIÓN (P00; SIN COMPLETAR)
+-- - G01: autorización explícita staging aislado, proveedor, región, plan, presupuesto.
+-- - V18 manifiesto NOT_AUTHORIZED y 16 controles pending: NO GO.
+-- - Reservar ID de cambio externo, aprobador, ventana y rollback firmado.
+-- - NO usar main, Supabase real, Lovable, cron, pagos ni correos.
+--
+-- 1. INVENTARIO/RECUPERACIÓN (P01; PENDIENTE)
+-- - Confirmar versión instalada y objetos existentes; archivos *.review.sql
+--   representan diseños y NO demuestran que tablas fueron creadas.
+-- - Inventariar por organización/sitio, sin exportar datos personales,
+--   filas con slug 'home' / slug legado '', publicación, CHECKs, roles,
+--   policies RLS, grants por tabla/columna, triggers, SECURITY DEFINER,
+--   funciones de publicación, eventos, outbox, idempotencia y RPO/RTO.
+-- - Obtener snapshot/backup cifrado y demostrar restauración independiente.
+-- - El histórico db/v13-endurecimiento-rls-legado.review.sql CONTIENE
+--   SQL ACTIVO. Mantenerlo CUARENTENADO fuera de cualquier orden de
+--   aplicación; examinar manualmente grants, owners, RLS y efectos.
+--
+-- 2. COMPATIBILIDAD DE LECTURA DUAL (P02; PENDIENTE)
+-- - Backend CONFIRMADO y autenticado, nunca session/role enviado por browser.
+-- - Resolver '/' exclusivamente contra slug interno 'home', no '/home'.
+-- - Aceptar slug heredado '' solo al transformar el borrador en memoria.
+-- - Lectura de mg_site_proposals.status durante transición:
+--     submitted_for_review -> submitted
+--     applied_to_draft     -> applied
+-- - NO convertir mg_proposal_reviews.decision 'changes' a 'needs_changes';
+--   no convertir notifications.event_type / outbox.event_type.
+-- - Revalidar control de acceso tenant/sitio, scopes, MFA y revocaciones.
+--
+-- 3. PROTECCIÓN DE HOME PUBLICADA (P03; PENDIENTE)
+-- - UNIQUE(site_id,slug) ya propuesto: impide duplicar pero NO garantiza
+--   la existencia de una Home por cada sitio publicado.
+-- - Definir invariante exactly-one-Home en transacción + mecanismo que
+--   PROHÍBA quitar/cambiar Home una vez publicado, incluso desde Data API.
+-- - Revisión obligatoria: GRANT SELECT, INSERT y UPDATE a authenticated
+--   en schema_core.review.sql; revocación legada V13 no se puede asumir.
+-- - Todos los escritores deben respetar un lock/FK/constraint confiable;
+--   un bloqueo exclusivo solo en la ruta publish es INSUFICIENTE.
+-- - Probar concurrencia pub/sub, DELETE, UPDATE slug, cambios tenant/site,
+--   publicación simultánea, cachés, restauración, RLS y rollbacks.
+--
+-- 4. CONVERSIÓN VERSIONADA DE ESTADOS (P04; PENDIENTE)
+-- - SOLO tabla public.mg_site_proposals columna status;
+-- - Claves históricas V13:
+--     'submitted_for_review' -> 'submitted'
+--     'applied_to_draft'     -> 'applied'
+-- - Preservar 4 estados restantes: draft,needs_changes,rejected,approved.
+-- - CHECK definitivo con 6 canónicos requiere migración coordinada.
+-- - Asegurar que backend receptor y clientes no escriban valores fuera de
+--   la versión SQL autorizada; soportar lectura antigua en rollout.
+-- - Reservar ventana, bloquear escritores/crear CAS y planificar operación
+--   atómica, sin reescribir id, organization_id, site_id, revision,
+--   created_at, updated_at ni applied_draft_revision.
+-- - Cambios a proposals + historial + aud. negocio + idempotencia + outbox
+--   se deben confirmar/transaccionar juntos, con ROLLBACK íntegro por error.
+-- - EVITAR UPDATE A CIEGAS: inventariar rows/counters/versiones primero.
+-- - CONSUMIDORES: inbox, permisos, templates, revisiones, notificaciones,
+--   logs, exports, API HTTP, serialización, eventos de retries, DLQ.
+-- - Nunca agregar 'proposal_created' o 'proposal_revised' a outbox SQL
+--   histórico sin revisar independientemente consumidores y versiones.
+--
+-- 5. ENDURECIMIENTO/QA (P05; PENDIENTE)
+-- - Validar migración real en PostgreSQL aislado, RLS por rol/organización,
+--   MFA e identidad en servidor, SECURITY DEFINER owner y search_path,
+--   grants, policies heredadas, tenant_id, time-of-check/time-of-use.
+-- - Pruebas de dos clients concurrentes, stale revision, evento duplicado,
+--   pérdida de red, último Home borrado, rollback por falla media.
+-- - Usuario CLIENT_EDITOR jamás aprueba ni publica sin permiso; cualquier
+--   estado o decisión inválido no debe producir evento externo.
+-- - Probar que 'changes' de audit/review/outbox != 'needs_changes' de status.
+--
+-- 6. RESTORE/DOWNGRADE (P06; PENDIENTE)
+-- - Ejecutar exclusivamente en staging aislado autorizado, restaurar un
+--   backup íntegro comprobado antes de tocar datos reales.
+-- - Si hay escritura con nombres nuevos, detenerla antes del downgrade
+--   V20 -> V13 y verificar soporte de los consumidores existentes.
+-- - Mapping inverso SOLO en status: 'submitted' -> 'submitted_for_review',
+--   'applied' -> 'applied_to_draft'; otras columnas y eventos sin cambio.
+-- - Verificar contadores y huellas y activar servicio solamente tras
+--   consistencia, permisos y restauración verificados.
+-- - No hacer downgrade improvisado después de emitir notificaciones reales.
+--
+-- 7. GATE FINAL (P07; PENDIENTE)
+-- - Adjuntar evidencia de backup, pruebas de PostgreSQL y seguridad,
+--   pruebas de concurrencia, RLS, outbox, fallos y control de costos.
+-- - Exigir autorizaciones INDEPENDIENTES para staging y producción.
+-- - V36 es solo un orden técnico para revisión, no un deploy ni SQL runnable.
+-- - Las incompatibilidades históricas permanecen abiertas en archivos
+--   de origen; un simulador o este documento nunca las corrige en DB.
+-- RESULTADO V36: NO GO | ZERO EXECUTED SQL | NO PUBLICATION.
