@@ -135,6 +135,30 @@ function main(){
  ok("no hay fetch/red en validador",!load("shared/mg-staging-package-v18.js").includes("fetch("));
  ok("no hay shell/subprocess",!load("shared/mg-staging-package-v18.js").includes("exec("));
  ok("no hay almacenamiento",!load("shared/mg-staging-package-v18.js").includes("localStorage"));
+ const plan=load("staging/V18-PLAN-DRY-RUN.md");
+ ok("plan de revisión NO GO",plan.includes("NO GO"));
+ ok("plan contiene inventario de cuatro SQL",gate.expectedSQL.every(p=>plan.includes(p)));
+ ok("plan explica incompatibilidad Home",plan.includes("slug=\"\""));
+ ok("plan exige RLS real",plan.includes("RLS"));
+ ok("plan distingue backups del mock",plan.includes("checkpoint V15"));
+ ok("plan excluye proyectos ajenos",plan.includes("BAZAR"));
+ ok("plan mantiene IA sin activar",plan.includes("IA real"));
+ const preflight=load("staging/v18-preflight.cjs");
+ ok("preflight es de solo lectura",preflight.includes("readFileSync"));
+ ok("preflight sin shell",!preflight.includes("child_process")&&!preflight.includes("execSync"));
+ ok("preflight sin network",!preflight.includes("fetch(")&&!preflight.includes("https.request"));
+ ok("preflight informa NO GO",preflight.includes("Autorización real: NO"));
+ const link="staging/V18-PLAN-DRY-RUN.md";
+ for(const panel of ["prototipo.html","portal-cliente.html","preparacion-backend-v16.html","evaluacion-staging-v17.html"]){
+  const source=load(panel);
+  ok("enlace V18 desde "+panel,source.includes(link));
+  if(panel==="prototipo.html"||panel==="portal-cliente.html"){
+   const m=source.match(/<script>\n\(function\(\)\{[\s\S]*?<\/script>/);
+   ok("script panel "+panel,!!m);
+   new Function(m[0].replace(/^<script>/,"").replace(/<\/script>$/,""));
+   ok("sintaxis panel "+panel,true);
+  }
+ }
  console.log("\n"+count+" comprobaciones V18 (estáticas) correctas. NO se ejecutó SQL ni despliegue.");
  return count;
 }
