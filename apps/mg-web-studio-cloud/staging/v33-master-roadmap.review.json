@@ -1,0 +1,392 @@
+{
+  "format": "mg-web-studio/master-readiness-v33-review",
+  "version": 33,
+  "project": "MG WEB STUDIO CLOUD",
+  "sourceBranch": "feature/mg-digital-v5-web-services",
+  "date": "2026-10-19",
+  "productionAuthorized": false,
+  "stagingAuthorized": false,
+  "execution": {
+    "reviewOnly": true,
+    "mayProvision": false,
+    "mayRunSQL": false,
+    "mayDeploy": false,
+    "mayPublish": false,
+    "maySendEmail": false,
+    "mayActivateBilling": false,
+    "mayUsePaidAI": false,
+    "mayModifyMain": false,
+    "mayModifyOtherProjects": false
+  },
+  "summary": {
+    "decision": "NO_GO",
+    "stage": "NO_GO",
+    "production": "NO_GO",
+    "scope": "Prioritized workplan; documentary evidence is not real platform validation.",
+    "nextTask": "C01",
+    "inventory": {
+      "v17CatalogCount": 32,
+      "v18Pending": 16,
+      "v19BlockingIncompatibilities": 2,
+      "v28Unexecuted": 30,
+      "v30Unexecuted": 18,
+      "v31Unexecuted": 20,
+      "v32Unexecuted": 24,
+      "disjointIssueCountClaimed": false
+    }
+  },
+  "openBlockers": [
+    "HOME_SLUG_CONFLICT",
+    "STATUS_CONTRACT_MISMATCH",
+    "SECURITY_DEFINER_REVIEW",
+    "CAS_SQL_TRANSACTION_UNPROVEN",
+    "POSTGRES_REQUIRED",
+    "AUTH_MFA_REAL_UNTESTED",
+    "AUDIT_INTEGRITY_UNPROVEN"
+  ],
+  "milestones": [
+    {
+      "id": "M1",
+      "title": "Documentar y probar correcciones SQL/API en GitHub",
+      "taskIds": [
+        "C01",
+        "C02",
+        "C03"
+      ],
+      "acceptance": "Artefactos revisables y tests estáticos, sin SQL ejecutado",
+      "goAllowed": false
+    },
+    {
+      "id": "M2",
+      "title": "Autorizar staging y cerrar controles reales",
+      "taskIds": [
+        "G01",
+        "S01",
+        "S02",
+        "D01",
+        "D02",
+        "D03",
+        "R01",
+        "Q01"
+      ],
+      "acceptance": "Pruebas reales y evidencias verificables solo después de autorización",
+      "goAllowed": false
+    },
+    {
+      "id": "M3",
+      "title": "Decisión de producción separada",
+      "taskIds": [
+        "P01"
+      ],
+      "acceptance": "Signoff humano de producción después de QA, recovery y seguridad",
+      "goAllowed": false
+    },
+    {
+      "id": "M4",
+      "title": "Funciones opcionales de pago",
+      "taskIds": [
+        "X01"
+      ],
+      "acceptance": "Nueva autorización independiente, no incluida en la preparación del núcleo",
+      "goAllowed": false
+    }
+  ],
+  "tasks": [
+    {
+      "id": "G01",
+      "phase": "authorization",
+      "priority": "P0",
+      "title": "Autorizar staging aislado y límite de gastos",
+      "mode": "explicit-user-approval",
+      "owner": "Propietario del proyecto",
+      "deps": [],
+      "status": "BLOCKED_NEEDS_APPROVAL",
+      "gate": [
+        "authorization",
+        "budget",
+        "provider_region",
+        "isolated_environment"
+      ],
+      "exit": "Autorización externa explícita con proveedor, región, límite de gasto, responsable, cuenta exclusiva y alcance de pruebas; no basta un JSON",
+      "source": [
+        "staging/v18-manifest.review.json",
+        "QA-EVALUACION-STAGING-V17.md"
+      ]
+    },
+    {
+      "id": "C01",
+      "phase": "github",
+      "priority": "P0",
+      "title": "Cerrar contrato de Inicio (slug home y ruta /)",
+      "mode": "github-only-no-execution",
+      "owner": "Desarrollo",
+      "deps": [],
+      "status": "READY_FOR_GITHUB_WORK",
+      "gate": [
+        "home_slug"
+      ],
+      "exit": "Propuesta SQL/API/UI versionada y ensayos estáticos de Home única, ausente, duplicada y ruta /, sin ejecutar migración",
+      "source": [
+        "QA-AUDITORIA-SQL-V19.md",
+        "QA-COMPATIBILIDAD-SQL-API-V21.md"
+      ]
+    },
+    {
+      "id": "C02",
+      "phase": "github",
+      "priority": "P0",
+      "title": "Cerrar diseño de estados de propuestas V13/V20",
+      "mode": "github-only-no-execution",
+      "owner": "Desarrollo",
+      "deps": [],
+      "status": "READY_FOR_GITHUB_WORK",
+      "gate": [
+        "sql_compat"
+      ],
+      "exit": "Plan de compatibilidad de lectura/escritura, versión de esquema, transición de datos heredados, reversión y pruebas estáticas; sin migración real",
+      "source": [
+        "QA-AUDITORIA-SQL-V19.md",
+        "QA-COMPATIBILIDAD-SQL-API-V21.md"
+      ]
+    },
+    {
+      "id": "C03",
+      "phase": "github",
+      "priority": "P0",
+      "title": "Preparar parches de migración revisables y pruebas reproducibles",
+      "mode": "github-only-no-execution",
+      "owner": "Desarrollo y revisión de seguridad",
+      "deps": [
+        "C01",
+        "C02"
+      ],
+      "status": "BLOCKED_DEPENDENCY",
+      "gate": [
+        "sql_compat",
+        "rollback_review"
+      ],
+      "exit": "Archivos *.review.sql o diffs de revisión, escenarios de rollback y pruebas aisladas en código; cero comandos sobre una DB",
+      "source": [
+        "db/v20-contratos-propuestos.review.sql",
+        "QA-MIGRACIONES-REVERSIBLES-V22.md"
+      ]
+    },
+    {
+      "id": "S01",
+      "phase": "staging",
+      "priority": "P0",
+      "title": "Identidad de servidor, sesiones y MFA reales",
+      "mode": "requires-staging-approval",
+      "owner": "Backend y seguridad",
+      "deps": [
+        "G01"
+      ],
+      "status": "BLOCKED_NEEDS_APPROVAL",
+      "gate": [
+        "auth_mfa",
+        "secrets_review"
+      ],
+      "exit": "Pruebas reales de inicio/cierre/revocación de sesión y MFA; actor y scopes derivados del servidor, no del navegador",
+      "source": [
+        "QA-AISLAMIENTO-MULTIEMPRESA-V23.md",
+        "ARQUITECTURA-BACKEND-CONTRATOS-V29.md"
+      ]
+    },
+    {
+      "id": "S02",
+      "phase": "staging",
+      "priority": "P0",
+      "title": "PostgreSQL RLS, grants y SECURITY DEFINER",
+      "mode": "requires-staging-approval",
+      "owner": "Backend y seguridad",
+      "deps": [
+        "G01",
+        "C03",
+        "S01"
+      ],
+      "status": "BLOCKED_NEEDS_APPROVAL",
+      "gate": [
+        "rls_pgtest",
+        "tenant_scope",
+        "sql_compat"
+      ],
+      "exit": "Pruebas PostgreSQL aisladas con roles y ámbitos cruzados, grants/search_path/RLS, migración y rollback aprobados",
+      "source": [
+        "QA-AUDITORIA-SQL-V19.md",
+        "QA-ESQUEMA-RLS-V13.md"
+      ]
+    },
+    {
+      "id": "D01",
+      "phase": "staging",
+      "priority": "P0",
+      "title": "Transacción ACID, CAS, idempotencia y outbox",
+      "mode": "requires-staging-approval",
+      "owner": "Backend y base de datos",
+      "deps": [
+        "G01",
+        "C03",
+        "S01",
+        "S02"
+      ],
+      "status": "BLOCKED_NEEDS_APPROVAL",
+      "gate": [
+        "sql_compat",
+        "rls_pgtest"
+      ],
+      "exit": "Pruebas de concurrencia, rollback y reinicio: propuesta, borrador, recibo idempotente, auditoría y outbox se confirman o revierten juntos",
+      "source": [
+        "ARQUITECTURA-BACKEND-CONTRATOS-V29.md",
+        "QA-INTEGRIDAD-FALLOS-COMBINADOS-V32.md"
+      ]
+    },
+    {
+      "id": "D02",
+      "phase": "staging",
+      "priority": "P1",
+      "title": "Auditoría de negocio y seguridad separadas",
+      "mode": "requires-staging-approval",
+      "owner": "Backend y seguridad",
+      "deps": [
+        "G01",
+        "S01",
+        "S02",
+        "D01"
+      ],
+      "status": "BLOCKED_NEEDS_APPROVAL",
+      "gate": [
+        "privacy_fixtures",
+        "tenant_scope"
+      ],
+      "exit": "Registro durable restringido con eventos firmados o integridad equivalente, redacción y rechazo de asociación a tenant no verificado",
+      "source": [
+        "QA-AUDITORIA-TRAZABILIDAD-V24.md",
+        "ARQUITECTURA-BACKEND-CONTRATOS-V29.md"
+      ]
+    },
+    {
+      "id": "D03",
+      "phase": "staging",
+      "priority": "P1",
+      "title": "Worker de notificaciones, deduplicación, DLQ y conciliación",
+      "mode": "requires-staging-approval",
+      "owner": "Backend y operaciones",
+      "deps": [
+        "G01",
+        "D01",
+        "D02"
+      ],
+      "status": "BLOCKED_NEEDS_APPROVAL",
+      "gate": [
+        "observability",
+        "privacy_fixtures"
+      ],
+      "exit": "Reintentos y failover probados, sin duplicados externos, con fencing y validación de destinatario, DLQ protegida y métricas operativas",
+      "source": [
+        "QA-EVENTOS-RECONCILIACION-V30.md",
+        "QA-OBSERVABILIDAD-RECUPERACION-V31.md"
+      ]
+    },
+    {
+      "id": "R01",
+      "phase": "staging",
+      "priority": "P0",
+      "title": "Backups, restauración, reversión y recuperación",
+      "mode": "requires-staging-approval",
+      "owner": "Operaciones y seguridad",
+      "deps": [
+        "G01",
+        "S02"
+      ],
+      "status": "BLOCKED_NEEDS_APPROVAL",
+      "gate": [
+        "backup_restore",
+        "rollback_review"
+      ],
+      "exit": "Backup verificado, restauración en entorno aislado, rollback ensayado, RPO/RTO documentados y evidencia revisada",
+      "source": [
+        "QA-RESILIENCIA-RECUPERACION-V15.md",
+        "QA-PAQUETE-STAGING-V18.md"
+      ]
+    },
+    {
+      "id": "Q01",
+      "phase": "staging",
+      "priority": "P1",
+      "title": "QA integral multiempresa/multidispositivo con backend real",
+      "mode": "requires-staging-approval",
+      "owner": "QA y seguridad",
+      "deps": [
+        "S01",
+        "S02",
+        "D01",
+        "D02",
+        "D03",
+        "R01"
+      ],
+      "status": "BLOCKED_NEEDS_APPROVAL",
+      "gate": [
+        "smoke_e2e",
+        "privacy_fixtures",
+        "observability"
+      ],
+      "exit": "Pruebas reales HTTP, navegador, sesiones concurrentes, accesibilidad, seguridad, privacidad, fallos de red y evidencia sin datos reales",
+      "source": [
+        "QA-INTEGRIDAD-FALLOS-COMBINADOS-V32.md",
+        "QA-PREPARACION-TECNICA-V26.md"
+      ]
+    },
+    {
+      "id": "P01",
+      "phase": "production",
+      "priority": "P0",
+      "title": "Aprobación independiente de salida a producción",
+      "mode": "separate-production-approval",
+      "owner": "Propietario y seguridad",
+      "deps": [
+        "Q01",
+        "R01"
+      ],
+      "status": "BLOCKED_NEEDS_APPROVAL",
+      "gate": [
+        "signoff"
+      ],
+      "exit": "GO humano documentado fuera de la app; revisión completa, dominio/TLS, costes y rollback; no se publica en esta fase",
+      "source": [
+        "staging/v18-manifest.review.json",
+        "QA-EVALUACION-STAGING-V17.md"
+      ]
+    },
+    {
+      "id": "X01",
+      "phase": "optional",
+      "priority": "P2",
+      "title": "Cobros reales e IA de pago solo bajo permiso separado",
+      "mode": "optional-separate-approval",
+      "owner": "Propietario comercial",
+      "deps": [
+        "P01"
+      ],
+      "status": "NOT_AUTHORIZED_OPTIONAL",
+      "gate": [],
+      "exit": "Alcance, proveedor y presupuesto aprobados por separado y pruebas de seguridad/pagos específicas; no son requisito del núcleo",
+      "source": [
+        "PLAN-ASISTENTE-IA-V9-V11.md",
+        "QA-CONTRATOS-BACKEND-V29.md"
+      ]
+    }
+  ],
+  "evidenceManifestPaths": [
+    "staging/v18-manifest.review.json",
+    "staging/v28-backend-rls-matrix.review.json",
+    "staging/v30-outbox-delivery.review.json",
+    "staging/v31-observability.review.json",
+    "staging/v32-combined-faults.review.json"
+  ],
+  "cautions": [
+    "V17 controls overlap with V18 and are not added to unique blocker counts.",
+    "V28/V30/V31/V32 scenario lists overlap; 92 items are cases, not 92 distinct defects.",
+    "Passing memory suites V20–V32 does not constitute real PostgreSQL, identity, delivery, or production proof.",
+    "Changing review JSON cannot grant approval. Any real deployment needs independent human authorization."
+  ]
+}
