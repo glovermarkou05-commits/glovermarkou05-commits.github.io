@@ -115,8 +115,9 @@ ok("Editor cannot view audit",A.querySite(data().ledger,S,directory,session("edi
 ok("B owner cannot view A audit",A.querySite(data().ledger,S,directory,session("ownerB"),"orgA","siteA",clock).code==="AUDIT_ACCESS_DENIED");
 const revoke=S.mutateFixture(directory,"revokeMembership","ownA");directory=revoke;
 denied("revoked owner",request("ownerA","approve","p2",{expectedRevision:2}),"ACCESS_DENIED");
-const revokedReplay=flow.execute({...approveReq,now:clock++});
-ok("replay after revocation denied",revokedReplay.code==="AUDIT_FAILED"||revokedReplay.code==="ACCESS_DENIED");
+const revokedReplay=flow.execute({...approveReq,eventId:"revoked_retry_"+(++seq),now:clock++});
+ok("replay after revocation denied",revokedReplay.code==="ACCESS_DENIED");
+ok("replay after revocation audit recorded",revokedReplay.attemptLogged===true&&data().ledger.at(-1).outcome==="denied");
 directory=dir();
 const revokedScope=S.mutateFixture(directory,"removeScope","edtA","siteA");directory=revokedScope;
 denied("revoked site scope",request("editorA","changes","p2",{expectedRevision:2,note:"Hay que realizar modificaciones."}),"ACCESS_DENIED");
