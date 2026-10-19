@@ -1,0 +1,172 @@
+{
+  "format": "mg-web-studio/v31-observability-review",
+  "version": 31,
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "authorizationGranted": false,
+  "environment": null,
+  "execution": {
+    "reviewOnly": true,
+    "mayProvision": false,
+    "mayRunSQL": false,
+    "mayDeploy": false,
+    "mayPublish": false,
+    "maySendEmail": false,
+    "maySendPush": false,
+    "mayCallPaidAI": false,
+    "mayCharge": false,
+    "mayScheduleCron": false
+  },
+  "thresholds": {
+    "pendingAge": 30,
+    "retryOverdue": 20,
+    "leaseExpired": 0,
+    "backlogLimit": 3,
+    "unit": "fictional-ticks",
+    "productionCalibrated": false
+  },
+  "visibility": {
+    "metrics": "aggregate-only",
+    "includesTenantIds": false,
+    "includesRecipientIds": false,
+    "includesPayloads": false,
+    "alertRecipients": "none",
+    "externalAlertDelivery": false
+  },
+  "recovery": {
+    "mode": "MANUAL_REVIEW_ONLY",
+    "automatedReplay": false,
+    "externalWorkerStarted": false,
+    "realNotificationSent": false,
+    "productionRecoveryVerified": false
+  },
+  "checklist": [
+    {
+      "id": "O01",
+      "objective": "detect stuck pending events without disclosure of tenant IDs",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O02",
+      "objective": "detect retry overdue relative to configured backoff",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O03",
+      "objective": "detect leases expired and avoid premature recovery",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O04",
+      "objective": "count exhausted deliveries in restricted DLQ",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O05",
+      "objective": "alert backlog only with approved thresholds",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O06",
+      "objective": "check notification delivered/read consistency",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O07",
+      "objective": "detect missing and duplicate outbox items",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O08",
+      "objective": "detect committed-source and event correlation errors",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O09",
+      "objective": "detect disappearing events across checkpoints",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O10",
+      "objective": "detect attempts counter rewinding",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O11",
+      "objective": "detect delivery and read state regressions",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O12",
+      "objective": "detect modified tenant/recipient identities",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O13",
+      "objective": "test clock skew and timestamp sanity",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O14",
+      "objective": "avoid secrets and PII in metrics and alerts",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O15",
+      "objective": "restrict monitoring endpoints to authenticated staff",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O16",
+      "objective": "configure alert rate limits and deduplication",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O17",
+      "objective": "document human DLQ replay approval and immutable evidence",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O18",
+      "objective": "prove producer and outbox in same DB transaction",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O19",
+      "objective": "prove failover and recovery across worker restarts",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "O20",
+      "objective": "prove encrypted credentials and scoped notifier roles",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    }
+  ],
+  "status": {
+    "staticReview": "REVIEW_ONLY",
+    "realBackendTests": 0,
+    "realAlertsSent": 0,
+    "staging": "NO_GO",
+    "production": "NO_GO"
+  }
+}
