@@ -37,6 +37,17 @@ function createTransactionalMock(config){
    throw new TypeError("Borrador inicial de prueba inválido.");
   db.drafts.push({clientId:d.clientId,siteId:d.siteId,version:1,pages:deep(d.pages),publishedCount:0});
  }
+ 
+ // SOLO tests: rehidratación explícita y validada. No exponer esto en producción.
+ if(config.initialSnapshotForTests!==undefined){
+  if(typeof config.validateSnapshotForTests!=="function")
+   throw new TypeError("El checkpoint requiere validador de integridad de prueba.");
+  const validation=config.validateSnapshotForTests(config.initialSnapshotForTests,config.directory());
+  if(!validation||validation.ok!==true)
+   throw new TypeError("No se puede restaurar checkpoint inconsistente: "+
+    String(validation&&validation.error||"error desconocido"));
+  db=deep(config.initialSnapshotForTests);
+ }
  let tail=Promise.resolve();
  function directory(){
   const d=config.directory();
@@ -131,6 +142,14 @@ function createTransactionalMock(config){
    if(result.status<200||result.status>=300)return result; // ROLLBACK: no snapshot committed
    staged.operations.push({key,actorId:session.userId,organization:org,request:deep(normalized),
     response:{status:result.status,body:deep(result.body)}});
+   // SOLO TESTS: error artificial antes de confirmar el snapshot. No muta db.
+   if(typeof config.beforeCommitForTests==="function"){
+    try{
+     if(config.beforeCommitForTests({operationId:key,method:normalized.method,path:normalized.path,
+      actorId:session.userId,organization:org})===true)
+      return err(503,"SIMULATED_FAILURE","Fallo de commit simulado. Puede reintentarse con la misma clave.");
+    }catch(e){return err(503,"SIMULATED_FAILURE","Fallo simulado sin confirmar cambios.");}
+   }
    db=staged; // COMMIT atómico dentro de una sola instancia de JS
    return result;
   });
@@ -159,6 +178,23 @@ function createTransactionalMock(config){
     const n=staged.notifications.find(x=>x.id===original.id);
     n.read=true;return good(200,{notification:n});
    });
+  }
+  const eventsRoute=/^\/api\/v1\/organizations\/([a-z][a-z0-9_-]{0,63})\/sites\/([a-z][a-z0-9_-]{0,63})\/events$/.exec(route);
+  if(eventsRoute){
+   if(method!=="GET")return err(405,"METHOD_NOT_ALLOWED","Los eventos son de solo lectura.");
+   const org=eventsRoute[1],site=eventsRoute[2];
+   const denied=authorize(s,org,site,"read",true);
+   if(denied)return denied;
+   const after=(req.query||{}).after;
+   const cursor=after===undefined?0:Number(after);
+   if(!Number.isSafeInteger(cursor)||cursor<0)return err(400,"BAD_CURSOR","Cursor de eventos inválido.");
+   const rows=db.outbox.filter(x=>x.clientId===org&&x.siteId===site&&
+    Number(x.id.slice(1))>cursor).slice(0,50);
+   const items=rows.map(x=>({sequence:Number(x.id.slice(1)),revision:x.revision,
+    proposalId:x.proposalId,type:x.type,siteId:x.siteId}));
+   return good(200,{items,nextCursor:items.length?items[items.length-1].sequence:cursor,
+    hasMore:db.outbox.some(x=>x.clientId===org&&x.siteId===site&&
+     Number(x.id.slice(1))>(items.length?items[items.length-1].sequence:cursor))});
   }
   if(route==="/api/v1/admin/outbox"&&method==="GET"){
    if(!staff(s))return err(403,"MFA_REQUIRED","Outbox solo SUPERADMIN ficticio.");
