@@ -1,0 +1,82 @@
+-- MG WEB STUDIO CLOUD — V35/C02 — Estados de propuestas V13 ↔ V20
+-- SOLO COMENTARIOS · NO EJECUTAR · NO ES UNA MIGRACIÓN SQL.
+-- Todos los renglones de este archivo son comentarios '--' deliberadamente.
+--
+-- INVENTARIO DEL SQL V13 (db/v13-propuestas-scopes.review.sql):
+-- public.mg_site_proposals.status CHECK enum:
+--   draft, submitted_for_review, needs_changes, rejected, approved, applied_to_draft.
+-- V20 canon:
+--   draft, submitted, needs_changes, rejected, approved, applied.
+-- Mapeos NO ambiguos:
+--   submitted_for_review -> submitted
+--   applied_to_draft     -> applied
+-- Estados sin cambio: draft, needs_changes, rejected, approved.
+--
+-- TIPOS DISTINTOS. NO APLICAR EL MAPEO DE status SOBRE ELLOS:
+-- public.mg_proposal_reviews.decision CHECK:
+--   approved, changes, rejected
+-- public.mg_proposal_notifications.event_type CHECK:
+--   submitted, approved, changes, rejected, applied
+-- mg_private.mg_proposal_outbox.event_type CHECK:
+--   submitted, approved, changes, rejected, applied
+-- IMPORTANTE: changes es EVENTO/DECISIÓN; needs_changes es ESTADO.
+-- En SQL V13, estos enum de EVENTOS ya son compatibles con eventos clásicos.
+-- V27/V30 ahora también simulan eventos proposal_created y proposal_revised;
+-- V13 NO contiene estos dos tipos en notificaciones ni en outbox.
+-- NO ampliar enums ni emitir esos eventos en tablas reales sin definición clara
+-- de receptor, autorización, compatibilidad y prueba transaccional previa.
+--
+-- PLAN DE MIGRACIÓN FUTURA POR ETAPAS (NINGUNA EJECUTADA):
+-- 01. Staging exclusivo aprobado (G01), cuenta/región/coste, backup/restore
+--     verificado, esquema real inventariado; NO asumir que V13 fue aplicado.
+-- 02. Contar filas por cada estado en mg_site_proposals por organización/sitio,
+--     id/revision y establecer controles anti-fuga de información.
+-- 03. Inventariar funciones RPC, triggers, vistas, policies, RLS, dashboards,
+--     filtros de inbox, webhooks, exportaciones, reportes y consumidores,
+--     incluyendo proyectos independientes, sin tocarlos.
+-- 04. Definir versión de API y un periodo de lectura dual temporal:
+--     convertir alias antiguos al leer, para el cliente; no interpretar
+--     el alias en un rol ni permiso y no usar datos del browser como fuente.
+-- 05. Bloquear escritores concurrentes de propuestas durante la transacción
+--     de conversión, y proteger idempotencia, eventos y auditoría.
+-- 06. Orden SQL sujeto a revisión humana PostgreSQL:
+--       a. asegurar CHECK transitorio que acepte ambos nombres sin permitir
+--          estados adicionales; y/o ejecutar backfill de filas primero con
+--          sustitución atómica versionada dentro de misma transacción.
+--       b. convertir solamente mg_site_proposals.status para las dos parejas,
+--          preservando id, organization_id, site_id, revision, created_at,
+--          updated_at, applied_draft_revision y referencias.
+--       c. verificar row counts antes/después, version CAS, FK, checks,
+--          eventos históricos, estados y ausencia de duplicados.
+--       d. instalar CHECK definitivo con exactamente seis nombres canónicos;
+--          adaptar escrituras RPC/backend y lectores con despliegue coordinado.
+--       e. no modificar decision ni event_type por un mapeo de status.
+--       f. escritura de auditoría y outbox dentro de una sola transacción,
+--          sin enviar correos mientras se hacen cambios de esquema.
+-- 07. PRUEBAS DE SEGURIDAD: RLS/GRANT/SECURITY DEFINER/search_path/EXECUTE,
+--     roles reales, MFA, límites de empresa/sitio, dos sesiones concurrentes,
+--     acceso denegado a otra empresa, rollback, restauración y retry.
+-- 08. Exigir contrato de versión de base de datos antes de aceptar estados
+--     canónicos en una escritura. Los adaptadores JavaScript de V35 solo
+--     PROPONEN un label para un target declarado; NO escriben jamás.
+-- 09. Implementar rollback planificado basado en snapshot + reverse mapping,
+--     NOTA: rollback después de que nuevos clientes hayan escrito estados
+--     exige bloqueo de escrituras y plan de reversión compatible con versiones.
+-- 10. Capturar evidencia real y aprobación humana para liberar entorno;
+--     jamás dar GO por un informe estático o por un alias de lectura.
+--
+-- ESCENARIOS DE STAGING PENDIENTES:
+-- - Filas submitted_for_review y applied_to_draft con referencias intactas.
+-- - Lectores V13/V20 durante despliegue coordinado (no pérdida ni doble evento).
+-- - CAS stale revision, clientes concurrentes y duplicados de idempotencia.
+-- - Tabla de revisiones, reviews, notifications y outbox conserva historia.
+-- - Cada evento 'changes' permanece 'changes' y el estado 'needs_changes'.
+-- - Aplicar no equivale a publicar sitio, ni modifica visibilidad pública.
+-- - Errores + rollback dejan mismo estado y mismo historial, sin side effects.
+-- - RLS evita cruzar empresa y scope, sin logging contaminado por atacantes.
+-- - Verificar tablas reales, plan de rollback y manifest de publicación.
+--
+-- ESTADO ACTUAL: STATUS_CONTRACT_MISMATCH SIGUE ABIERTO EN SQL V13,
+-- incluso si el puente de JavaScript V35 pasa todos sus tests ficticios.
+-- C03 depende de C01/C02 y exige revisión independiente antes de SQL real.
+-- SIN CAMBIOS A SUPABASE, main, producción, Lovable ni proyectos ajenos.
