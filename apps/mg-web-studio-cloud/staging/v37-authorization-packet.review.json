@@ -1,0 +1,319 @@
+{
+  "format": "mg-web-studio/v37-isolated-staging-authorization-review",
+  "version": 37,
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "date": "2026-10-19",
+  "sourceTask": "G01",
+  "currentDecision": "NOT_AUTHORIZED",
+  "notAnAuthorization": true,
+  "authorization": {
+    "granted": false,
+    "reference": null,
+    "approver": null,
+    "approvedOn": null
+  },
+  "target": {
+    "provider": null,
+    "account": null,
+    "projectRef": null,
+    "region": null,
+    "monthlyBudgetUsd": null,
+    "plan": null
+  },
+  "dataRestrictions": {
+    "syntheticOnly": true,
+    "noProductionData": true,
+    "noClientUploads": true,
+    "noSecretsInGitHub": true,
+    "separateTenantAndAccess": true
+  },
+  "boundedScope": {
+    "reviewExistingGitHub": true,
+    "createEnvironment": false,
+    "accessDatabase": false,
+    "runSQL": false,
+    "deployBackend": false,
+    "activatePayments": false,
+    "sendNotifications": false,
+    "scheduleJobs": false,
+    "publish": false,
+    "callPaidAI": false,
+    "modifyMain": false,
+    "modifyOtherProjects": false
+  },
+  "evidenceClassification": [
+    {
+      "id": "authorization",
+      "category": "governance",
+      "stage": "approval-prerequisite",
+      "status": "PENDING",
+      "evidence": null
+    },
+    {
+      "id": "budget",
+      "category": "governance",
+      "stage": "approval-prerequisite",
+      "status": "PENDING",
+      "evidence": null
+    },
+    {
+      "id": "provider_region",
+      "category": "governance",
+      "stage": "approval-prerequisite",
+      "status": "PENDING",
+      "evidence": null
+    },
+    {
+      "id": "isolated_environment",
+      "category": "isolation",
+      "stage": "approval-prerequisite",
+      "status": "PENDING",
+      "evidence": null
+    },
+    {
+      "id": "secrets_review",
+      "category": "security",
+      "stage": "post-approval-validation",
+      "status": "PENDING",
+      "evidence": null
+    },
+    {
+      "id": "tenant_scope",
+      "category": "security",
+      "stage": "post-approval-validation",
+      "status": "PENDING",
+      "evidence": null
+    },
+    {
+      "id": "auth_mfa",
+      "category": "security",
+      "stage": "post-approval-validation",
+      "status": "PENDING",
+      "evidence": null
+    },
+    {
+      "id": "rls_pgtest",
+      "category": "security",
+      "stage": "post-approval-validation",
+      "status": "PENDING",
+      "evidence": null
+    },
+    {
+      "id": "sql_compat",
+      "category": "database",
+      "stage": "post-approval-validation",
+      "status": "PENDING",
+      "evidence": null
+    },
+    {
+      "id": "home_slug",
+      "category": "database",
+      "stage": "post-approval-validation",
+      "status": "PENDING",
+      "evidence": null
+    },
+    {
+      "id": "rollback_review",
+      "category": "recovery",
+      "stage": "post-approval-validation",
+      "status": "PENDING",
+      "evidence": null
+    },
+    {
+      "id": "backup_restore",
+      "category": "recovery",
+      "stage": "post-approval-validation",
+      "status": "PENDING",
+      "evidence": null
+    },
+    {
+      "id": "observability",
+      "category": "operations",
+      "stage": "post-approval-validation",
+      "status": "PENDING",
+      "evidence": null
+    },
+    {
+      "id": "privacy_fixtures",
+      "category": "operations",
+      "stage": "approval-prerequisite",
+      "status": "PENDING",
+      "evidence": null
+    },
+    {
+      "id": "smoke_e2e",
+      "category": "qa",
+      "stage": "post-approval-validation",
+      "status": "PENDING",
+      "evidence": null
+    },
+    {
+      "id": "signoff",
+      "category": "governance",
+      "stage": "post-approval-validation",
+      "status": "PENDING",
+      "evidence": null
+    }
+  ],
+  "decisionQuestions": [
+    {
+      "key": "approver",
+      "prompt": "¿Quién autoriza y asume la responsabilidad del staging?",
+      "value": null,
+      "required": true
+    },
+    {
+      "key": "provider",
+      "prompt": "¿Qué proveedor y cuenta separada se utilizarían?",
+      "value": null,
+      "required": true
+    },
+    {
+      "key": "region",
+      "prompt": "¿En qué región se alojaría el staging?",
+      "value": null,
+      "required": true
+    },
+    {
+      "key": "monthlyBudgetUsd",
+      "prompt": "¿Cuál es el máximo autorizado de gasto en USD/mes, incluidos complementos y excedentes?",
+      "value": null,
+      "required": true
+    },
+    {
+      "key": "costAlertsAndStop",
+      "prompt": "¿Cómo se limitarían y detendrían los servicios antes de exceder el presupuesto?",
+      "value": null,
+      "required": true
+    },
+    {
+      "key": "dataPolicy",
+      "prompt": "¿Se confirma usar solamente datos sintéticos y ninguna base real de clientes?",
+      "value": null,
+      "required": true
+    },
+    {
+      "key": "isolationAndAccess",
+      "prompt": "¿Cómo se verificará la cuenta/proyecto aislado y quién tendrá acceso?",
+      "value": null,
+      "required": true
+    },
+    {
+      "key": "allowedActions",
+      "prompt": "¿Qué acciones exactas se autorizan? Lectura primero; SQL, despliegue y red requieren permisos separados.",
+      "value": null,
+      "required": true
+    },
+    {
+      "key": "incidentOwner",
+      "prompt": "¿Quién recibirá incidencias y custodiará copias de seguridad?",
+      "value": null,
+      "required": true
+    }
+  ],
+  "reviewerChecklist": [
+    {
+      "id": "A01",
+      "area": "scope",
+      "text": "Identificar proyecto de staging exclusivo y no compartido",
+      "status": "OPEN"
+    },
+    {
+      "id": "A02",
+      "area": "governance",
+      "text": "Aprobar proveedor, región, cuenta, responsable y límite económico",
+      "status": "OPEN"
+    },
+    {
+      "id": "A03",
+      "area": "privacy",
+      "text": "Exigir datos sintéticos y prohibir exportar datos personales reales",
+      "status": "OPEN"
+    },
+    {
+      "id": "A04",
+      "area": "security",
+      "text": "Separar permisos de lectura de ejecución SQL y despliegue",
+      "status": "OPEN"
+    },
+    {
+      "id": "A05",
+      "area": "recovery",
+      "text": "Aprobar política de backup, rollback y responsable de incidencias",
+      "status": "OPEN"
+    },
+    {
+      "id": "A06",
+      "area": "safety",
+      "text": "No instalar automáticamente servicios, cron, correo, pasarelas o IA paga",
+      "status": "OPEN"
+    }
+  ],
+  "nextAllowedActions": [
+    "Mantener los prototipos y revisiones en GitHub feature branch",
+    "Validar sintaxis, referencias y coherencia de documentos localmente",
+    "Presentar opciones de proveedor y presupuesto sin contratar ni conectar servicios",
+    "Solicitar aprobación explícita humana separada para staging aislado"
+  ],
+  "sourceRefs": [
+    "staging/v18-manifest.review.json",
+    "staging/v33-master-roadmap.review.json",
+    "staging/v36-coordinated-changes.review.json",
+    "db/v13-endurecimiento-rls-legado.review.sql"
+  ],
+  "knownRisks": [
+    {
+      "code": "SQL_ACTIVE_IN_REVIEW_FILE",
+      "severity": "high",
+      "mitigation": "Cuarentena y revisión DBA de v13-endurecimiento-rls-legado.review.sql, jamás ejecución automática"
+    },
+    {
+      "code": "MISSING_PUBLISHED_HOME_INVARIANT",
+      "severity": "high",
+      "mitigation": "Implementar y probar Home obligatoria con PostgreSQL y escritor concurrente autorizado"
+    },
+    {
+      "code": "SQL_STATUS_API_DRIFT",
+      "severity": "high",
+      "mitigation": "Migración de dos estados y rollback coordinados, no convertir tipos de evento"
+    },
+    {
+      "code": "RLS_MFA_NOT_TESTED",
+      "severity": "high",
+      "mitigation": "Pruebas de roles, sesiones, RLS, scopes y MFA reales en staging aislado"
+    },
+    {
+      "code": "NO_DURABLE_ACID_OR_OUTBOX",
+      "severity": "high",
+      "mitigation": "Implementar atomicidad, idempotencia, outbox y prueba de fallo parcial"
+    },
+    {
+      "code": "BACKUP_RESTORE_NOT_TESTED",
+      "severity": "high",
+      "mitigation": "Probar restauración aislada antes de migrar o publicar"
+    },
+    {
+      "code": "COST_AND_PROVIDER_UNAPPROVED",
+      "severity": "high",
+      "mitigation": "Establecer límite de presupuesto y aprobación explícita previa"
+    }
+  ],
+  "criteria": {
+    "requestQuestionsOpen": 9,
+    "preApprovalRequirements": 5,
+    "postApprovalValidationRequirements": 11,
+    "stage": "NO_GO",
+    "production": "NO_GO",
+    "realSQLTests": 0,
+    "realBrowserTests": 0,
+    "realRecoveryTests": 0
+  },
+  "realExecution": {
+    "resourcesCreated": 0,
+    "queriesExecuted": 0,
+    "deployments": 0,
+    "noticesSent": 0,
+    "charges": 0
+  }
+}
