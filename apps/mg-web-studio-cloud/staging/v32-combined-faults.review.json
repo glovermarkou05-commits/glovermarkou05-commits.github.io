@@ -1,0 +1,179 @@
+{
+  "format": "mg-web-studio/v32-combined-fault-review",
+  "version": 32,
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "authorizationGranted": false,
+  "environment": null,
+  "execution": {
+    "reviewOnly": true,
+    "mayRunSQL": false,
+    "mayProvision": false,
+    "mayDeploy": false,
+    "mayPublish": false,
+    "maySendEmail": false,
+    "maySendPush": false,
+    "mayScheduleCron": false,
+    "mayCallPaidAI": false,
+    "mayCharge": false
+  },
+  "assumptions": {
+    "proofSource": "caller-owned-in-memory-fixtures",
+    "authenticatedIdentity": false,
+    "cryptographicIntegrity": false,
+    "atomicityVerified": false,
+    "externalDeliveryVerified": false
+  },
+  "cases": [
+    {
+      "id": "F01",
+      "objective": "allowed proposal mutation missing its expected outbox record",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F02",
+      "objective": "unspecified recipient notification outside explicit test plan",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F03",
+      "objective": "outbox references denied audit event instead of committed event",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F04",
+      "objective": "business ledger diverges from outbox source checkpoint",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F05",
+      "objective": "proposal state differs from latest allowed audit action",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F06",
+      "objective": "committed audit references a proposal absent from snapshot",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F07",
+      "objective": "duplicate outbox event identity or recipient target",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F08",
+      "objective": "missing notification for an otherwise valid outbox event",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F09",
+      "objective": "outbox revision exceeds final proposal revision",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F10",
+      "objective": "orphan notification or mismatched recipient and tenant",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F11",
+      "objective": "tampered checksum or reordered in-memory ledger",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F12",
+      "objective": "stale permission after tenant membership revocation",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F13",
+      "objective": "failed business operation must not generate outbox",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F14",
+      "objective": "two simultaneous claims must not create two deliveries",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F15",
+      "objective": "retry exhaustion requires restricted manual DLQ review",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F16",
+      "objective": "expired lease requires fencing before worker replacement",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F17",
+      "objective": "lost outbox event between consecutive simulated checkpoints",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F18",
+      "objective": "notification read regression after a previous checkpoint",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F19",
+      "objective": "unexpected change of tenant/site/recipient in checkpoint",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F20",
+      "objective": "invalid backend contract or changed SQL execution flag",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F21",
+      "objective": "invalid observability plan or forged real evidence",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F22",
+      "objective": "missing delivery plan entry for an allowed audit event",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F23",
+      "objective": "duplicate delivery-plan entry or unknown audit reference",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    },
+    {
+      "id": "F24",
+      "objective": "atomicity, rollback and concurrency proven only in future isolated PostgreSQL",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null
+    }
+  ],
+  "result": {
+    "realBackendTests": 0,
+    "realAlertsSent": 0,
+    "staging": "NO_GO",
+    "production": "NO_GO"
+  }
+}
