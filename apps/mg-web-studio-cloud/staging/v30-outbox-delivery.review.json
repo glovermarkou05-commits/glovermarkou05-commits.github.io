@@ -1,0 +1,198 @@
+{
+  "format": "mg-web-studio/outbox-delivery-v30-review",
+  "version": 30,
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "state": "NOT_AUTHORIZED",
+  "environment": null,
+  "serviceProvider": null,
+  "credentials": null,
+  "execution": {
+    "reviewOnly": true,
+    "mayProvision": false,
+    "mayRunSQL": false,
+    "mayDeploy": false,
+    "mayPublish": false,
+    "maySendEmail": false,
+    "maySendPush": false,
+    "mayCallPaidAI": false,
+    "mayCharge": false
+  },
+  "events": [
+    {
+      "action": "create",
+      "source": "committed-proposal-change",
+      "delivery": "not-implemented"
+    },
+    {
+      "action": "submit",
+      "source": "committed-proposal-change",
+      "delivery": "not-implemented"
+    },
+    {
+      "action": "changes",
+      "source": "committed-proposal-change",
+      "delivery": "not-implemented"
+    },
+    {
+      "action": "revise",
+      "source": "committed-proposal-change",
+      "delivery": "not-implemented"
+    },
+    {
+      "action": "approve",
+      "source": "committed-proposal-change",
+      "delivery": "not-implemented"
+    },
+    {
+      "action": "reject",
+      "source": "committed-proposal-change",
+      "delivery": "not-implemented"
+    },
+    {
+      "action": "apply",
+      "source": "committed-proposal-change",
+      "delivery": "not-implemented"
+    }
+  ],
+  "guarantees": {
+    "transactionalSource": "same-future-db-transaction-as-business-change",
+    "deliverySemantics": "AT_LEAST_ONCE_DESIGN_NOT_PROVEN",
+    "orderScope": "per-tenant-site-proposal",
+    "jobUniqueness": [
+      "organizationId",
+      "siteId",
+      "proposalId",
+      "auditEventId",
+      "recipientId"
+    ],
+    "recipientSource": "server-verified-active-tenant-site-scope",
+    "revalidateRecipientOnDispatch": true,
+    "idempotentConsumerRequired": true,
+    "retryPolicy": "bounded-exponential-with-jitter-to-be-reviewed",
+    "deadLetter": "restricted-queue-and-manual-investigation",
+    "externalSideEffects": "NONE_IN_V30",
+    "notificationRead": "server-verifies-current-recipient-and-scope",
+    "antiEnumeration": "no-unverified-tenant-association",
+    "reconciliation": "detect-missing-or-extra-events-and-notifications-no-auto-fix",
+    "observability": "redacted-request-and-event-ids",
+    "securityAudit": "private-separated-from-tenant-business-feed",
+    "retention": "UNDECIDED"
+  },
+  "checklist": [
+    {
+      "id": "N01",
+      "objective": "Postgres atomic proposal/audit/outbox commit",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N02",
+      "objective": "No outbox event after failed business transaction",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N03",
+      "objective": "CAS/idempotency durable on restart",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N04",
+      "objective": "Worker identity and DB grants isolated from client role",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N05",
+      "objective": "Lease with fencing token for concurrent workers",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N06",
+      "objective": "Retry after timeout without duplicate external side effect",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N07",
+      "objective": "Recipient permission rechecked on each send and acknowledgment",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N08",
+      "objective": "No foreign-tenant event/notification visibility",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N09",
+      "objective": "Deduplication using provider message ID and attempt ID",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N10",
+      "objective": "DLQ access controls, retention and human review",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N11",
+      "objective": "Reconciliation with trusted source ledger and pagination",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N12",
+      "objective": "Notification read only by verified active recipient",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N13",
+      "objective": "No secret data or raw proposal body in event payload",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N14",
+      "objective": "Encrypted provider credentials only in server environment",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N15",
+      "objective": "Rollback/restore without replaying already sent messages",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N16",
+      "objective": "Rate limits, backoff, alerts and abuse handling",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N17",
+      "objective": "No emails, webhooks or push sent before explicit authorization",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    },
+    {
+      "id": "N18",
+      "objective": "Review regional privacy, budgets and incident response",
+      "status": "NOT_EXECUTED",
+      "evidence": null
+    }
+  ],
+  "result": {
+    "staging": "NO_GO",
+    "production": "NO_GO",
+    "realDeliveries": 0,
+    "realBackendTests": 0
+  }
+}
