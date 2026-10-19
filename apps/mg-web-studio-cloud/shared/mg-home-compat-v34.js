@@ -107,7 +107,7 @@ function inspectPublicationDraft(site,pages,contracts){
  const review=prepareDraft(pages,contracts);
  if(!review.ok)return err(review.code);
  return ok({contentPreconditionsMet:true,homeSlug:HOME,publicPath:PUBLIC_ROOT,
-  draftPageCount:review.pages.length,stillRequiresServerTransaction:true,
+  draftPageCount:review.pages.length,requiresServerTransaction:true,
   requiresVerifiedTenantAuthorization:true,requiresPublicationMutex:true,
   status:"CONTENT_ONLY_NOT_AUTHORIZATION"});
 }
