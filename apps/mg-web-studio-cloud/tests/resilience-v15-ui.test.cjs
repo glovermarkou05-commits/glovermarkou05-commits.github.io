@@ -6,7 +6,7 @@ const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("n
 const root=path.join(__dirname,".."),read=p=>fs.readFileSync(path.join(root,p),"utf8");
 const window={};
 for(const file of ["shared/mg-ai-web-assistant-demo.js","shared/mg-proposal-exchange-demo.js",
- "shared/mg-transactional-api-v14-demo.js","shared/mg-v15-recovery-demo.js"])
+ "shared/mg-transactional-api-v14-demo.js","shared/mg-v15-recovery-demo.js","shared/mg-service-adapter-v16-demo.js"])
  new Function("window",read(file))(window);
 let passed=0;const check=(title,val)=>{assert.ok(val,title);passed++;console.log("✓ "+title)};
 function stub(){return {innerHTML:"",textContent:"",value:"",disabled:false,dataset:{},style:{},
