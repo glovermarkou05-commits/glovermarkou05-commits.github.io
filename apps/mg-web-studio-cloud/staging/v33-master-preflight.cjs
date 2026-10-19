@@ -115,16 +115,18 @@ function assess(inputs){
  const checks={
   v18Pending:Array.isArray(v18.checks)?v18.checks.filter(x=>x.status==="pending").length:null,
   v28Unexecuted:Array.isArray(v28.cases)?v28.cases.filter(x=>x.evidenceStatus==="NOT_EXECUTED").length:null,
-  v30Unexecuted:Array.isArray(v30.checklist)?v30.checklist.filter(x=>x.evidenceStatus==="NOT_EXECUTED").length:null,
+  v30Unexecuted:Array.isArray(v30.checklist)?v30.checklist.filter(x=>x.status==="NOT_EXECUTED").length:null,
   v31Unexecuted:Array.isArray(v31.checklist)?v31.checklist.filter(x=>x.evidenceStatus==="NOT_EXECUTED").length:null,
   v32Unexecuted:Array.isArray(v32.cases)?v32.cases.filter(x=>x.evidenceStatus==="NOT_EXECUTED").length:null
  };
- for(const [name,rows,target] of [
-  ["V28",v28.cases,30],["V30",v30.checklist,18],
-  ["V31",v31.checklist,20],["V32",v32.cases,24]
+ for(const [name,rows,target,key,evidenceKey] of [
+  ["V28",v28.cases,30,"evidenceStatus","evidenceRef"],
+  ["V30",v30.checklist,18,"status","evidence"],
+  ["V31",v31.checklist,20,"evidenceStatus","evidenceRef"],
+  ["V32",v32.cases,24,"evidenceStatus","evidenceRef"]
  ]){
-  if(!Array.isArray(rows)||rows.length!==target||!pending(rows,"evidenceStatus","NOT_EXECUTED")||
-   rows.some(x=>x.evidenceRef!==null))add(name+"_EVIDENCE_CHANGED");
+  if(!Array.isArray(rows)||rows.length!==target||!pending(rows,key,"NOT_EXECUTED")||
+   rows.some(x=>x[evidenceKey]!==null))add(name+"_EVIDENCE_CHANGED");
  }
  if(v28.version!==28||v28.authorizationGranted!==false||
   v28.execution?.mayRunSQL!==false||v28.execution?.mayDeploy!==false||
