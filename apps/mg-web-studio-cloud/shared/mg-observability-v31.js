@@ -136,6 +136,54 @@ function compare(previous,current){
  return response({valid:alerts.length===0,code:alerts.length?"SNAPSHOT_CHANGE_WARNING":"STATIC_COMPARISON_ONLY",
   alerts,readiness:"NO_GO",dataRedacted:true,realDeliveriesVerified:0});
 }
+function inspectPlan(plan){
+ const issues=[],add=k=>issues.push(k);
+ if(!obj(plan)||plan.format!=="mg-web-studio/v31-observability-review"||
+   plan.version!==31||plan.project!=="MG WEB STUDIO CLOUD"||
+   plan.branch!=="feature/mg-digital-v5-web-services")
+   add("WRONG_PROJECT_OR_VERSION");
+ if(!obj(plan)||plan.authorizationGranted!==false||plan.environment!==null)
+   add("UNAUTHORIZED_ENVIRONMENT");
+ const flags=plan&&plan.execution;
+ if(!obj(flags)||flags.reviewOnly!==true||
+  !["mayProvision","mayRunSQL","mayDeploy","mayPublish","maySendEmail","maySendPush",
+   "mayCallPaidAI","mayCharge","mayScheduleCron"].every(k=>flags[k]===false)||
+  Object.keys(flags).some(k=>!["reviewOnly","mayProvision","mayRunSQL","mayDeploy",
+   "mayPublish","maySendEmail","maySendPush","mayCallPaidAI","mayCharge","mayScheduleCron"].includes(k)))
+   add("EXECUTION_NOT_BLOCKED");
+ const t=plan&&plan.thresholds;
+ if(!obj(t)||!thresholds({pendingAge:t.pendingAge,retryOverdue:t.retryOverdue,
+  leaseExpired:t.leaseExpired,backlogLimit:t.backlogLimit})||
+  t.unit!=="fictional-ticks"||t.productionCalibrated!==false)
+   add("THRESHOLDS_UNTRUSTED");
+ const visibility=plan&&plan.visibility;
+ if(!obj(visibility)||visibility.metrics!=="aggregate-only"||
+  visibility.includesTenantIds!==false||visibility.includesRecipientIds!==false||
+  visibility.includesPayloads!==false||visibility.alertRecipients!=="none"||
+  visibility.externalAlertDelivery!==false)
+   add("VISIBILITY_UNSAFE");
+ const recovery=plan&&plan.recovery;
+ if(!obj(recovery)||recovery.mode!=="MANUAL_REVIEW_ONLY"||
+  recovery.automatedReplay!==false||recovery.externalWorkerStarted!==false||
+  recovery.realNotificationSent!==false||recovery.productionRecoveryVerified!==false)
+   add("RECOVERY_UNSAFE");
+ if(!Array.isArray(plan&&plan.checklist)||plan.checklist.length!==20)
+   add("MISSING_EVIDENCE_CHECKS");
+ else plan.checklist.forEach((x,i)=>{
+  if(!obj(x)||x.id!=="O"+String(i+1).padStart(2,"0")||
+   typeof x.objective!=="string"||x.objective.length<15||
+   x.evidenceStatus!=="NOT_EXECUTED"||x.evidenceRef!==null)
+    add("CHECK_NOT_PENDING");
+ });
+ const status=plan&&plan.status;
+ if(!obj(status)||status.staticReview!=="REVIEW_ONLY"||
+  status.realBackendTests!==0||status.realAlertsSent!==0||
+  status.staging!=="NO_GO"||status.production!=="NO_GO")
+  add("NO_GO_CHANGED");
+ return response({valid:issues.length===0,issues:[...new Set(issues)],
+  pendingChecks:20,realAlertsSent:0,realBackendTests:0,
+  productionReady:false,stagingReady:false,readiness:"NO_GO"});
+}
 root.MGObservabilityV31=Object.freeze({version:VERSION,mode:"memory-read-only",
-  defaults:DEFAULTS,summarize,compare,validateThresholds:x=>thresholds(x)!==null});
+  defaults:DEFAULTS,summarize,compare,inspectPlan,validateThresholds:x=>thresholds(x)!==null});
 })(typeof window!=="undefined"?window:globalThis);
