@@ -37,7 +37,7 @@ En V20 ya se acordó la representación canónica Home `slug=home` y la ruta pú
 
 ## 3. Ruta crítica recomendada — 13 tareas y cuatro hitos
 
-<escape>###</escape> Hito M1 — GitHub, sin costo ni ejecución de SQL
+### Hito M1 — GitHub, sin costo ni ejecución de SQL
 
 | Prioridad | ID | Acción | Condición de salida |
 |---|---|---|---|
