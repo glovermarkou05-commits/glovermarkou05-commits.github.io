@@ -27,9 +27,11 @@ function assess(deps,source){
   return {version:VERSION,decision:"NO_GO",validInputs:false,blockers:issues.concat(CRITICAL_REVIEW),stageReady:false,
    productionReady:false,mayRunSQL:false,mayDeploy:false,simulationOnly:true,authorizationReal:false};
  }
- const versions=[["v17","17.0-review"],["v18","18.0-review"],["v19","19.0-review"],["v21","21.0-review"]];
+ const versions=[["v17","17.0-review"],["v18","18.0-review"],["v19","19.0-review"]];
  for(const [k,version] of versions)
   if(!validObject(deps[k])||deps[k].version!==version)push("DEPENDENCY_"+k.toUpperCase(),"Inventory","Missing or unexpected "+k+" evaluator.");
+ if(!validObject(deps.v21)||typeof deps.v21.audit!=="function")
+  push("DEPENDENCY_V21","Inventory","Missing the V21 SQL/API evaluator.");
  const needed=["manifest","env","procedure","sqlReviews","v20ContractSource","v25WorkflowSource"];
  for(const key of needed)
   if(source[key]===undefined||source[key]===null)push("MISSING_"+key.toUpperCase(),"Inventory","Missing required input "+key+".");
