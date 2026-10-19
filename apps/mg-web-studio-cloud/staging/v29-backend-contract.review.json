@@ -1,0 +1,428 @@
+{
+  "format": "mg-web-studio/backend-contract-v29-review",
+  "version": 29,
+  "project": "MG WEB STUDIO CLOUD",
+  "sourceBranch": "feature/mg-digital-v5-web-services",
+  "authorization": {
+    "granted": false,
+    "approvedEnvironment": null,
+    "approvedCostUsd": null
+  },
+  "execution": {
+    "reviewOnly": true,
+    "mayRunSQL": false,
+    "mayProvision": false,
+    "mayDeploy": false,
+    "mayPublish": false,
+    "mayCallPaidAI": false,
+    "mayCharge": false
+  },
+  "mode": "design-only-not-implemented",
+  "routes": [
+    {
+      "action": "create",
+      "method": "POST",
+      "route": "/api/v1/organizations/:organizationId/sites/:siteId/proposals",
+      "roles": [
+        "SUPERADMIN"
+      ],
+      "from": null,
+      "to": "draft",
+      "permission": "staff_mfa",
+      "requiresRevision": 0,
+      "requiresDraftVersion": false,
+      "clientSupplied": [
+        "Idempotency-Key",
+        "expectedRevision",
+        "decisionPayload"
+      ],
+      "serverDerived": [
+        "actorId",
+        "role",
+        "tenantMembership",
+        "siteScope",
+        "mfaLevel",
+        "requestId",
+        "auditEventId"
+      ],
+      "notImplemented": true
+    },
+    {
+      "action": "submit",
+      "method": "POST",
+      "route": "/api/v1/organizations/:organizationId/sites/:siteId/proposals/:proposalId/submit",
+      "roles": [
+        "SUPERADMIN"
+      ],
+      "from": "draft",
+      "to": "submitted",
+      "permission": "staff_mfa",
+      "requiresRevision": 1,
+      "requiresDraftVersion": false,
+      "clientSupplied": [
+        "Idempotency-Key",
+        "expectedRevision",
+        "decisionPayload"
+      ],
+      "serverDerived": [
+        "actorId",
+        "role",
+        "tenantMembership",
+        "siteScope",
+        "mfaLevel",
+        "requestId",
+        "auditEventId"
+      ],
+      "notImplemented": true
+    },
+    {
+      "action": "changes",
+      "method": "POST",
+      "route": "/api/v1/organizations/:organizationId/sites/:siteId/proposals/:proposalId/review",
+      "roles": [
+        "CLIENT_OWNER",
+        "CLIENT_ADMIN",
+        "CLIENT_EDITOR"
+      ],
+      "from": "submitted",
+      "to": "needs_changes",
+      "permission": "proposalChanges",
+      "requiresRevision": 1,
+      "requiresDraftVersion": false,
+      "clientSupplied": [
+        "Idempotency-Key",
+        "expectedRevision",
+        "decisionPayload"
+      ],
+      "serverDerived": [
+        "actorId",
+        "role",
+        "tenantMembership",
+        "siteScope",
+        "mfaLevel",
+        "requestId",
+        "auditEventId"
+      ],
+      "notImplemented": true
+    },
+    {
+      "action": "revise",
+      "method": "POST",
+      "route": "/api/v1/organizations/:organizationId/sites/:siteId/proposals/:proposalId/revise",
+      "roles": [
+        "SUPERADMIN"
+      ],
+      "from": [
+        "needs_changes",
+        "rejected"
+      ],
+      "to": "draft",
+      "permission": "staff_mfa",
+      "requiresRevision": 1,
+      "requiresDraftVersion": false,
+      "clientSupplied": [
+        "Idempotency-Key",
+        "expectedRevision",
+        "decisionPayload"
+      ],
+      "serverDerived": [
+        "actorId",
+        "role",
+        "tenantMembership",
+        "siteScope",
+        "mfaLevel",
+        "requestId",
+        "auditEventId"
+      ],
+      "notImplemented": true
+    },
+    {
+      "action": "approve",
+      "method": "POST",
+      "route": "/api/v1/organizations/:organizationId/sites/:siteId/proposals/:proposalId/review",
+      "roles": [
+        "CLIENT_OWNER",
+        "CLIENT_ADMIN"
+      ],
+      "from": "submitted",
+      "to": "approved",
+      "permission": "proposalApprove",
+      "requiresRevision": 1,
+      "requiresDraftVersion": false,
+      "clientSupplied": [
+        "Idempotency-Key",
+        "expectedRevision",
+        "decisionPayload"
+      ],
+      "serverDerived": [
+        "actorId",
+        "role",
+        "tenantMembership",
+        "siteScope",
+        "mfaLevel",
+        "requestId",
+        "auditEventId"
+      ],
+      "notImplemented": true
+    },
+    {
+      "action": "reject",
+      "method": "POST",
+      "route": "/api/v1/organizations/:organizationId/sites/:siteId/proposals/:proposalId/review",
+      "roles": [
+        "CLIENT_OWNER",
+        "CLIENT_ADMIN"
+      ],
+      "from": "submitted",
+      "to": "rejected",
+      "permission": "proposalReject",
+      "requiresRevision": 1,
+      "requiresDraftVersion": false,
+      "clientSupplied": [
+        "Idempotency-Key",
+        "expectedRevision",
+        "decisionPayload"
+      ],
+      "serverDerived": [
+        "actorId",
+        "role",
+        "tenantMembership",
+        "siteScope",
+        "mfaLevel",
+        "requestId",
+        "auditEventId"
+      ],
+      "notImplemented": true
+    },
+    {
+      "action": "apply",
+      "method": "POST",
+      "route": "/api/v1/organizations/:organizationId/sites/:siteId/proposals/:proposalId/apply",
+      "roles": [
+        "CLIENT_OWNER",
+        "CLIENT_ADMIN",
+        "CLIENT_EDITOR"
+      ],
+      "from": "approved",
+      "to": "applied",
+      "permission": "proposalApply",
+      "requiresRevision": 1,
+      "requiresDraftVersion": true,
+      "clientSupplied": [
+        "Idempotency-Key",
+        "expectedRevision",
+        "expectedDraftVersion",
+        "decisionPayload"
+      ],
+      "serverDerived": [
+        "actorId",
+        "role",
+        "tenantMembership",
+        "siteScope",
+        "mfaLevel",
+        "requestId",
+        "auditEventId"
+      ],
+      "notImplemented": true
+    }
+  ],
+  "idempotency": {
+    "uniqueScope": [
+      "organizationId",
+      "authenticatedActorId",
+      "Idempotency-Key"
+    ],
+    "requestFingerprintIncludes": [
+      "method",
+      "canonicalRoute",
+      "organizationId",
+      "siteId",
+      "proposalId",
+      "action",
+      "expectedRevision",
+      "expectedDraftVersion",
+      "decisionPayload"
+    ],
+    "responseReplay": "after-fresh-auth-and-tenant-scope-check",
+    "collision": "IDEMPOTENCY_CONFLICT",
+    "storage": "future-server-transaction-only",
+    "retention": "UNDECIDED_REQUIRES_POLICY",
+    "forbiddenFingerprintFields": [
+      "password",
+      "accessToken",
+      "secret",
+      "authorizationHeader",
+      "cookie",
+      "sessionId"
+    ]
+  },
+  "transaction": {
+    "boundary": "single-future-PostgreSQL-transaction",
+    "sequence": [
+      "verify-authenticated-identity",
+      "resolve-tenant-scope-and-resource",
+      "check-server-role-and-mfa",
+      "lock-or-cas-proposal-revision",
+      "validate-status-transition",
+      "write-proposal-and-draft-if-applicable",
+      "write-operation-idempotency-receipt",
+      "write-private-business-audit",
+      "write-outbox-event",
+      "commit-together"
+    ],
+    "rollback": "any-error-reverts-business-state-idempotency-receipt-and-outbox",
+    "isolation": "NOT_DECIDED_PENDING_POSTGRES_CONCURRENCY_TEST",
+    "implementationState": "NOT_IMPLEMENTED",
+    "publishSite": false
+  },
+  "audit": {
+    "businessLog": "private-tenant-scoped-after-verified-resource-ownership",
+    "deniedSecurityLog": "separate-restricted-server-security-audit-no-unverified-target-tenant-association",
+    "redact": [
+      "credentials",
+      "cookies",
+      "tokens",
+      "notes",
+      "proposalBody",
+      "paymentData",
+      "rawUserInput"
+    ],
+    "actorTrust": "server-verified-only",
+    "integrity": "UNPROVEN_REQUIRES_CRYPTOGRAPHIC_OR_IMMUTABLE_DESIGN",
+    "securityLogging": "design-only",
+    "clientCanWrite": false
+  },
+  "responses": {
+    "success": {
+      "format": "{ok:true,data:{...},requestId}",
+      "serverMintsRequestId": true
+    },
+    "failure": {
+      "format": "{ok:false,error:{code,message},requestId}",
+      "serverMintsRequestId": true
+    },
+    "noSecretsInErrors": true,
+    "noRawSqlMessages": true,
+    "noOutboxPayloadOnClient": true
+  },
+  "errors": [
+    {
+      "code": "UNAUTHENTICATED",
+      "httpStatus": 401,
+      "retryable": false,
+      "visibility": "public-generic",
+      "revealResource": false
+    },
+    {
+      "code": "RESOURCE_UNAVAILABLE",
+      "httpStatus": 404,
+      "retryable": false,
+      "visibility": "public-generic",
+      "revealResource": false
+    },
+    {
+      "code": "FORBIDDEN",
+      "httpStatus": 403,
+      "retryable": false,
+      "visibility": "public-generic",
+      "revealResource": false
+    },
+    {
+      "code": "INVALID_REQUEST",
+      "httpStatus": 400,
+      "retryable": false,
+      "visibility": "public-generic",
+      "revealResource": false
+    },
+    {
+      "code": "INVALID_TRANSITION",
+      "httpStatus": 409,
+      "retryable": false,
+      "visibility": "public-generic",
+      "revealResource": false
+    },
+    {
+      "code": "STALE_REVISION",
+      "httpStatus": 409,
+      "retryable": true,
+      "visibility": "public-generic",
+      "revealResource": false
+    },
+    {
+      "code": "STALE_DRAFT",
+      "httpStatus": 409,
+      "retryable": true,
+      "visibility": "public-generic",
+      "revealResource": false
+    },
+    {
+      "code": "IDEMPOTENCY_CONFLICT",
+      "httpStatus": 409,
+      "retryable": false,
+      "visibility": "public-generic",
+      "revealResource": false
+    },
+    {
+      "code": "RETRY_LATER",
+      "httpStatus": 503,
+      "retryable": true,
+      "visibility": "public-generic",
+      "revealResource": false
+    },
+    {
+      "code": "RATE_LIMITED",
+      "httpStatus": 429,
+      "retryable": true,
+      "visibility": "public-generic",
+      "revealResource": false
+    },
+    {
+      "code": "INTERNAL_ERROR",
+      "httpStatus": 500,
+      "retryable": false,
+      "visibility": "public-generic",
+      "revealResource": false
+    },
+    {
+      "code": "METHOD_NOT_ALLOWED",
+      "httpStatus": 405,
+      "retryable": false,
+      "visibility": "public-generic",
+      "revealResource": false
+    }
+  ],
+  "integration": {
+    "existingV14RoutesReviewed": true,
+    "canonicalV20States": [
+      "draft",
+      "submitted",
+      "needs_changes",
+      "rejected",
+      "approved",
+      "applied"
+    ],
+    "legacyReadAliases": {
+      "submitted_for_review": "submitted",
+      "applied_to_draft": "applied"
+    },
+    "migrationRequired": true,
+    "homeSlug": "home",
+    "homePath": "/",
+    "sqlExecuted": false,
+    "backendImplemented": false
+  },
+  "blockers": [
+    "STATUS_CONTRACT_MISMATCH",
+    "HOME_EXISTENCE_UNPROVEN",
+    "SECURITY_DEFINER_REVIEW",
+    "CAS_SQL_TRANSACTION_UNPROVEN",
+    "POSTGRES_REQUIRED",
+    "AUTH_MFA_REAL_UNTESTED",
+    "AUDIT_INTEGRITY_UNPROVEN"
+  ],
+  "acceptance": {
+    "allRealTests": "NOT_EXECUTED",
+    "stage": "NO_GO",
+    "production": "NO_GO"
+  }
+}
