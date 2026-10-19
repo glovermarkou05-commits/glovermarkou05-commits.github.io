@@ -86,3 +86,8 @@ No se copiaron ni ejecutaron comandos de despliegue de la documentación. El paq
 ## Próxima fase sugerida
 
 V19: revisión de dependencias, compatibilidad SQL y pruebas más exhaustivas de seguridad estática; todavía sin conectar proveedor ni ejecutar migraciones. La decisión de infraestructura seguirá pendiente de una autorización dedicada.
+
+
+## Actualización: hallazgos V19 (NO GO)
+
+La auditoría SQL estática posterior confirma dos incompatibilidades de diseño sin aplicar: página Inicio con `slug=""` frente a la validación SQL no vacía y estados de propuestas `submitted`/`applied` frente a `submitted_for_review`/`applied_to_draft`. Se mantienen pendientes la revisión de `SECURITY DEFINER`, transacciones CAS reales y pruebas de PostgreSQL/RLS. Consultar: [Informe V19](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/blob/feature/mg-digital-v5-web-services/apps/mg-web-studio-cloud/staging/V19-HALLAZGOS-COMPATIBILIDAD.md). **No ejecutar migraciones**.
