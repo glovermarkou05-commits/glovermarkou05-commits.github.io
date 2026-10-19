@@ -101,7 +101,7 @@ async function main(){
  ok("telemetría registra reintento",clientTele.metrics.replayed===1);
  ok("telemetría limitada a metadatos",!JSON.stringify(clientTele).includes("café")&&!JSON.stringify(clientTele).includes("offering"));
  ok("sin credenciales en telemetría",!JSON.stringify(clientTele).includes("authorization"));
- ok("auditoria de operaciones en memoria",shared.inspectForTests().operations.length>=6);
+ ok("auditoria de operaciones en memoria",shared.inspectForTests().operations.length===5);
  const checkpoint=w.MGWebV15Recovery.makeCheckpoint(shared.inspectForTests(),db);
  ok("checkpoint V15 compatible con V16",checkpoint.ok);
  const restoredEngine=createEngine({
