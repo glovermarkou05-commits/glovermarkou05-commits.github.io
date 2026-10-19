@@ -6,7 +6,7 @@ const assert=require("node:assert/strict"),fs=require("node:fs"),path=require("n
 const root=path.join(__dirname,".."),read=f=>fs.readFileSync(path.join(root,f),"utf8");
 const win={};
 for(const f of ["shared/mg-ai-web-assistant-demo.js","shared/mg-proposal-exchange-demo.js",
- "shared/mg-transactional-api-v14-demo.js"])new Function("window",read(f))(win);
+ "shared/mg-transactional-api-v14-demo.js","shared/mg-service-adapter-v16-demo.js"])new Function("window",read(f))(win);
 let count=0;function check(name,truth){assert.ok(truth,name);count++;console.log("✓",name);}
 function element(){return {innerHTML:"",textContent:"",value:"",dataset:{},style:{},disabled:false,
  querySelectorAll:()=>[],addEventListener(){},focus(){},select(){}};}
