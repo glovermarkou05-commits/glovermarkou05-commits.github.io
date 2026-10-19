@@ -1,0 +1,174 @@
+{
+  "format": "mg-web-studio/v38-staging-provider-evaluation",
+  "version": 38,
+  "dateReviewed": "2026-10-19",
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "task": "G01",
+  "reviewOnly": true,
+  "proposalIsNotAuthorization": true,
+  "decision": "RECOMMENDATION_NOT_APPROVED",
+  "production": "NO_GO",
+  "staging": "NOT_AUTHORIZED",
+  "dataPolicy": {
+    "syntheticDataOnly": true,
+    "productionDataAllowed": false,
+    "shareDatabasesWithOtherProjects": false,
+    "credentialsStoredInGitHub": false
+  },
+  "publicEvidence": {
+    "officialDocs": [
+      {
+        "name": "Supabase Pricing",
+        "url": "https://supabase.com/pricing"
+      },
+      {
+        "name": "Supabase Regions",
+        "url": "https://supabase.com/docs/guides/platform/regions"
+      },
+      {
+        "name": "Supabase Billing FAQ",
+        "url": "https://supabase.com/docs/guides/platform/billing-faq"
+      },
+      {
+        "name": "Supabase Free project pausing",
+        "url": "https://supabase.com/docs/guides/platform/free-project-pausing"
+      },
+      {
+        "name": "Supabase Local development",
+        "url": "https://supabase.com/docs/guides/local-development"
+      },
+      {
+        "name": "Supabase cost control",
+        "url": "https://supabase.com/docs/guides/platform/cost-control"
+      }
+    ],
+    "observedAt": "2026-10-19",
+    "liveAccountInspected": false,
+    "availabilityChecked": false,
+    "projectRegionChecked": false,
+    "providerQuoteRequested": false
+  },
+  "alternatives": [
+    {
+      "id": "A",
+      "provider": "Supabase",
+      "plan": "Free",
+      "publishedBaseUsdPerMonth": 0,
+      "recommended": true,
+      "citedLimits": {
+        "freeActiveProjects": 2,
+        "databaseMb": 500,
+        "objectStorageGb": 1,
+        "egressGb": 5,
+        "inactivityPauseDays": 7
+      },
+      "automaticDatabaseBackups": false,
+      "accountFreeSlotVerified": false,
+      "regionAvailableForAccount": null,
+      "acceptableFor": "isolated synthetic staging proof of basic Postgres/Auth/RLS behavior",
+      "constraints": [
+        "No production or customer data",
+        "Free plan may pause after low activity",
+        "No automated backups; create separately reviewed export/restore exercise",
+        "Free slot, policy and actual account restrictions need verification",
+        "Do not enable paid add-ons or upgrades"
+      ],
+      "regionCandidates": [
+        {
+          "region": "sa-east-1",
+          "label": "São Paulo",
+          "status": "PENDING_AVAILABILITY_AND_LATENCY_CHECK"
+        },
+        {
+          "region": "us-east-1",
+          "label": "N. Virginia",
+          "status": "ALTERNATIVE_NOT_BENCHMARKED"
+        }
+      ]
+    },
+    {
+      "id": "B",
+      "provider": "Local Supabase CLI plus container runtime",
+      "plan": "Local-only",
+      "publishedBaseUsdPerMonth": null,
+      "recommended": false,
+      "estimate": "No Supabase cloud subscription; laptop/electricity/storage and any runtime licensing/support remain separate responsibilities",
+      "acceptableFor": "offline and disposable local synthetic integration, not publicly reachable staging",
+      "constraints": [
+        "Requires dedicated workstation resources and Docker-compatible runtime",
+        "Not a shared remote QA environment by default",
+        "Local backups and isolation must be managed",
+        "Do not run anything until specifically authorized"
+      ]
+    },
+    {
+      "id": "C",
+      "provider": "Supabase",
+      "plan": "Pro",
+      "publishedBaseUsdPerMonth": 25,
+      "recommended": false,
+      "estimate": "From $25/month for subscription; compute, extra projects, add-ons and usage charges can increase total",
+      "acceptableFor": "later, if Free cannot meet agreed needs and a paid budget is approved",
+      "constraints": [
+        "No upgrade/billing authorization",
+        "Spend Cap does not cover all charges, including compute",
+        "Pro is unnecessary for initial document review"
+      ]
+    }
+  ],
+  "requiredOwnerDecisions": {
+    "responsibleApprover": null,
+    "providerAccount": null,
+    "separateOrganizationOrEquivalent": null,
+    "freeSlotAvailable": null,
+    "selectedPlan": null,
+    "selectedRegion": null,
+    "monthlyBudgetUsd": null,
+    "overageOrPaidUpgradeAllowed": null,
+    "syntheticDataOnlyAccepted": null,
+    "permissionToCreateIsolatedProject": null,
+    "createProjectAuthorizationReference": null
+  },
+  "approvalBoundaries": {
+    "githubReviewAllowed": true,
+    "inspectSupabaseAccount": false,
+    "createSupabaseProject": false,
+    "connectDatabase": false,
+    "executeSQL": false,
+    "deployBackend": false,
+    "runExternalWorker": false,
+    "sendEmails": false,
+    "activatePayments": false,
+    "callPaidAI": false,
+    "modifyMain": false,
+    "modifyOtherProjects": false,
+    "publish": false
+  },
+  "prerequisitesToCreate": [
+    "Confirm owner and authoritative Supabase account/org, without copying secrets",
+    "Check that two-free-project quota has an available slot and paid plans are not inadvertently selected",
+    "Select region from live options, considering latency and data residency",
+    "Confirm synthetic-only seed data and no customer information",
+    "Approve explicitly creation of one isolated project with $0/month platform target",
+    "Keep SQL execution and deployment as separate later approvals"
+  ],
+  "futureValidation": [
+    "Verify actual workspace and organization isolation, members and scopes",
+    "Review account billing to ensure no paid add-ons or upgrade",
+    "Inspect environment configuration without revealing secrets",
+    "Agree database backup/restore test procedure before any migration",
+    "Execute no SQL until separately approved, with PostgreSQL schema/roles/RLS checks",
+    "Keep release/production signoff as a separate process"
+  ],
+  "latestResult": {
+    "realProjectsCreated": 0,
+    "realDatabaseQueries": 0,
+    "realMigrationsApplied": 0,
+    "realPaymentsActivated": 0,
+    "realBrowserTests": 0,
+    "proofOfAccountFreeSlot": false,
+    "approvalGranted": false,
+    "go": false
+  }
+}
