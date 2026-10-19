@@ -52,6 +52,7 @@ Los cuatro tienen marcador de NO EJECUTAR / NO MIGRACIÓN. **No** se copiaron a 
 
 ### Bloqueos técnicos detectados y mantenidos (NO GO)
 
+- **Aislamiento:** crear, si llega a autorizarse, un proyecto exclusivo MG WEB STUDIO CLOUD. No reutilizar ni modificar FINZY, BAZAR-ONLINE, Regaladitos Club ni sus bases existentes.
 - **Slug Home:** la demo utiliza \`slug=""\`, pero el SQL base obliga a un slug no vacío; hay que consensuar y corregir un único modelo.
 - **RLS antiguo:** la lectura de miembros de un tenant es demasiado amplia para EDITOR/VIEWER; deben retirarse políticas previas, no simplemente agregar políticas permisivas nuevas.
 - **Acceso de equipo interno:** SUPERADMIN/MFA deben autenticarse y auditarse con fuentes del servidor; el selector de roles de JS no es identidad válida.
