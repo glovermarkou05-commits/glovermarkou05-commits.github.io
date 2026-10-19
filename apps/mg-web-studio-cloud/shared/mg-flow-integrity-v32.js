@@ -24,7 +24,7 @@ const restricted=(payload)=>({version:VERSION,mode:"combined-read-only-fixtures"
  realBackendVerified:false,realDeliveriesVerified:0,redacted:true,...payload});
 function inspect(input){
  const violations=[],counts={},record=(code)=>{counts[code]=(counts[code]||0)+1;};
- if(!object(input)||!object(input.workflow)||!object(input.delivery)||
+ if(!object(input)||!object(input.workflow)||
   !Array.isArray(input.workflow.proposals)||!Array.isArray(input.workflow.sites)||
   !Array.isArray(input.workflow.ledger)||!Array.isArray(input.deliverySourceLedger)||
   !Array.isArray(input.plans)||!safe(input.now)||!object(input.deps)||
