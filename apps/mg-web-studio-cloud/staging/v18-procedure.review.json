@@ -1,0 +1,55 @@
+{
+  "format": "mg-web-studio/staging-v18-procedure",
+  "mode": "review-only",
+  "executables": [],
+  "sequence": [
+    {
+      "id": "preflight",
+      "phase": "BEFORE",
+      "kind": "document",
+      "action": "Confirmar autoridad, proveedor, región, presupuesto y segregación de proyectos; NO crear nada aún."
+    },
+    {
+      "id": "inventory",
+      "phase": "BEFORE",
+      "kind": "review",
+      "action": "Revisar todos los SQL .review.sql, corregir orden, slug Inicio, FKs compuestas, seguridad de funciones privilegiadas."
+    },
+    {
+      "id": "no_secret",
+      "phase": "BEFORE",
+      "kind": "review",
+      "action": "Revisar el catálogo de nombres de variables. No escribir valores en GitHub."
+    },
+    {
+      "id": "local_migrations",
+      "phase": "AFTER_EXPLICIT_APPROVAL",
+      "kind": "human-reviewed-future",
+      "action": "Convertir SQL revisado a migraciones versionadas, comprobar CLI actual y probar en un entorno local aislado."
+    },
+    {
+      "id": "local_rls",
+      "phase": "AFTER_EXPLICIT_APPROVAL",
+      "kind": "human-reviewed-future",
+      "action": "Ejecutar pruebas PostgreSQL/pgTAP multiempresa, Auth MFA, RLS, Data API grants, storage y anti-IDOR."
+    },
+    {
+      "id": "new_staging",
+      "phase": "AFTER_EXPLICIT_APPROVAL",
+      "kind": "human-reviewed-future",
+      "action": "Crear únicamente el staging explícitamente autorizado; sin compartir proyectos existentes."
+    },
+    {
+      "id": "smoke",
+      "phase": "AFTER_EXPLICIT_APPROVAL",
+      "kind": "human-reviewed-future",
+      "action": "Ejecutar smoke tests sobre staging aislado, registrar auditoría y resultados de recuperación."
+    },
+    {
+      "id": "gate",
+      "phase": "AFTER_EXPLICIT_APPROVAL",
+      "kind": "human-reviewed-future",
+      "action": "Obtener aprobación humana específica de cada publicación futura, costos y rollback."
+    }
+  ]
+}
