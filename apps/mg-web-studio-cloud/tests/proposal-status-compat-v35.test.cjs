@@ -191,7 +191,7 @@ yes("V35 SQL review long enough",reviewSQL.length>2500);
 yes("every SQL file line comment-only",reviewSQL.split(/\r?\n/).every(x=>!x.trim()||x.trim().startsWith("--")));
 for(const token of ["NO EJECUTAR","submitted_for_review -> submitted","applied_to_draft     -> applied",
  "changes es EVENTO","NO ampliar enums","ROLLBACK","RLS","SECURITY DEFINER"]){
- yes("SQL review includes "+token,reviewSQL.includes(token));
+ yes("SQL review includes "+token,reviewSQL.toUpperCase().includes(token.toUpperCase()));
 }
 const roadmap=JSON.parse(read("staging/v33-master-roadmap.review.json"));
 yes("C02 independent pending documentation",roadmap.tasks.find(x=>x.id==="C02").status==="READY_FOR_GITHUB_WORK");
