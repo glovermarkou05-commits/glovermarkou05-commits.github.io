@@ -44,7 +44,7 @@ button:disabled{opacity:.43;cursor:not-allowed}.result{border:1px solid #345e75;
 </div>
 <div class="stats"><div class="stat"><span>Propuestas visibles</span><strong id="proposalCount">0</strong></div>
 <div class="stat"><span>Notificaciones no leídas</span><strong id="unreadCount">0</strong></div>
-<div class="stat"><span>Eventos del outbox de prueba</span><strong id="outboxCount">0</strong></div></div>
+<div class="stat"><span>Eventos del outbox de prueba</span><strong id="outboxCount">0</strong></div><div class="stat"><span>Solicitudes al adaptador V16</span><strong id="adapterCount">0</strong></div></div>
 <div id="result" class="result" role="status">Selecciona un perfil y crea una propuesta para comenzar.</div></section>
 <div class="grid" style="margin-top:17px">
 <section class="card"><h2>Operaciones de demostración</h2>
@@ -72,13 +72,14 @@ button:disabled{opacity:.43;cursor:not-allowed}.result{border:1px solid #345e75;
 <script src="./shared/mg-ai-web-assistant-demo.js"></script>
 <script src="./shared/mg-proposal-exchange-demo.js"></script>
 <script src="./shared/mg-transactional-api-v14-demo.js"></script>
+<script src="./shared/mg-service-adapter-v16-demo.js"></script>
 <script>
 (function(){
 "use strict";
 const $=id=>document.getElementById(id);
 const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const lib=window.MGWebTransactionalAPI,templates=window.MGAIWebAssistant,exchange=window.MGWebProposalExchange;
-if(!lib||!templates||!exchange){
+if(!lib||!templates||!exchange||!window.MGWebStudioServiceAdapter){
  $("result").textContent="No están disponibles los módulos compartidos. Abre la carpeta completa con un servidor estático local.";
  document.querySelectorAll("button").forEach(b=>b.disabled=true);return;
 }
@@ -107,12 +108,13 @@ const api=lib.createTransactionalMock({
  {clientId:"c1",siteId:"s3",pages:[{slug:"",name:"Inicio",title:"Web secundaria"}]},
  {clientId:"c2",siteId:"s2",pages:[{slug:"",name:"Inicio",title:"Papelería ejemplo"}]}]
 });
+const adapter=window.MGWebStudioServiceAdapter&&window.MGWebStudioServiceAdapter.createDemoAdapter({api});
 let seq=0,selected=null,last=null,busy=false,lines=[];
 function identity(){return $("actor").value;}
 function location(){const [org,site]=$("site").value.split(".");return {org,site,base:"/api/v1/organizations/"+org+"/sites/"+site};}
 function nextOp(){return "v14-demo-op-"+(++seq);}
 function call(fixture,method,path,body,operationId){
- return api.request({fixture,method,path,body:body||{},operationId});
+ return adapter?adapter.request({fixture,method,path,body:body||{},operationId}):Promise.resolve({status:503,headers:{"Cache-Control":"no-store"},body:{ok:false,error:{code:"ADAPTER_UNAVAILABLE"}}});
 }
 function record(label,result){
  const ok=result.status>=200&&result.status<300;
@@ -154,6 +156,7 @@ async function refresh(){
    record("Marcar aviso",r);
  }));
  $("outboxCount").textContent=identity()==="super"?api.inspectForTests().outbox.length:"—";
+ $("adapterCount").textContent=adapter?adapter.getTelemetry().metrics.total:"—";
  $("apply").disabled=!selected||dr.status!==200||!["owner1","owner2","editor1"].includes(who);
 }
 async function perform(fn){
