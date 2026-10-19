@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>MG WEB STUDIO CLOUD | Contratos V20</title>
+<style>
+:root{font-family:Inter,system-ui,Arial,sans-serif;background:#081523;color:#eaf5ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 90% 0%,#18415e 0,transparent 54%),#081523}
+main{max-width:1130px;margin:auto;padding:30px 20px 60px}
+h1{font-size:clamp(24px,3.4vw,38px);margin:8px 0;letter-spacing:-1px}h2{font-size:17px;margin:0 0 10px}
+p{color:#b9ccdd;font-size:13px;line-height:1.6}
+a{color:#a0e1ff}.eyebrow{font-size:11px;font-weight:850;letter-spacing:.1em;color:#7bd0fa}
+.nav,.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}.nav a{font-size:11px;text-decoration:none;padding:9px 12px;border:1px solid #355d76;border-radius:8px;background:#143650;color:#e9f5fc}
+header{display:flex;gap:20px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.banner{border:1px solid #906f39;background:#56401e55;border-radius:12px;padding:16px;color:#f8dbaf;font-size:12px;line-height:1.6;margin:23px 0}
+.card{padding:18px;border:1px solid #2a5269;border-radius:15px;background:#10283dcf}
+.columns{display:grid;grid-template-columns:1fr 1fr;gap:16px}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+.metric{background:#0a2539;border:1px solid #2c536e;border-radius:11px;padding:14px}.metric strong{font-size:22px;display:block}.metric small{font-size:11px;color:#a7c6d7}
+label{font-size:12px;color:#bbd9eb;font-weight:760;display:grid;gap:7px;flex:1;min-width:140px}
+input,select,textarea{background:#081f30;color:#eaf7ff;border:1px solid #3d627c;border-radius:9px;padding:10px;font:inherit;font-size:12px;width:100%}
+button{background:#17659d;color:#fff;border:1px solid #3688b8;border-radius:9px;padding:10px 14px;cursor:pointer;font-size:12px;font-weight:750}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid #a0e6ff;outline-offset:2px}
+.result{padding:13px;background:#0d344b;border:1px solid #386e8f;border-radius:10px;font-size:12px;line-height:1.6;margin-top:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.muted{font-size:11px;color:#a4bece}.table{display:grid;gap:8px}.line{display:flex;justify-content:space-between;gap:10px;padding:10px;background:#0c2a3c;border-radius:9px;border:1px solid #2d4e63;font-size:11px}
+.foot{margin-top:22px;font-size:11px;color:#9db8ca}
+@media(max-width:740px){main{padding:20px 12px}.columns,.metrics{grid-template-columns:1fr}.card{padding:14px}}
+</style></head><body><main>
+<header><div><div class="eyebrow">MG DIGITAL SOLUTIONS · REVISIÓN V20</div>
+<h1>Contratos de página Inicio y propuestas</h1>
+<p>Revisa cómo funcionarán las rutas, los estados de aprobación y los permisos antes de generar migraciones reales.</p></div>
+<nav class="nav"><a href="./prototipo.html">SUPERADMIN</a><a href="./portal-cliente.html">Portal cliente</a>
+<a href="./evaluacion-staging-v17.html">Evaluación staging</a></nav></header>
+<div class="banner"><strong>PROPUESTA SIN APLICAR · NO GO.</strong> Los formularios de esta pantalla prueban funciones JavaScript locales. Seleccionar OWNER o SUPERADMIN <strong>no autentica a nadie</strong>, no cambia roles reales ni guarda información. Los contratos SQL V1/V13 todavía tienen diferencias que deben resolverse; ninguna migración o publicación está autorizada.</div>
+<div class="metrics">
+<div class="metric"><small>Estado del contrato</small><strong style="font-size:17px">Solo revisión</strong></div>
+<div class="metric"><small>Incompatibilidades SQL V19</small><strong>2</strong></div>
+<div class="metric"><small>Seguridad real</small><strong style="font-size:17px">Sin probar</strong></div>
+</div>
+<div class="columns">
+<section class="card">
+<h2>1. Unificar la página Inicio</h2><p>El sitio usará <code>home</code> como identificador guardado. Al visitar la dirección principal, se muestra <code>/</code>.</p>
+<label>Slug o ruta a comprobar<input id="slug" value="" placeholder='Vacío = página Inicio'></label>
+<div class="row" style="margin-top:12px"><button id="normalize">Normalizar slug</button><button id="resolve">Interpretar como URL pública</button></div>
+<div id="routeResult" class="result" role="status">El slug vacío de la demo se transformará en home → /.</div>
+<p class="muted">Se rechazan los duplicados de Inicio, las rutas anidadas, las barras finales y los parámetros incluidos directamente en la ruta.</p>
+<h2 style="margin-top:22px">Vista previa de navegación</h2>
+<div class="table"><div class="line"><span>Inicio (guardado: home)</span><strong>/</strong></div>
+<div class="line"><span>Servicios</span><strong>/servicios</strong></div>
+<div class="line"><span>Contacto</span><strong>/contacto</strong></div></div>
+</section>
+<section class="card">
+<h2>2. Estados y permisos</h2><p>Prueba una transición con perfiles ficticios. Un editor solo tiene acceso al sitio principal de Café Horizonte.</p>
+<div class="row"><label>Perfil de prueba<select id="actor">
+<option value="SUPERADMIN">MG SUPERADMIN con MFA ficticio</option>
+<option value="SUPERADMIN_LOW">MG SUPERADMIN sin MFA</option>
+<option value="CLIENT_OWNER">Propietario del cliente</option>
+<option value="CLIENT_ADMIN">Administrador del cliente</option>
+<option value="CLIENT_EDITOR">Editor del sitio 1</option>
+<option value="CLIENT_VIEWER">Solo lectura</option>
+</select></label><label>Sitio de prueba<select id="site"><option value="s1">Sitio autorizado s1</option>
+<option value="s2">Otro sitio s2</option></select></label></div>
+<div class="row"><label>Estado actual<select id="status">
+<option value="">Sin crear</option>
+<option value="draft">Borrador</option>
+<option value="submitted">En revisión</option>
+<option value="needs_changes">Solicita cambios</option>
+<option value="rejected">Rechazado</option>
+<option value="approved">Aprobado</option>
+<option value="applied">Aplicado al borrador</option>
+</select></label><label>Acción<select id="action"><option value="create">Crear propuesta</option>
+<option value="submit">Enviar a revisión</option><option value="approve">Aprobar</option>
+<option value="changes">Solicitar cambios</option><option value="reject">Rechazar</option>
+<option value="revise">Generar nueva revisión</option><option value="apply">Aplicar al borrador</option>
+</select></label></div>
+<div class="row" style="margin-top:12px"><button id="testDecision">Evaluar transición</button></div>
+<div id="decisionResult" class="result" role="status">Elige estado y acción. Los perfiles son simulados.</div>
+<p class="muted">No se publica una web al aplicar una propuesta: únicamente cambia el borrador ficticio. Todas las escrituras reales exigirán identidad de servidor, versión esperada y controles RLS.</p>
+</section>
+</div>
+<div class="card" style="margin-top:16px">
+<h2>3. Flujo canónico acordado para revisión</h2>
+<div class="table"><div class="line"><span>1 · MG crea propuesta</span><strong>draft</strong></div>
+<div class="line"><span>2 · MG envía al cliente</span><strong>submitted</strong></div>
+<div class="line"><span>3 · Cliente decide</span><strong>approved / needs_changes / rejected</strong></div>
+<div class="line"><span>4 · MG genera otra revisión, cuando procede</span><strong>draft (rev. +1)</strong></div>
+<div class="line"><span>5 · Cliente autorizado aplica lo aprobado al borrador</span><strong>applied</strong></div></div>
+<p><a href="https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/blob/feature/mg-digital-v5-web-services/apps/mg-web-studio-cloud/db/v20-contratos-propuestos.review.sql" target="_blank" rel="noopener noreferrer">Revisar propuesta SQL V20 (solo comentarios, NO EJECUTAR) ↗</a></p>
+</div>
+<div class="foot">V20 · Datos completamente ficticios · Sin almacenamiento, servidor, IA de pago ni Supabase · Los paneles existentes conservan sus estados separados.</div>
+</main>
+<script src="./shared/mg-contracts-v20.js"></script>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const contract=window.MGWebContractsV20;
+if(!contract){$("routeResult").textContent="No se cargó el módulo compartido. Abre HTML y shared desde un mismo origen.";document.querySelectorAll("button").forEach(x=>x.disabled=true);return;}
+function fmt(res){
+ if(!res.ok)return "DENEGADO · "+res.code+"\n"+res.message;
+ return "ACEPTADO · "+JSON.stringify(res);
+}
+$("normalize").onclick=()=>{$("routeResult").textContent=fmt(contract.normalizedSlug($("slug").value));};
+$("resolve").onclick=()=>{$("routeResult").textContent=fmt(contract.pathToPage($("slug").value));};
+$("testDecision").onclick=()=>{
+ const role=$("actor").value;
+ const isSuper=role==="SUPERADMIN"||role==="SUPERADMIN_LOW";
+ const editor=role==="CLIENT_EDITOR"||role==="CLIENT_VIEWER";
+ const status=$("status").value||null;
+ const actor={kind:isSuper?"staff":"client",role:isSuper?"SUPERADMIN":role,
+  aal:role==="SUPERADMIN"?"aal2":"aal1",active:true};
+ const input={actor,action:$("action").value,status,
+  currentRevision:status===null?0:1,expectedRevision:status===null?0:1,
+  organizationId:"c1",siteId:$("site").value,
+  scope:editor?{organizationId:"c1",level:"selected",siteIds:["s1"]}:
+   {organizationId:"c1",level:"all",siteIds:[]},
+  currentDraftVersion:1,expectedDraftVersion:1,
+  note:"Revisar y actualizar el contenido ficticio."
+ };
+ $("decisionResult").textContent=fmt(contract.contractDecision(input));
+};
+})();
+</script></body></html>
