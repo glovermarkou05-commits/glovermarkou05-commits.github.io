@@ -94,7 +94,7 @@ function assess(input){
  const core=texts[ORDER[0]]||"",v13=texts[ORDER[2]]||"",patch=texts[ORDER[3]]||"";
  if(!/create\s+table\s+public\.mg_pages\s*\([\s\S]*?\bslug\s+text\s+not\s+null\s+check\s*\(\s*slug\s*~\s*'\^\[a-z0-9\]/i.test(core))
   add("HOME_RULE_MISSING","blocker","No se identifica el contrato de slug de las páginas.",[ORDER[0]]);
- else if(typeof input.demoCode==="string"&&input.demoCode.includes('slug:""'))
+ else if(typeof input.demoCode==="string"&&/\bslug\s*:\s*["\x27]{2}/.test(input.demoCode))
   add("HOME_SLUG_CONFLICT","blocker","El SQL impide slug vacío en páginas; la demo usa slug=\"\" para Inicio.",[ORDER[0],"shared/mg-transactional-api-v14-demo.js"]);
  else add("DEMO_INPUT_MISSING","review","No se suministró demoCode para comparar la página Inicio.",[]);
  const realStatusMatch=v13.match(/create\s+table\s+public\.mg_site_proposals\s*\([\s\S]*?\bstatus\s+text\s+not\s+null\s+default\s+'draft'\s*check\s*\(\s*status\s+in\s*\(([^)]*)\)/i);
