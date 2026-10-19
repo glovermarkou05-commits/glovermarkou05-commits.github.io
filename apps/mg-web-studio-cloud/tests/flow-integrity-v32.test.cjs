@@ -125,6 +125,20 @@ const dirty=delivery.snapshot();dirty.notifications[0].recipientId="ownerB";
 fault("cross-tenant notification",p=>p.rehearsal=makeDelivery(dirty),"RECONCILIATION_INVALID");
 const stale=delivery.snapshot();stale.events[0].auditEventId="auditUnknown";
 fault("corrupted source event",p=>p.rehearsal=makeDelivery(stale),"RECONCILIATION_INVALID");
+const rejectedLedger=A.recordSimulatedDecision(ledger,{
+ eventId:"auditDenied",happenedAt:300,action:"proposal_approved",
+ organizationId:"orgA",siteId:"siteA",targetId:"proposalA",
+ actorId:null,outcome:"denied",reason:"ACCESS_DENIED"
+});
+check("Denied audit event generated in mock",rejectedLedger.ok);
+const rejectedOutbox=delivery.snapshot();rejectedOutbox.events[0].auditEventId="auditDenied";
+const auditWithRejection=clone(workflow);auditWithRejection.ledger=rejectedLedger.events;
+const rejectedFault=fault("denied operation cannot source notification",p=>{
+ p.workflow=auditWithRejection;
+ p.deliverySourceLedger=rejectedLedger.events;
+ p.rehearsal=makeDelivery(rejectedOutbox,rejectedLedger.events);
+},"RECONCILIATION_INVALID");
+check("Denied operation not in allowed sources",has(rejectedFault,"UNEXPECTED_OUTBOX_DELIVERY"));
 const missingNote=delivery.snapshot();missingNote.notifications=[];
 fault("missing notification",p=>p.rehearsal=makeDelivery(missingNote),"RECONCILIATION_INVALID");
 const duplicate=delivery.snapshot();duplicate.notifications.push(clone(duplicate.notifications[0]));
