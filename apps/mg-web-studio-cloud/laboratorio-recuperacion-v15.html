@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MG WEB STUDIO CLOUD · Recuperación V15</title>
+<style>
+:root{font-family:Inter,system-ui,Arial,sans-serif;color:#eff5ff;background:#071622}*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 83% 0,#1e4360,transparent 53%),#081725;min-height:100vh}
+main{max-width:1160px;padding:34px 22px 60px;margin:auto}
+h1{font-size:clamp(25px,3.4vw,37px);letter-spacing:-1px;margin:8px 0}h2{font-size:17px;margin:0 0 12px}
+p{font-size:12px;line-height:1.6;color:#b6cadb}
+small{font-size:11px;color:#a5bed1}.kicker{font-size:10px;letter-spacing:.12em;color:#78d5fa;font-weight:900}
+header{display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:flex-start}
+.nav{display:flex;gap:8px;flex-wrap:wrap}.nav a{color:#bcdef6;text-decoration:none;padding:9px 12px;border:1px solid #34546b;border-radius:9px;background:#153148;font-size:12px}
+.banner{border:1px solid #927342;border-radius:12px;background:#68492031;color:#f1daaa;padding:15px;font-size:12px;line-height:1.6;margin:19px 0}
+.card{background:#10273bc9;border:1px solid #2c4c65;border-radius:14px;padding:18px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.stat{background:#0a2336;border:1px solid #304d62;border-radius:10px;padding:13px}
+.stat strong{font-size:24px;display:block;margin:6px 0}.stat small{display:block}
+button{background:#1b3b55;border:1px solid #37617b;color:#eaf6ff;border-radius:9px;padding:11px 13px;cursor:pointer;font:inherit;font-size:12px;font-weight:750}
+button.primary{background:#155e9c;border-color:#388cc4}button.warn{background:#593e22;border-color:#97723a}
+button:disabled{opacity:.52;cursor:not-allowed}
+.row{display:flex;gap:9px;flex-wrap:wrap;margin:12px 0}
+.status{background:#0a2b42;border:1px solid #315c7b;padding:13px;border-radius:10px;margin:14px 0;font-size:12px}
+.log{display:grid;gap:7px;max-height:280px;overflow:auto}
+.log article{background:#0a2639;border:1px solid #244962;border-radius:8px;padding:9px;color:#b6d5e9;font-size:11px}
+label{display:grid;gap:7px;font-size:12px;color:#a9c5d7}
+select,textarea{font:inherit;font-size:12px;width:100%;background:#0a1e2e;color:#eaf6fe;border:1px solid #375569;border-radius:9px;padding:10px}
+textarea{min-height:90px;resize:vertical}
+@media(max-width:800px){main{padding:20px 12px 43px}.grid,.stats{grid-template-columns:1fr 1fr}}
+@media(max-width:520px){.grid,.stats{grid-template-columns:1fr}}
+</style>
+</head><body><main>
+<header><div><div class="kicker">MG DIGITAL SOLUTIONS / V15 / QA DE RESILIENCIA</div><h1>Laboratorio de recuperación</h1>
+<p>Prueba fallos antes del guardado, reintentos, checkpoints ficticios y eventos pendientes sin conectar ningún servicio.</p></div>
+<nav class="nav"><a href="./prototipo.html">SUPERADMIN</a><a href="./portal-cliente.html">Emprendedor</a>
+<a href="./laboratorio-api-v14.html">API V14</a></nav></header>
+<div class="banner"><strong>SOLO DEMOSTRACIÓN:</strong> este checkpoint se guarda temporalmente en la memoria del navegador y NO es una copia de seguridad real. Los IDs, usuarios y permisos son ficticios. Un checksum local no es una firma ni garantiza seguridad. No utilizar datos reales.</div>
+<div class="stats">
+<div class="stat"><small>Estado de propuesta</small><strong id="proposalState" style="font-size:16px">Sin crear</strong></div>
+<div class="stat"><small>Revisión borrador</small><strong id="draftVersion">1</strong></div>
+<div class="stat"><small>Eventos pendientes</small><strong id="eventCount">0</strong></div>
+<div class="stat"><small>Checkpoint temporal</small><strong id="checkpointState" style="font-size:16px">No creado</strong></div>
+</div>
+<div class="grid">
+<section class="card"><h2>Simular flujo editorial</h2>
+<p>El fallo se introduce en la próxima operación de envío. El primer intento devuelve 503 sin modificar el estado y el segundo confirma la misma operación.</p>
+<div class="row"><button class="primary" id="create">1. Crear propuesta</button>
+<button class="warn" id="failSend">2. Fallar envío (503)</button>
+<button class="primary" id="retrySend">3. Reintentar mismo envío</button></div>
+<div class="row"><button id="approve">4. Aprobar</button><button id="saveCheckpoint">5. Crear checkpoint</button>
+<button class="primary" id="apply">6. Aplicar al borrador</button></div>
+<div class="row"><button class="warn" id="restore">7. Restaurar checkpoint ficticio</button>
+<button id="reset">Reiniciar laboratorio</button></div>
+<div class="status" role="status" id="feedback">No hay operaciones.</div>
+<h2 style="margin-top:22px">Prueba de sincronización</h2>
+<label>Perfil para consultar eventos<select id="reader">
+<option value="owner">Propietario Café Horizonte</option><option value="viewer">VIEWER del mismo sitio</option>
+<option value="other">Propietario Papelería Nube</option><option value="editor3">EDITOR de otro sitio</option>
+</select></label>
+<div class="row"><button id="readEvents">Consultar eventos después del cursor</button>
+<button id="resetCursor">Volver al cursor cero</button></div>
+<p id="cursorLabel">Cursor: 0</p>
+</section>
+<section class="card"><h2>Eventos recuperados</h2><div class="log" id="events"></div>
+<h2 style="margin-top:24px">Resultado de verificaciones</h2><div class="log" id="history"></div>
+<h2 style="margin-top:24px">Resumen de checkpoint local</h2><textarea readonly id="checkpointDetails">Sin checkpoint.</textarea>
+<p><small>El snapshot se restaura en una nueva instancia JavaScript de esta página. Los paneles SUPERADMIN y emprendedor siguen independientes.</small></p>
+</section>
+</div></main>
+<script src="./shared/mg-ai-web-assistant-demo.js"></script>
+<script src="./shared/mg-proposal-exchange-demo.js"></script>
+<script src="./shared/mg-transactional-api-v14-demo.js"></script>
+<script src="./shared/mg-v15-recovery-demo.js"></script>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const escape=x=>String(x==null?"":x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const deps=window.MGAIWebAssistant&&window.MGWebProposalExchange&&window.MGWebTransactionalAPI&&window.MGWebV15Recovery;
+if(!deps){$("feedback").textContent="Faltan módulos compartidos. Abre el HTML junto a la carpeta shared, desde un servidor estático.";document.querySelectorAll("button").forEach(b=>b.disabled=true);return;}
+const directory={organizations:[{id:"c1",plan:"Crece",status:"active"},{id:"c2",plan:"Start",status:"active"}],
+ sites:[{id:"s1",clientId:"c1"},{id:"s2",clientId:"c2"}],
+ members:[
+ {userId:"owner1",clientId:"c1",status:"Activo (demo)",role:"CLIENT_OWNER",scope:"all",siteIds:[]},
+ {userId:"viewer1",clientId:"c1",status:"Activo (demo)",role:"CLIENT_VIEWER",scope:"selected",siteIds:["s1"]},
+ {userId:"editor1",clientId:"c1",status:"Activo (demo)",role:"CLIENT_EDITOR",scope:"selected",siteIds:["s1"]},
+ {userId:"owner2",clientId:"c2",status:"Activo (demo)",role:"CLIENT_OWNER",scope:"all",siteIds:[]},
+ {userId:"editor3",clientId:"c1",status:"Activo (demo)",role:"CLIENT_EDITOR",scope:"selected",siteIds:["s2"]}
+ ],staff:[{userId:"super1",role:"SUPERADMIN",active:true}]};
+const sessions={
+ super:{verified:true,kind:"staff",userId:"super1",aal:"aal2"},
+ owner:{verified:true,kind:"client",userId:"owner1"},
+ viewer:{verified:true,kind:"client",userId:"viewer1"},
+ editor:{verified:true,kind:"client",userId:"editor1"},
+ other:{verified:true,kind:"client",userId:"owner2"},
+ editor3:{verified:true,kind:"client",userId:"editor3"}};
+let failNext=false,api=null,checkpoint=null,proposalId=null,sendBody=null,cursor=0,seq=0,busy=false,history=[];
+const base="/api/v1/organizations/c1/sites/s1";
+function newAPI(snapshot){
+ return window.MGWebTransactionalAPI.createTransactionalMock({
+  directory:()=>directory,resolveSession:r=>sessions[r.fixture]||null,
+  exchange:window.MGWebProposalExchange,
+  initialDrafts:[{clientId:"c1",siteId:"s1",pages:[{slug:"",name:"Inicio",title:"Página ficticia"}]},
+   {clientId:"c2",siteId:"s2",pages:[{slug:"",name:"Inicio",title:"Tienda ficticia"}]}],
+  ...(snapshot?{initialSnapshotForTests:snapshot,validateSnapshotForTests:window.MGWebV15Recovery.validateSnapshot}:{}),
+  beforeCommitForTests:op=>{if(failNext&&op.operationId==="send-demo-v15"){failNext=false;return true;}return false;}
+ });
+}
+function call(who,method,path,body,op,query){return api.request({fixture:who,method,path,body:body||{},operationId:op,query:query||{}});}
+function log(message){
+ history.unshift(message);history=history.slice(0,15);
+ $("history").innerHTML=history.map(s=>"<article>"+escape(s)+"</article>").join("");
+ $("feedback").textContent=message;
+}
+async function refresh(){
+ const data=api.inspectForTests();
+ const p=proposalId?data.proposals.find(p=>p.id===proposalId):null;
+ $("proposalState").textContent=p?p.status+" (v"+p.revision+")":"Sin crear";
+ $("draftVersion").textContent=data.drafts.find(d=>d.clientId==="c1"&&d.siteId==="s1").version;
+ $("eventCount").textContent=data.outbox.length;
+ $("checkpointState").textContent=checkpoint?"Creado":"No creado";
+ $("cursorLabel").textContent="Cursor: "+cursor;
+}
+async function step(fn){
+ if(busy)return;busy=true;try{await fn();await refresh();}catch(e){log("Error de demostración: "+String(e));}finally{busy=false;}
+}
+function reset(){
+ api=newAPI();checkpoint=null;proposalId=null;sendBody=null;cursor=0;failNext=false;seq=0;history=[];
+ $("events").textContent="Sin eventos consultados.";
+ $("checkpointDetails").value="Sin checkpoint.";
+ log("Laboratorio reiniciado. Todos los datos siguen siendo ficticios.");
+ refresh();
+}
+$("create").onclick=()=>step(async()=>{
+ const generated=window.MGAIWebAssistant.createProposal({
+ brand:"Café Horizonte",type:"restaurante",style:"natural",goal:"contacto",plan:"Crece",
+ offering:"café y meriendas de prueba",audience:"familias y estudiantes"});
+ const result=await call("super","POST",base+"/proposals",{proposal:generated.proposal},"create-demo-"+(++seq).toString().padStart(5,"0"));
+ if(result.status===201)proposalId=result.body.proposal.id;
+ log("Crear: respuesta "+result.status+(proposalId?" · "+proposalId:""));
+});
+$("failSend").onclick=()=>step(async()=>{
+ if(!proposalId){log("Primero crea una propuesta.");return;}
+ sendBody={expectedRevision:1};failNext=true;
+ const result=await call("super","POST",base+"/proposals/"+proposalId+"/submit",sendBody,"send-demo-v15");
+ log("Fallo programado: "+result.status+" · Sin commit si devuelve 503.");
+});
+$("retrySend").onclick=()=>step(async()=>{
+ if(!proposalId||!sendBody){log("Ejecuta primero el envío con fallo simulado.");return;}
+ const result=await call("super","POST",base+"/proposals/"+proposalId+"/submit",sendBody,"send-demo-v15");
+ log("Reintento: "+result.status+(result.headers["Idempotency-Replayed"]?" · Operación ya confirmada":" · Nueva confirmación"));
+});
+$("approve").onclick=()=>step(async()=>{
+ if(!proposalId){log("Primero envía una propuesta.");return;}
+ const result=await call("owner","POST",base+"/proposals/"+proposalId+"/review",
+ {expectedRevision:1,decision:"approved",note:""},"approve-demo-"+(++seq).toString().padStart(4,"0"));
+ log("Aprobación ficticia: "+result.status);
+});
+$("saveCheckpoint").onclick=()=>step(async()=>{
+ const result=window.MGWebV15Recovery.makeCheckpoint(api.inspectForTests(),directory);
+ if(!result.ok){log(result.error);return;}
+ checkpoint=result.checkpoint;
+ $("checkpointDetails").value=JSON.stringify({checksum:checkpoint.checksum,
+  resumen:result.summary,advertencia:"No es backup real, solo memoria temporal."},null,2);
+ log("Checkpoint creado y validado · checksum NO criptográfico: "+checkpoint.checksum);
+});
+$("apply").onclick=()=>step(async()=>{
+ if(!proposalId){log("Primero crea y aprueba una propuesta.");return;}
+ const d=await call("editor","GET",base+"/draft");
+ if(d.status!==200){log("Borrador no accesible: "+d.status);return;}
+ const result=await call("editor","POST",base+"/proposals/"+proposalId+"/apply",
+ {expectedRevision:1,expectedDraftVersion:d.body.draft.version},
+ "apply-demo-"+(++seq).toString().padStart(4,"0"));
+ log("Aplicar solo al borrador ficticio: "+result.status);
+});
+$("restore").onclick=()=>step(async()=>{
+ if(!checkpoint){log("Primero genera un checkpoint.");return;}
+ const r=window.MGWebV15Recovery.inspectCheckpoint(checkpoint,directory);
+ if(!r.ok){log("Checkpoint inválido: "+r.error);return;}
+ api=newAPI(checkpoint.state);
+ const p=api.inspectForTests().proposals.at(-1);
+ proposalId=p?p.id:null;
+ log("Restauración de demostración: instancia recreada con el checkpoint temporal.");
+});
+$("reader").onchange=()=>{cursor=0;refresh();};
+$("readEvents").onclick=()=>step(async()=>{
+ const who=$("reader").value;
+ const r=await call(who,"GET",base+"/events",null,null,{after:cursor});
+ if(r.status!==200){log("Acceso a eventos: "+r.status+" · Verifica empresa y sitio.");return;}
+ cursor=r.body.nextCursor;
+ $("events").innerHTML=r.body.items.length?r.body.items.map(x=>
+  "<article>Evento #"+x.sequence+" · "+escape(x.type)+" · Revisión "+x.revision+"</article>").join(""):
+  "<article>No hay nuevos eventos desde este cursor.</article>";
+ log("Eventos consultados: "+r.body.items.length+" · Cursor nuevo "+cursor);
+});
+$("resetCursor").onclick=()=>{cursor=0;refresh();log("Cursor reiniciado. Vuelve a consultar eventos.");};
+$("reset").onclick=reset;
+reset();
+})();
+</script></body></html>
