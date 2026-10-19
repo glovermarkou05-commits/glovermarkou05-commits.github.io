@@ -32,7 +32,7 @@ function assess(deps,source){
   if(!validObject(deps[k])||deps[k].version!==version)push("DEPENDENCY_"+k.toUpperCase(),"Inventory","Missing or unexpected "+k+" evaluator.");
  if(!validObject(deps.v21)||typeof deps.v21.audit!=="function")
   push("DEPENDENCY_V21","Inventory","Missing the V21 SQL/API evaluator.");
- const needed=["manifest","env","procedure","sqlReviews","v20ContractSource","v25WorkflowSource"];
+ const needed=["manifest","env","procedure","sqlReviews","v20ContractSource","v25WorkflowSource","v14DemoCode"];
  for(const key of needed)
   if(source[key]===undefined||source[key]===null)push("MISSING_"+key.toUpperCase(),"Inventory","Missing required input "+key+".");
  let stage=null,packageV18=null,sqlV19=null,contractV21=null;
@@ -40,7 +40,7 @@ function assess(deps,source){
   try{
    stage=deps.v17.evaluate({});
    packageV18=deps.v18.inspect(source.manifest,source.env,source.procedure,source.sqlReviews);
-   sqlV19=deps.v19.assess({manifest:source.manifest,sqlReviews:source.sqlReviews});
+   sqlV19=deps.v19.assess({manifest:source.manifest,sqlReviews:source.sqlReviews,demoCode:source.v14DemoCode});
    contractV21=deps.v21.audit({
     core:source.sqlReviews["db/schema_core.review.sql"],
     proposals:source.sqlReviews["db/v13-propuestas-scopes.review.sql"],
