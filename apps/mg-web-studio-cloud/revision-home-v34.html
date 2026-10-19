@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow"><title>MG WEB STUDIO CLOUD | Revisión Home V34</title>
+<style>
+:root{font-family:Inter,system-ui,Arial,sans-serif;color:#ebf6ff;background:#081523}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 90% 0%,#19415e 0,transparent 55%),#081523}
+main{max-width:960px;margin:auto;padding:28px 20px 60px}
+h1{font-size:clamp(25px,3.7vw,36px);margin:8px 0}h2{font-size:17px;margin:0 0 8px}
+p{line-height:1.65;color:#afc8da;font-size:13px}
+a{color:#a3e6ff}.eyebrow{font-size:12px;color:#84d5ff;font-weight:800;letter-spacing:.1em}
+.nav{display:flex;gap:10px;flex-wrap:wrap}.nav a{font-size:12px;padding:9px 12px;border:1px solid #315c77;border-radius:9px;text-decoration:none}
+.banner{padding:14px;border:1px solid #9d7842;background:#493a2488;color:#ffe6bc;border-radius:12px;font-size:12px;margin:22px 0;line-height:1.6}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.card{border:1px solid #355770;border-radius:13px;background:#102c42;padding:18px}
+label{display:grid;gap:7px;font-size:12px;font-weight:700;color:#cce1ef}
+input,select{width:100%;padding:11px;border:1px solid #406883;background:#071d2e;border-radius:8px;color:#fff;font:inherit;font-size:12px}
+button{background:#176d9b;color:#fff;border:1px solid #4599c2;border-radius:8px;padding:10px 13px;cursor:pointer;font-size:12px;font-weight:700;margin:12px 8px 0 0}
+button:focus-visible,input:focus-visible,select:focus-visible,a:focus-visible{outline:2px solid #acebff;outline-offset:3px}
+pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#081d2e;border:1px solid #2b5975;padding:12px;border-radius:10px;font-size:12px;min-height:80px}
+footer{font-size:12px;color:#afc7d7;margin-top:24px}@media(max-width:720px){.grid{grid-template-columns:1fr}main{padding:22px 12px}}
+</style></head><body><main>
+<div class="eyebrow">MG DIGITAL SOLUTIONS · REVISIÓN V34</div>
+<h1>Compatibilidad de página Inicio (Home)</h1>
+<p>Simulación local de navegación y normalización del identificador <code>home</code>. La dirección pública de Inicio es <strong>/</strong>. La forma antigua <code>slug=""</code> solo se transforma como borrador de revisión.</p>
+<nav class="nav"><a href="./laboratorio-contratos-v20.html">Contrato V20</a><a href="./prototipo.html">SUPERADMIN</a><a href="./portal-cliente.html">Portal cliente</a><a href="./PLAN-MAESTRO-FINALIZACION-V33.md">Plan maestro V33</a></nav>
+<div class="banner" role="status"><strong>NO GO · REVISIÓN LOCAL.</strong> Este laboratorio no realiza autenticación, SQL, llamadas de red, guardado, publicación, despliegue ni migración. La verificación de Home publicada requiere servidor y PostgreSQL reales en un entorno autorizado.</div>
+<div class="grid">
+<section class="card"><h2>1. Documento de páginas ficticias</h2>
+<label for="fixture">Escenario<select id="fixture"><option value="legacy">Inicio legado + contacto</option><option value="canonical">Inicio canónico</option><option value="missing">Sin Inicio</option><option value="duplicate">Dos alias de Inicio</option></select></label>
+<button id="normalize" type="button">Revisar normalización</button>
+<button id="checkPublish" type="button">Revisar condiciones de contenido</button>
+<pre id="pagesResult" aria-live="polite">Escoge un escenario. Ningún botón escribe datos.</pre></section>
+<section class="card"><h2>2. URL pública canónica</h2>
+<label for="route">Ruta (ej. /, /contacto, /home)<input id="route" value="/" autocomplete="off" spellcheck="false"></label>
+<button id="resolve" type="button">Resolver localmente</button>
+<pre id="routeResult" aria-live="polite">/ representa la página guardada como home.</pre></section>
+</div>
+<section class="card" style="margin-top:16px"><h2>3. Regla SQL pendiente de prueba</h2>
+<p>El esquema propuesto admite <code>slug='home'</code> y contiene <code>UNIQUE(site_id,slug)</code>, pero esa restricción no obliga a que la página Inicio exista en un sitio publicado. La futura publicación debe validar la Home con bloqueo de concurrencia y permisos de servidor.</p>
+<p><a href="./db/v34-home-publication.review.sql">Revisar propuesta SQL V34 (solo comentarios, no ejecutable)</a></p></section>
+<footer>V34 · Datos ficticios · Sin conexión a Supabase · Sin créditos Lovable · Sin publicación · NO GO</footer>
+</main>
+<script src="./shared/mg-contracts-v20.js"></script>
+<script src="./shared/mg-home-compat-v34.js"></script>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const C=window.MGWebContractsV20,H=window.MGHomeCompatV34;
+const examples={
+ legacy:[{slug:"",title:"Inicio"},{slug:"contacto",title:"Contacto"}],
+ canonical:[{slug:"home",title:"Inicio"}],
+ missing:[{slug:"contacto",title:"Contacto"}],
+ duplicate:[{slug:""},{slug:"home"}]
+};
+function show(x){return (x.ok?"REVISIÓN CORRECTA · ":"BLOQUEADO · ")+JSON.stringify(x,null,2);}
+function pages(){return examples[$("fixture").value]||examples.missing;}
+if(!C||!H){
+ $("pagesResult").textContent="No se cargaron los módulos. Verifica los archivos shared de esta rama.";
+ $("routeResult").textContent="No se cargaron los módulos.";
+ document.querySelectorAll("button").forEach(b=>b.disabled=true);
+ return;
+}
+$("normalize").onclick=()=>{$("pagesResult").textContent=show(H.prepareDraft(pages(),C));};
+$("checkPublish").onclick=()=>{$("pagesResult").textContent=show(H.inspectPublicationDraft(
+ {id:"siteA",organizationId:"orgA",status:"review"},pages(),C));};
+$("resolve").onclick=()=>{$("routeResult").textContent=show(H.resolvePublicPath($("route").value,pages(),C));};
+})();
+</script></body></html>
