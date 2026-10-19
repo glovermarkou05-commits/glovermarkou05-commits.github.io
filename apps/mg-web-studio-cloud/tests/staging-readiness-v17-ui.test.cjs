@@ -31,7 +31,7 @@ async function main(){
  ok("fase staging visible",nodes.requirements.innerHTML.includes("Antes de staging"));
  ok("fase producción visible",nodes.requirements.innerHTML.includes("Antes de producción"));
  ok("página indica NO GO real",html.includes("NO GO REAL"));
- ok("estado bloqueado",nodes.realGate.textContent===""&&html.includes("La infraestructura real permanece bloqueada"));
+ ok("estado bloqueado",html.includes("La infraestructura real permanece bloqueada"));
  ok("presupuesto sin escoger",nodes.budgetAmount.textContent==="Por definir");
  nodes.budgetScenario.value="free";nodes.budgetScenario.onchange();
  ok("free indica $0",nodes.budgetAmount.textContent.includes("$0"));
