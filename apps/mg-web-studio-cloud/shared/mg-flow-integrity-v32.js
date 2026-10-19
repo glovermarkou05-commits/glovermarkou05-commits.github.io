@@ -75,7 +75,7 @@ function inspect(input){
   const source=latest.get([p.organizationId,p.siteId,p.id].join("|"));
   if(!source){record("PROPOSAL_WITHOUT_ALLOWED_EVENT");continue;}
   let normalized;try{normalized=input.deps.contracts.normalizedState(p.status);}catch(e){}
-  if(!normalized||!normalized.ok||normalized.state!==ACTIONS[source.action])
+  if(!normalized||!normalized.ok||normalized.status!==ACTIONS[source.action])
     record("PROPOSAL_LAST_STATE_DRIFT");
  }
  for(const event of allowed){
