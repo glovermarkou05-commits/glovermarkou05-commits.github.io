@@ -1,0 +1,50 @@
+-- MG WEB STUDIO CLOUD | V20 | PROPUESTA DE CONTRATO, SOLO COMENTARIOS
+-- NO EJECUTAR. NO ES MIGRACION. NINGUNA SENTENCIA SQL ACTIVA.
+-- Este archivo describe CAMBIOS SUGERIDOS que NO se han aplicado a V1/V13.
+--
+-- Decisión A — HOME: nombre interno fijo slug='home', ruta pública '/'.
+-- Se debe diseñar un nuevo CHECK de mg_pages.slug con slug='home' reservado
+-- para Inicio. La regex actual ^[a-z0-9]+(-[a-z0-9]+)*$ YA acepta home,
+-- pero se necesita: exactamente una página Home por sitio y reglas de creación.
+-- La API convierte el legado slug='' -> 'home' ANTES de escribir en DB.
+-- Para servir GET /, resolver public.mg_pages WHERE site_id=? AND slug='home'.
+-- Evitar que GET /home produzca una ruta distinta de la misma página: redirigir
+-- con decisión explícita o responder 404; la demo canónica devuelve error.
+-- Proteger (site_id,slug) con unique, validar conflicto de páginas home y ''.
+--
+-- Decisión B — ESTADOS: mantener seis valores canónicos:
+-- 'draft','submitted','needs_changes','rejected','approved','applied'.
+-- En una futura migración revisada, reemplazar CHECK de
+-- public.mg_site_proposals.status actualmente con:
+-- submitted_for_review => submitted
+-- applied_to_draft    => applied
+-- ¡NO aplicar un UPDATE a ciegas! No existe base real MG WEB STUDIO CLOUD
+-- verificada; tomar inventario, ensayar backfill en staging y revisar
+-- referencias en triggers, eventos, RPC, dashboards, auditoría y exportación.
+-- Si existen filas en una base nueva, hacer el cambio y el CHECK en
+-- transacción probada, evitando escrituras concurrentes y rollback improvisado.
+--
+-- Decisión C — TRANSICIONES (en backend, no solo CHECK de enum):
+-- create: null -> draft; revisión inicial 1 (solo SUPERADMIN MFA).
+-- submit: draft -> submitted (solo SUPERADMIN MFA).
+-- approve: submitted -> approved (OWNER/ADMIN).
+-- changes: submitted -> needs_changes (OWNER/ADMIN/EDITOR con sitio asignado).
+-- reject: submitted -> rejected (OWNER/ADMIN, nota obligatoria).
+-- revise: needs_changes/rejected -> draft; revision +1 (SUPERADMIN MFA).
+-- apply: approved -> applied; revision borrador +1 (OWNER/ADMIN/EDITOR).
+-- Debe comprobarse revision esperada, versión borrador e idempotencia en SQL ACID.
+-- Un EDITOR nunca debe publicar, aprobar o acceder a otros sitios.
+-- VIEWER: solo lectura del sitio asignado, no acciones de edición.
+-- STAFF: ningún rol/autenticación derivado del browser.
+--
+-- Decisión D — AISLAMIENTO: OWNER/ADMIN acceso a empresa autorizada,
+-- EDITOR/VIEWER solo a scopes de sitio explícitos. La función privada
+-- mg_private.mg_can_access_site sigue pendiente de auditoría:
+-- SECURITY DEFINER, search_path, EXECUTE, propietario, BOLA, RLS real.
+-- Data API y GRANT no equivalen a autorización RLS: probar ambas.
+--
+-- Decisión E — QA REAL PENDIENTE:
+-- pgTAP/perfiles autenticados, SQL parser, ejecución en staging exclusivo,
+-- concurrencia, migraciones, rollback, backups/restore y smoke entre dispositivos.
+-- Ningún diseño V20 constituye GO ni habilita infraestructura, hosting, cobros,
+-- IA real, dominios o publicación. main y otros proyectos quedan intactos.
