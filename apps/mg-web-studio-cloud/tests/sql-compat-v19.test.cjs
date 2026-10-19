@@ -64,7 +64,7 @@ function main(){
  ok("no sobrevive mg_sites_read_member",!trans.live.some(x=>x.policy==="mg_sites_read_member"));
  ok("lectura scoped de páginas",trans.live.some(x=>x.table==="public.mg_pages"&&x.policy==="mg_v13_pages_scoped_read"));
  ok("lectura scoped de sitios",trans.live.some(x=>x.table==="public.mg_sites"&&x.policy==="mg_v13_sites_scoped_read"));
- const withoutDemo=scan(manifest,originals);
+ const withoutDemo=scan(manifest,originals,null);
  ok("si falta fixture se advierte",has(withoutDemo,"DEMO_INPUT_MISSING"));
  ok("sin demo no se afirma slug correcto",!has(withoutDemo,"HOME_SLUG_CONFLICT"));
  mutation("fuente SQL faltante",x=>{delete x.sqlReviews[files[0]];},"SQL_SOURCE_MISSING");
