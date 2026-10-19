@@ -83,9 +83,9 @@ function main(){
  mutation("enum SQL estado retirado",x=>{x.sqlReviews[files[2]]=x.sqlReviews[files[2]].replace("'submitted_for_review'","'submitted'");},"STATUS_CONTRACT_MISMATCH");
  mutation("función de permisos ausente",x=>{x.sqlReviews[files[2]]=x.sqlReviews[files[2]].replace(/mg_can_access_site/g,"can_access_without_guard");},"SCOPE_FUNCTION_MISSING");
  mutation("unique tenant site perdida",x=>{x.sqlReviews[files[0]]=x.sqlReviews[files[0]].replace("unique(id,organization_id)","unique(id)");},"TENANT_FK_TARGET_MISSING");
- mutation("FK tenant site perdida",x=>{x.sqlReviews[files[2]]=x.sqlReviews[files[2]].replace("foreign key(site_id,organization_id)","foreign key(site_id)");},"TENANT_FK_MISSING");
+ mutation("FK tenant site perdida",x=>{x.sqlReviews[files[2]]=x.sqlReviews[files[2]].replace(/foreign key\s*\(site_id,organization_id\)/g,"foreign key(site_id)");},"TENANT_FK_MISSING");
  mutation("unicidad revision compuesta perdida",x=>{x.sqlReviews[files[2]]=x.sqlReviews[files[2]].replace("unique(proposal_id,revision,organization_id,site_id)","unique(proposal_id,revision)");},"REVISION_FK_TARGET_MISSING");
- mutation("FK a revision exacta perdida",x=>{x.sqlReviews[files[2]]=x.sqlReviews[files[2]].replace("foreign key(proposal_id,revision,organization_id,site_id)","foreign key(proposal_id,revision)");},"REVISION_FK_MISSING");
+ mutation("FK a revision exacta perdida",x=>{x.sqlReviews[files[2]]=x.sqlReviews[files[2]].replace(/foreign key\s*\(proposal_id,revision,organization_id,site_id\)/g,"foreign key(proposal_id,revision)");},"REVISION_FK_MISSING");
  mutation("borrador sin clave empresa sitio",x=>{x.sqlReviews[files[2]]=x.sqlReviews[files[2]].replace("primary key(organization_id,site_id)","primary key(site_id)");},"CAS_DRAFT_KEY_MISSING");
  mutation("drop pages_read antiguo perdido",x=>{x.sqlReviews[files[3]]=x.sqlReviews[files[3]].replace("drop policy if exists mg_pages_read_member on public.mg_pages;","");},"BROAD_POLICY_SURVIVES");
  mutation("drop sites_read antiguo perdido",x=>{x.sqlReviews[files[3]]=x.sqlReviews[files[3]].replace("drop policy if exists mg_sites_read_member on public.mg_sites;","");},"BROAD_POLICY_SURVIVES");
