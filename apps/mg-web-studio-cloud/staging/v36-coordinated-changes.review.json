@@ -1,0 +1,241 @@
+{
+  "format": "mg-web-studio/coordinated-migrations-v36-review",
+  "version": 36,
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "date": "2026-10-19",
+  "taskId": "C03",
+  "previous": [
+    "C01",
+    "C02"
+  ],
+  "intendedMode": "review-only-not-executable",
+  "authorization": {
+    "stagingApproved": false,
+    "productionApproved": false,
+    "costApproved": false,
+    "provider": null,
+    "region": null,
+    "reference": null
+  },
+  "execution": {
+    "reviewOnly": true,
+    "mayRunSQL": false,
+    "mayProvision": false,
+    "mayDeploy": false,
+    "mayPublish": false,
+    "mayScheduleCron": false,
+    "maySendEmail": false,
+    "mayUsePaidAI": false,
+    "mayCharge": false,
+    "mayModifyMain": false,
+    "mayModifyOtherProjects": false
+  },
+  "sourceDocs": [
+    {
+      "path": "db/schema_core.review.sql",
+      "kind": "historical-schema-text",
+      "execute": false
+    },
+    {
+      "path": "db/v13-propuestas-scopes.review.sql",
+      "kind": "historical-schema-text",
+      "execute": false
+    },
+    {
+      "path": "db/v13-endurecimiento-rls-legado.review.sql",
+      "kind": "contains-active-sql-hazard",
+      "execute": false
+    },
+    {
+      "path": "db/v20-contratos-propuestos.review.sql",
+      "kind": "comment-only-design",
+      "execute": false
+    },
+    {
+      "path": "db/v34-home-publication.review.sql",
+      "kind": "comment-only-design",
+      "execute": false
+    },
+    {
+      "path": "db/v35-estados-propuestas.review.sql",
+      "kind": "comment-only-design",
+      "execute": false
+    },
+    {
+      "path": "db/v36-paq-coordinado.review.sql",
+      "kind": "comment-only-design",
+      "execute": false
+    }
+  ],
+  "compatibility": {
+    "homeInternalSlug": "home",
+    "homePublicRoute": "/",
+    "disallowDuplicateHome": true,
+    "requirePublishedHomeInFutureDatabase": true,
+    "homeGuaranteeImplemented": false,
+    "mappings": [
+      {
+        "from": "submitted_for_review",
+        "to": "submitted",
+        "table": "public.mg_site_proposals",
+        "column": "status"
+      },
+      {
+        "from": "applied_to_draft",
+        "to": "applied",
+        "table": "public.mg_site_proposals",
+        "column": "status"
+      }
+    ],
+    "preserveReviewDecisions": [
+      "approved",
+      "changes",
+      "rejected"
+    ],
+    "preserveEventTypes": [
+      "submitted",
+      "approved",
+      "changes",
+      "rejected",
+      "applied"
+    ],
+    "newEventTypesNeedSeparateReview": [
+      "proposal_created",
+      "proposal_revised"
+    ],
+    "preserveFields": [
+      "id",
+      "organization_id",
+      "site_id",
+      "revision",
+      "created_at",
+      "updated_at",
+      "applied_draft_revision"
+    ],
+    "rollbackStrategy": "coordinated-backup-restore-and-version-aware-reverse-mapping-after-write-freeze",
+    "transactBusinessStateAuditOutbox": true,
+    "transactionImplemented": false,
+    "sqlStateConflictOpen": true,
+    "homeExistenceConflictOpen": true
+  },
+  "phases": [
+    {
+      "id": "P00",
+      "name": "Verificar autorización y aislamiento",
+      "owner": "Propietario y seguridad",
+      "depends": [],
+      "requiresRealEnvironment": true,
+      "action": "Documentar permiso de staging, proveedor, región, costo máximo y responsables antes de cualquier uso de servicios reales.",
+      "exit": "Aprobación humana verificable; V18 deja de ser NOT_AUTHORIZED solo mediante proceso autorizado",
+      "status": "BLOCKED_NOT_AUTHORIZED"
+    },
+    {
+      "id": "P01",
+      "name": "Inventario y backup",
+      "owner": "DBA y seguridad",
+      "depends": [
+        "P00"
+      ],
+      "requiresRealEnvironment": true,
+      "action": "Inventariar esquema instalado, objetos y registros por tenant, funciones, grants y dependencias. Crear backup y practicar restore primero.",
+      "exit": "Esquema/version real identificado; conteos y copias protegidos, restauración probada",
+      "status": "BLOCKED_NOT_AUTHORIZED"
+    },
+    {
+      "id": "P02",
+      "name": "Compatibilidad de lectura dual",
+      "owner": "Backend",
+      "depends": [
+        "P01"
+      ],
+      "requiresRealEnvironment": true,
+      "action": "Implementar en futura API confiable lectura de submitted_for_review y applied_to_draft como submitted y applied, y slug legado solo en entrada de borrador.",
+      "exit": "Lectores canónicos/legados probados sin permisos del browser y sin escrituras fuera de tenant",
+      "status": "BLOCKED_NOT_AUTHORIZED"
+    },
+    {
+      "id": "P03",
+      "name": "Asegurar Home publicada",
+      "owner": "DBA y backend",
+      "depends": [
+        "P01",
+        "P02"
+      ],
+      "requiresRealEnvironment": true,
+      "action": "Definir protección SQL de existencia exactamente una Home en sitios publicados, incluyendo escritores directos, concurrencia, rollback y publicación.",
+      "exit": "Pruebas PostgreSQL contra INSERT/UPDATE/DELETE concurrentes y revocación RLS/grants, sin Home ausente",
+      "status": "BLOCKED_NOT_AUTHORIZED"
+    },
+    {
+      "id": "P04",
+      "name": "Convertir estados bajo transacción",
+      "owner": "DBA y backend",
+      "depends": [
+        "P01",
+        "P02",
+        "P03"
+      ],
+      "requiresRealEnvironment": true,
+      "action": "Bloquear escritores, aplicar conversión versionada de solo dos estados de propuestas y coordinar CHECK definitivo con clientes; no reescribir review.decision ni event_type.",
+      "exit": "Conteos y FK/revisions iguales; APIs versionadas; CAS/idempotencia/auditoría/outbox consistentes; rollback probado",
+      "status": "BLOCKED_NOT_AUTHORIZED"
+    },
+    {
+      "id": "P05",
+      "name": "Verificar permisos y consumo de eventos",
+      "owner": "QA y seguridad",
+      "depends": [
+        "P04"
+      ],
+      "requiresRealEnvironment": true,
+      "action": "Probar sesiones, MFA, RLS, SECURITY DEFINER, search_path, grants, tenant/site, outbox, DLQ y escenarios de red.",
+      "exit": "Matriz real de pruebas negativas/concurrentes completa, sin fugas ni duplicados",
+      "status": "BLOCKED_NOT_AUTHORIZED"
+    },
+    {
+      "id": "P06",
+      "name": "Ensayo de reversión y restauración",
+      "owner": "DBA y QA",
+      "depends": [
+        "P04",
+        "P05"
+      ],
+      "requiresRealEnvironment": true,
+      "action": "Validar downgrade coordinado, bloqueo de nuevas escrituras, snapshot/restauración y recuperación de eventos sin dobles envíos.",
+      "exit": "Restauración reproducible, historial preservado, RPO/RTO confirmados",
+      "status": "BLOCKED_NOT_AUTHORIZED"
+    },
+    {
+      "id": "P07",
+      "name": "Decisión de salida independiente",
+      "owner": "Propietario y seguridad",
+      "depends": [
+        "P05",
+        "P06"
+      ],
+      "requiresRealEnvironment": true,
+      "action": "Recopilar evidencias de staging y solicitar autorización independiente para despliegue o publicación. No automatizar aprobación.",
+      "exit": "Decisión humana documentada; desplegar requiere otro procedimiento y permiso",
+      "status": "BLOCKED_NOT_AUTHORIZED"
+    }
+  ],
+  "evidence": {
+    "realDatabaseTests": 0,
+    "realAuthTests": 0,
+    "sqlStatementsExecuted": 0,
+    "homeMigrationApplied": false,
+    "statusMigrationApplied": false,
+    "backupTested": false,
+    "restoredSuccessfully": false,
+    "outboxDeliveryTested": false,
+    "checksExecuted": 0
+  },
+  "acceptance": {
+    "readiness": "NO_GO",
+    "staging": "NO_GO",
+    "production": "NO_GO",
+    "reviewedBy": null,
+    "signoffRef": null
+  }
+}
