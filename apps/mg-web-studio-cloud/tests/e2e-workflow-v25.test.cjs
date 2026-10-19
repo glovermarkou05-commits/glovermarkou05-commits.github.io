@@ -84,7 +84,7 @@ t("reject audited",wf.snapshot().ledger[2].action==="proposal_rejected");
 checkUnchanged(wf,gen("ownerA","approve","p2"),"INVALID_TRANSITION","approve rejected state");
 checkUnchanged(wf,gen("ownerA","reject","p3",{note:"Texto suficientemente largo"}),"INVALID_TRANSITION","reject approved");
 checkUnchanged(wf,gen("ownerA","apply","p3",{expectedDraftVersion:1}),"STALE_DRAFT","stale draft");
-checkUnchanged(wf,gen("ownerA","apply","p3",{expectedDraftVersion:2,eventId:"evt_"+approve.eventId}),"AUDIT_FAILED","invalid duplicate audit id");
+checkUnchanged(wf,gen("ownerA","apply","p3",{expectedDraftVersion:2,eventId:approve.eventId}),"AUDIT_FAILED","invalid duplicate audit id");
 checkUnchanged(wf,gen("viewerA","apply","p3",{expectedDraftVersion:2}),"ACCESS_DENIED","viewer apply");
 checkUnchanged(wf,gen("editorA","reject","p3",{note:"Texto suficientemente largo"}),"ACCESS_DENIED","editor reject");
 checkUnchanged(wf,gen("ownerB","approve","p3"),"ACCESS_DENIED","cross tenant owner");
