@@ -35,7 +35,7 @@ check("Never call paid AI",result.mayCallPaidAI===false);
 check("First GitHub task C01",result.firstGithubTask==="C01");
 check("Thirteen tasks",result.tasksTotal===13);
 check("Two immediately GitHub-ready",result.githubReady===2);
-check("Nine authorization-dependent work items",result.approvalBlocked===9);
+check("Ten authorization-dependent work items",result.approvalBlocked===10);
 check("V18 16 checks pending",result.checks.v18Pending===16);
 check("V28 30 real tests pending",result.checks.v28Unexecuted===30);
 check("V30 18 real tests pending",result.checks.v30Unexecuted===18);
@@ -116,7 +116,7 @@ const edits=[
  ["v28 no-go removed",x=>x.v28.authorizationGranted=true,"SOURCE_APPROVAL_CHANGED"],
  ["v29 fake real backend",x=>x.v29.integration.backendImplemented=true,"V29_BACKEND_CONTRACT_CHANGED"],
  ["v29 claim SQL",x=>x.v29.integration.sqlExecuted=true,"V29_BACKEND_CONTRACT_CHANGED"],
- ["v30 fake delivery",x=>x.v30.checklist[1].evidenceStatus="DONE","V30_EVIDENCE_CHANGED"],
+ ["v30 fake delivery",x=>x.v30.checklist[1].status="DONE","V30_EVIDENCE_CHANGED"],
  ["v30 activate mail",x=>x.v30.execution.maySendEmail=true,"SOURCE_APPROVAL_CHANGED"],
  ["v31 fake monitoring",x=>x.v31.checklist[0].evidenceStatus="PASS","V31_EVIDENCE_CHANGED"],
  ["v31 enable cron",x=>x.v31.execution.mayScheduleCron=true,"SOURCE_APPROVAL_CHANGED"],
