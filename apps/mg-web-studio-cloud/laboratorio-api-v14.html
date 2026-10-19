@@ -154,7 +154,7 @@ async function refresh(){
    record("Marcar aviso",r);
  }));
  $("outboxCount").textContent=identity()==="super"?api.inspectForTests().outbox.length:"—";
- $("apply").disabled=!selected||dr.status!==200;
+ $("apply").disabled=!selected||dr.status!==200||!["owner1","owner2","editor1"].includes(who);
 }
 async function perform(fn){
  if(busy)return;
