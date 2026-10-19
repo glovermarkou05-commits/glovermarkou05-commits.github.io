@@ -71,12 +71,13 @@ textarea{min-height:90px;resize:vertical}
 <script src="./shared/mg-proposal-exchange-demo.js"></script>
 <script src="./shared/mg-transactional-api-v14-demo.js"></script>
 <script src="./shared/mg-v15-recovery-demo.js"></script>
+<script src="./shared/mg-service-adapter-v16-demo.js"></script>
 <script>
 (function(){
 "use strict";
 const $=id=>document.getElementById(id);
 const escape=x=>String(x==null?"":x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const deps=window.MGAIWebAssistant&&window.MGWebProposalExchange&&window.MGWebTransactionalAPI&&window.MGWebV15Recovery;
+const deps=window.MGAIWebAssistant&&window.MGWebProposalExchange&&window.MGWebTransactionalAPI&&window.MGWebV15Recovery&&window.MGWebStudioServiceAdapter;
 if(!deps){$("feedback").textContent="Faltan módulos compartidos. Abre el HTML junto a la carpeta shared, desde un servidor estático.";document.querySelectorAll("button").forEach(b=>b.disabled=true);return;}
 const directory={organizations:[{id:"c1",plan:"Crece",status:"active"},{id:"c2",plan:"Start",status:"active"}],
  sites:[{id:"s1",clientId:"c1"},{id:"s2",clientId:"c2"}],
@@ -94,7 +95,7 @@ const sessions={
  editor:{verified:true,kind:"client",userId:"editor1"},
  other:{verified:true,kind:"client",userId:"owner2"},
  editor3:{verified:true,kind:"client",userId:"editor3"}};
-let failNext=false,api=null,checkpoint=null,proposalId=null,sendBody=null,cursor=0,seq=0,busy=false,history=[];
+let failNext=false,api=null,adapter=null,checkpoint=null,proposalId=null,sendBody=null,cursor=0,seq=0,busy=false,history=[];
 const base="/api/v1/organizations/c1/sites/s1";
 function newAPI(snapshot){
  return window.MGWebTransactionalAPI.createTransactionalMock({
@@ -106,7 +107,7 @@ function newAPI(snapshot){
   beforeCommitForTests:op=>{if(failNext&&op.operationId==="send-demo-v15"){failNext=false;return true;}return false;}
  });
 }
-function call(who,method,path,body,op,query){return api.request({fixture:who,method,path,body:body||{},operationId:op,query:query||{}});}
+function call(who,method,path,body,op,query){return adapter.request({fixture:who,method,path,body:body||{},operationId:op,query:query||{}});}
 function log(message){
  history.unshift(message);history=history.slice(0,15);
  $("history").innerHTML=history.map(s=>"<article>"+escape(s)+"</article>").join("");
@@ -119,13 +120,14 @@ async function refresh(){
  $("draftVersion").textContent=data.drafts.find(d=>d.clientId==="c1"&&d.siteId==="s1").version;
  $("eventCount").textContent=data.outbox.length;
  $("checkpointState").textContent=checkpoint?"Creado":"No creado";
- $("cursorLabel").textContent="Cursor: "+cursor;
+ $("cursorLabel").textContent="Cursor: "+cursor+" · Consultas V16: "+(adapter?adapter.getTelemetry().metrics.total:0);
 }
 async function step(fn){
  if(busy)return;busy=true;try{await fn();await refresh();}catch(e){log("Error de demostración: "+String(e));}finally{busy=false;}
 }
 function reset(){
- api=newAPI();checkpoint=null;proposalId=null;sendBody=null;cursor=0;failNext=false;seq=0;history=[];
+ api=newAPI();adapter=window.MGWebStudioServiceAdapter.createDemoAdapter({api});
+ checkpoint=null;proposalId=null;sendBody=null;cursor=0;failNext=false;seq=0;history=[];
  $("events").textContent="Sin eventos consultados.";
  $("checkpointDetails").value="Sin checkpoint.";
  log("Laboratorio reiniciado. Todos los datos siguen siendo ficticios.");
@@ -178,6 +180,7 @@ $("restore").onclick=()=>step(async()=>{
  const r=window.MGWebV15Recovery.inspectCheckpoint(checkpoint,directory);
  if(!r.ok){log("Checkpoint inválido: "+r.error);return;}
  api=newAPI(checkpoint.state);
+ adapter=window.MGWebStudioServiceAdapter.createDemoAdapter({api});
  const p=api.inspectForTests().proposals.at(-1);
  proposalId=p?p.id:null;
  log("Restauración de demostración: instancia recreada con el checkpoint temporal.");
