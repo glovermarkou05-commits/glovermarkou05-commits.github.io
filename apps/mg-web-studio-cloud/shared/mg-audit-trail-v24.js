@@ -11,6 +11,10 @@ const PERMISSIONS=Object.freeze({
  proposal_approved:"proposalApprove",
  proposal_rejected:"proposalReject",
  proposal_applied:"proposalApply",
+ proposal_created:"adminRead",
+ proposal_submitted:"adminRead",
+ proposal_changes:"proposalChanges",
+ proposal_revised:"adminRead",
  membership_revoked:"members",
  scope_revoked:"members",
  admin_access:"adminRead"
@@ -82,6 +86,33 @@ function record(entries,policy,directory,trustedSession,intent,now,eventId){
  return {ok:true,event:{...item},events:next,simulatedDecision:decision.allowed,
   checksum:item.checksum,simulationOnly:true,cryptographicallySecure:false,go:false};
 }
+/* V27 simulated decision append: ONLY test harnesses may provide this decision.
+ * No real authentication; caller controls outcome, so NEVER expose as a server endpoint.
+ * No request body/notes, tokens, passwords or arbitrary metadata are recorded.
+ */
+function recordSimulatedDecision(entries,meta){
+ const check=validate(entries);if(!check.ok)return check;
+ if(!isObj(meta)||!has(PERMISSIONS,meta.action)||!id(meta.eventId)||
+   !Number.isSafeInteger(meta.happenedAt)||meta.happenedAt<0||
+   (entries.length&&meta.happenedAt<entries[entries.length-1].happenedAt)||
+   entries.some(e=>e.eventId===meta.eventId)||entries.length===MAX_EVENTS)
+   return err("INVALID_EVENT");
+ if(meta.action==="admin_access"||!id(meta.organizationId)||!id(meta.siteId)||
+   !id(meta.targetId)||!["allowed","denied"].includes(meta.outcome)||
+   typeof meta.reason!=="string"||!/^([A-Z][A-Z0-9_]{1,63})$/.test(meta.reason)||
+   (meta.outcome==="allowed"?!id(meta.actorId):meta.actorId!==null))
+   return err("INVALID_DECISION");
+ const entry={
+   sequence:entries.length+1,eventId:meta.eventId,happenedAt:meta.happenedAt,
+   action:meta.action,organizationId:meta.organizationId,siteId:meta.siteId,
+   targetId:meta.targetId,actorId:meta.outcome==="allowed"?meta.actorId:null,
+   outcome:meta.outcome,reason:meta.reason,previousChecksum:check.checksum
+ };
+ entry.checksum=digest(entry);
+ const next=entries.map(e=>({...e})).concat([entry]);
+ return {ok:true,events:next,event:{...entry},simulationOnly:true,
+   cryptographicallySecure:false,go:false};
+}
 function querySite(entries,policy,directory,trustedSession,organizationId,siteId,now){
  const verified=validate(entries);if(!verified.ok)return verified;
  if(!id(organizationId)||!id(siteId)||!policy||typeof policy.authorize!=="function"||
@@ -102,6 +133,6 @@ function queryAdmin(entries,policy,directory,trustedSession,now){
 }
 root.MGAuditTrailV24=Object.freeze({
  version:VERSION,mode:"memory-demo-only",PERMISSIONS,
- validate,record,querySite,queryAdmin
+ validate,record,recordSimulatedDecision,querySite,queryAdmin
 });
 })(typeof window!=="undefined"?window:globalThis);
