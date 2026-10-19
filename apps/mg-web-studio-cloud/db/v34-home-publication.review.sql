@@ -1,0 +1,81 @@
+-- MG WEB STUDIO CLOUD · V34 · CAMBIO PROPUESTO HOME / PUBLICACIÓN
+-- 2026-10-19 · C01 del plan maestro V33
+-- SOLO COMENTARIOS. NO EJECUTAR. NO ES UNA MIGRACIÓN NI UNA AUTORIZACIÓN.
+-- TODAS LAS LÍNEAS SON COMENTARIOS '--': no hay sentencias SQL activas.
+--
+-- DECISIÓN CONGELADA V20 (SIN ALTERAR EL ESQUEMA ORIGINAL):
+--   Slug interno canónico = 'home'; ruta pública = '/'.
+--   GET /home = ruta NO CANÓNICA; responder 404/RESERVED_HOME.
+--   Para cualquier otra página: slug 'contacto' -> GET /contacto.
+--   Prohibir URL anidadas, slash final distinto de '/', percent-encoding,
+--   fragmentos y query en el resolver de rutas del contrato V20.
+--   Convertir slug legado '' en 'home' SOLAMENTE antes de persistir, en un
+--   backend confiable, después de validar que no hay dos Home.
+--
+-- INVENTARIO ESTÁTICO VERIFICADO EN db/schema_core.review.sql:
+--   public.mg_pages.slug text not null check (regex)
+--   La expresión ^[a-z0-9]+(-[a-z0-9]+)*$ YA admite 'home' y prohíbe ''.
+--   UNIQUE(site_id,slug) YA impide dos Home exactas persistidas en un sitio.
+--   FOREIGN KEY(site_id,organization_id) YA vincula página con el tenant
+--   de public.mg_sites y la columna (organization_id,site_id) es indexada.
+--   public.mg_sites.status ya acepta 'published'.
+--   EL PROBLEMA ABIERTO: UNIQUE NO EXIGE QUE EXISTA UNA HOME.
+--
+-- SECUENCIA DE CAMBIO FUTURO (PARA REVISIÓN HUMANA, NO EJECUTABLE):
+--  1. Autorizar staging separado, proveedor, región, presupuesto y responsable.
+--  2. Confirmar desde una BD aislada si el SQL V1/V13 se aplicó y qué hay
+--     realmente, tomando backup verificable ANTES de cualquier cambio.
+--  3. Inventariar sitios publicados, sitios sin Home, duplicados lógicos,
+--     documentos heredados con slug '', nombre reservado en borradores,
+--     referencias en drafts/releases/SEO/links y scopes entre empresas.
+--     NO asumir que el ejemplo V14 implica datos SQL heredados existentes.
+--  4. Establecer en el servicio autenticado resolución canónica: "/" => 'home';
+--     rutas "/home" explícitamente rechazadas como en V20; no filtrar drafts
+--     vía anon/Data API. Aceptar "" exclusivamente como input legado en la
+--     conversión de borrador, NO como fila persistida.
+--  5. En la FUTURA transacción de publicación, el backend debe:
+--     a) validar identidad, MFA si corresponde, membresía/rol y tenant/site.
+--     b) bloquear la fila del sitio SELECT ... FOR UPDATE, y exigir que
+--        TODOS los escritores de páginas del sitio adquieran el MISMO lock.
+--     c) asegurar exactamente una página slug='home' en el sitio/tenant,
+--        sin documentos pendientes de escritura ni borradores incoherentes.
+--     d) validar permisos de cada operación y la relación compuesta tenant/site.
+--     e) actualizar estado publicado, release y auditoría de negocio + outbox
+--        EN LA MISMA TRANSACCIÓN durable con chequeo CAS e idempotencia.
+--     f) hacer COMMIT una sola vez o ROLLBACK íntegro.
+--  6. Bloquear INSERT/UPDATE/DELETE directos que borren o renombren Home de
+--     sitios published, incluyendo llamadas Data API que ignoren el lock.
+--     CONSIDERAR permisos mínimos solo backend o triggers/constraint triggers
+--     revisados; no asumir que la validación previa a publicar basta.
+--  7. Auditar reglas de direct grants existentes: schema_core.review.sql
+--     actualmente propone GRANT INSERT/UPDATE de mg_pages a authenticated.
+--     RLS no reemplaza permisos de operación ni invariante de Home publicada.
+--     Ajustar permisos y RPCs en revisión coordinada; sin ejecutarlos ahora.
+--  8. Garantizar atomicidad/concurrencia: dos publishers, borrado simultáneo,
+--     cambio de slug concurrente y restore deben mantener Home. Ensayar en
+--     PostgreSQL real, con pgTAP o harness equivalente y roles reales.
+--  9. Mantener el tratamiento de Home en exportaciones, release manifiestos,
+--     routers, breadcrumbs, redirects, sitemap, enlace canónico y SEO,
+--     evitando crear una segunda Home en /home.
+-- 10. PLAN DE REVERSIÓN: preservar snapshot/backup de datos; aislar tráfico,
+--     restaurar copia validada o revertir un release conforme a un procedimiento
+--     probado. Nunca crear SQL inverso improvisado para borrar Home.
+--
+-- CASOS REQUERIDOS EN FUTURO STAGING, NO EJECUTADOS:
+--   - Sitio draft sin Home permitido solo mientras se edita; publicación NO.
+--   - Site published sin Home imposible aun ante DELETE o UPDATE concurrentes.
+--   - Site published con una Home y otras páginas normales permitido.
+--   - Dos Home (slug 'home' + legado '') detectadas antes de persistir.
+--   - UNIQUE(site_id,slug) impide duplicado directo pero no Home ausente.
+--   - sitio A y B pueden tener Home propia (sin fugas tenant).
+--   - cambiar organización o sitio de página no permite cross-tenant.
+--   - rollback/restauración no suprimen Home ni publican borradores.
+--   - prueba de invalidación de sesión antes de publicar.
+--   - GET /home NO crea contenido alternativo a GET /.
+--   - caché/CDN/redirects respetan ruta '/' y autorización.
+--
+-- BLOQUEADORES INDEPENDIENTES QUE NO CAMBIA V34:
+--   STATUS_CONTRACT_MISMATCH se resolverá en C02; SECURITY_DEFINER_REVIEW;
+--   CAS_SQL_TRANSACTION_UNPROVEN; POSTGRES_REQUIRED; autorización staging.
+-- Sin SQL ejecutado, no se declara Home garantizada realmente y se mantiene
+-- NO GO para staging y producción. main y proyectos ajenos intactos.
