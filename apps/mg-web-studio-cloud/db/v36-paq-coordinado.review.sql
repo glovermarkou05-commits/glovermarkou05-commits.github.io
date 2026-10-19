@@ -35,6 +35,7 @@
 -- 3. PROTECCIÓN DE HOME PUBLICADA (P03; PENDIENTE)
 -- - UNIQUE(site_id,slug) ya propuesto: impide duplicar pero NO garantiza
 --   la existencia de una Home por cada sitio publicado.
+-- - Restringir cambios cuando mg_sites.status='published'.
 -- - Definir invariante exactly-one-Home en transacción + mecanismo que
 --   PROHÍBA quitar/cambiar Home una vez publicado, incluso desde Data API.
 -- - Revisión obligatoria: GRANT SELECT, INSERT y UPDATE a authenticated
