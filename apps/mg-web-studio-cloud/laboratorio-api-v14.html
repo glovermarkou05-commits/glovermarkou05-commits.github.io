@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MG WEB STUDIO CLOUD · Laboratorio API V14</title>
+<style>
+:root{font-family:Inter,system-ui,Arial,sans-serif;color:#eaf3fd;background:#071725}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 85% 5%,#1e3c61,transparent 53%),#071725}
+main{max-width:1150px;margin:auto;padding:30px 20px 70px}h1{font-size:clamp(25px,3.3vw,38px);letter-spacing:-.035em;margin:8px 0}
+h2{font-size:17px;margin:0 0 12px}p{font-size:13px;line-height:1.55;color:#b7cce0}
+small{color:#9db8ce;font-size:11px}.eyebrow{font-size:11px;letter-spacing:.12em;color:#70d1f6;font-weight:900}
+a{color:#99deff}.nav,.row{display:flex;flex-wrap:wrap;align-items:center;gap:10px}
+.nav a{font-size:12px;text-decoration:none;border:1px solid #395772;padding:10px;border-radius:10px;background:#142d43}
+header{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:20px}
+.banner{border:1px solid #8b7244;background:#3b2f1e77;border-radius:13px;padding:16px;margin:23px 0;color:#ffe5b4;font-size:12px;line-height:1.6}
+.card{border:1px solid #2a4b63;background:#10273bc9;border-radius:15px;padding:18px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:17px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:13px;margin:17px 0}
+.stat{background:#0a2237;border:1px solid #2b4861;border-radius:12px;padding:13px}
+.stat strong{display:block;font-size:23px;margin-top:5px}.stat span{font-size:11px;color:#a7c1d4}
+label{display:grid;gap:7px;font-size:12px;color:#c8dced;font-weight:750;margin:5px 0}
+input,select,textarea{border:1px solid #3b5872;background:#081e30;color:#e7f4ff;border-radius:9px;padding:11px;font:inherit;font-size:12px;width:100%}
+button{border:1px solid #345b79;background:#173753;color:#e8f6ff;padding:10px 12px;font:inherit;font-size:12px;font-weight:750;border-radius:9px;cursor:pointer}
+button.primary{background:#1265a0;border-color:#247fd0}button.warn{background:#644a25;border-color:#9a753a}
+button:disabled{opacity:.43;cursor:not-allowed}.result{border:1px solid #345e75;border-radius:10px;background:#0b2d44;padding:12px;font-size:12px;min-height:44px;margin-top:14px}
+.log{display:grid;gap:8px;max-height:250px;overflow:auto;margin-top:10px}
+.log article{padding:10px;background:#0b293c;border-radius:9px;border:1px solid #294a5f;font-size:11px;color:#c7dded}
+.log strong{font-size:12px}.badge{border:1px solid #46718e;border-radius:20px;padding:4px 9px;color:#9dd8f6;display:inline-block;font-size:10px}
+@media(max-width:770px){main{padding:21px 12px 45px}.grid,.stats{grid-template-columns:1fr}.card{padding:14px}}
+</style></head>
+<body><main><header><div><div class="eyebrow">MG DIGITAL SOLUTIONS · API V14 · SIMULACIÓN LOCAL</div>
+<h1>Laboratorio de transacciones</h1>
+<p>Comprueba aprobaciones, reintentos, conflictos simultáneos y notificaciones con datos completamente ficticios.</p></div>
+<nav class="nav"><a href="./prototipo.html">SUPERADMIN</a><a href="./portal-cliente.html">Emprendedor</a>
+<a href="./bandeja-propuestas-demo.html">Bandeja V12</a></nav></header>
+<div class="banner"><strong>ATENCIÓN:</strong> este laboratorio NO está conectado a Supabase, no ofrece un servidor HTTP y el selector de perfil NO inicia sesión ni verifica permisos reales. Los estados desaparecen al recargar. No utilices datos personales ni correos reales.</div>
+<section class="card">
+<div class="grid">
+<label>Perfil de ejemplo<select id="actor">
+<option value="super">MG SUPERADMIN (MFA ficticio)</option><option value="lowmfa">MG SUPERADMIN sin MFA</option>
+<option value="owner1">Café Horizonte · Propietario</option><option value="editor1">Café Horizonte · Editor</option>
+<option value="viewer1">Café Horizonte · Solo lectura</option><option value="owner2">Papelería Nube · Propietario</option>
+</select></label>
+<label>Sitio de ejemplo<select id="site"><option value="c1.s1">Café Horizonte · Web principal</option>
+<option value="c1.s3">Café Horizonte · Web secundaria</option>
+<option value="c2.s2">Papelería Nube · Tienda</option></select></label>
+</div>
+<div class="stats"><div class="stat"><span>Propuestas visibles</span><strong id="proposalCount">0</strong></div>
+<div class="stat"><span>Notificaciones no leídas</span><strong id="unreadCount">0</strong></div>
+<div class="stat"><span>Eventos del outbox de prueba</span><strong id="outboxCount">0</strong></div></div>
+<div id="result" class="result" role="status">Selecciona un perfil y crea una propuesta para comenzar.</div></section>
+<div class="grid" style="margin-top:17px">
+<section class="card"><h2>Operaciones de demostración</h2>
+<label>Nombre del negocio (ficticio)<input id="brand" maxlength="65" value="Café Horizonte"></label>
+<label>Observación ficticia<textarea id="note" maxlength="500">Cambiar los títulos y actualizar el diseño de muestra.</textarea></label>
+<div class="row"><button class="primary" id="create">1. Crear propuesta</button>
+<button id="send">2. Enviar a revisión</button>
+<button id="approve">3. Aprobar</button><button class="warn" id="changes">Solicitar cambios</button>
+<button id="revise">Preparar nueva revisión</button>
+<button id="apply">4. Aplicar al borrador</button></div>
+<h2 style="margin-top:22px">Pruebas de seguridad y consistencia</h2>
+<div class="row"><button id="retry">Repetir última operación</button>
+<button id="race">Simular dos decisiones simultáneas</button>
+<button id="refresh">Actualizar lectura</button></div>
+<p><small>Para probar concurrencia: crea y envía una propuesta, luego pulsa «Simular dos decisiones simultáneas». Solo una decisión debería confirmarse.</small></p>
+</section>
+<section class="card"><h2>Bandeja de propuestas</h2><div id="proposals" class="log"></div>
+<h2 style="margin-top:20px">Avisos para el perfil seleccionado</h2>
+<div id="notifications" class="log"></div>
+<h2 style="margin-top:20px">Resultados recientes</h2>
+<div id="history" class="log"></div></section>
+</div>
+<p style="margin-top:19px"><small>El laboratorio visual es una ilustración del contrato V14. La seguridad en producción requerirá API autenticada, PostgreSQL, RLS, transacciones reales, respaldo y auditoría.</small></p>
+</main>
+<script src="./shared/mg-ai-web-assistant-demo.js"></script>
+<script src="./shared/mg-proposal-exchange-demo.js"></script>
+<script src="./shared/mg-transactional-api-v14-demo.js"></script>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const esc=v=>String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const lib=window.MGWebTransactionalAPI,templates=window.MGAIWebAssistant,exchange=window.MGWebProposalExchange;
+if(!lib||!templates||!exchange){
+ $("result").textContent="No están disponibles los módulos compartidos. Abre la carpeta completa con un servidor estático local.";
+ document.querySelectorAll("button").forEach(b=>b.disabled=true);return;
+}
+const sessions={
+ super:{verified:true,userId:"super1",kind:"staff",aal:"aal2"},
+ lowmfa:{verified:true,userId:"super1",kind:"staff",aal:"aal1"},
+ owner1:{verified:true,userId:"owner1",kind:"client"},
+ editor1:{verified:true,userId:"editor1",kind:"client"},
+ viewer1:{verified:true,userId:"viewer1",kind:"client"},
+ owner2:{verified:true,userId:"owner2",kind:"client"}
+};
+const directory={
+ organizations:[{id:"c1",name:"Café Horizonte",plan:"Crece",status:"active"},
+  {id:"c2",name:"Papelería Nube",plan:"Start",status:"active"}],
+ sites:[{id:"s1",clientId:"c1"},{id:"s3",clientId:"c1"},{id:"s2",clientId:"c2"}],
+ members:[
+  {userId:"owner1",clientId:"c1",status:"Activo (demo)",role:"CLIENT_OWNER",scope:"all",siteIds:[]},
+  {userId:"editor1",clientId:"c1",status:"Activo (demo)",role:"CLIENT_EDITOR",scope:"selected",siteIds:["s1"]},
+  {userId:"viewer1",clientId:"c1",status:"Activo (demo)",role:"CLIENT_VIEWER",scope:"selected",siteIds:["s1"]},
+  {userId:"owner2",clientId:"c2",status:"Activo (demo)",role:"CLIENT_OWNER",scope:"all",siteIds:[]}
+ ],staff:[{userId:"super1",role:"SUPERADMIN",active:true}]
+};
+const api=lib.createTransactionalMock({
+ directory:()=>directory,resolveSession:r=>sessions[r.fixture]||null,exchange,
+ initialDrafts:[{clientId:"c1",siteId:"s1",pages:[{slug:"",name:"Inicio",title:"Café de ejemplo"}]},
+ {clientId:"c1",siteId:"s3",pages:[{slug:"",name:"Inicio",title:"Web secundaria"}]},
+ {clientId:"c2",siteId:"s2",pages:[{slug:"",name:"Inicio",title:"Papelería ejemplo"}]}]
+});
+let seq=0,selected=null,last=null,busy=false,lines=[];
+function identity(){return $("actor").value;}
+function location(){const [org,site]=$("site").value.split(".");return {org,site,base:"/api/v1/organizations/"+org+"/sites/"+site};}
+function nextOp(){return "v14-demo-op-"+(++seq);}
+function call(fixture,method,path,body,operationId){
+ return api.request({fixture,method,path,body:body||{},operationId});
+}
+function record(label,result){
+ const ok=result.status>=200&&result.status<300;
+ const code=result.body.error?.code||"OK";
+ const message=label+" · HTTP simulado "+result.status+" · "+code+
+  (result.headers["Idempotency-Replayed"]?" · Reintento reconocido":"");
+ $("result").textContent=message;
+ lines.unshift(message);lines=lines.slice(0,10);
+ $("history").innerHTML=lines.map(item=>"<article>"+esc(item)+"</article>").join("");
+ return ok;
+}
+function proposalPath(){return location().base+"/proposals";}
+async function refresh(){
+ const who=identity(),base=location().base;
+ const [ps,notes,dr]=await Promise.all([
+  call(who,"GET",base+"/proposals"),call(who,"GET","/api/v1/me/notifications"),
+  call(who,"GET",base+"/draft")]);
+ const items=ps.status===200?ps.body.items:[];
+ $("proposalCount").textContent=items.length;
+ if(selected&&!items.some(p=>p.id===selected))selected=null;
+ if(!selected&&items.length)selected=items.at(-1).id;
+ $("proposals").innerHTML=items.length?items.slice().reverse().map(p=>
+  '<article><strong>'+esc(p.id)+'</strong> · <span class="badge">'+esc(p.status)+'</span>'+
+  '<p>Revisión '+p.revision+' · '+esc(p.proposal.businessName)+'</p>'+
+  '<button data-choose="'+esc(p.id)+'" '+(p.id===selected?"disabled":"")+'>Seleccionar</button></article>').join(""):
+ '<article>Sin propuestas visibles para este perfil y sitio.</article>';
+ $("proposals").querySelectorAll("[data-choose]").forEach(b=>b.onclick=()=>{selected=b.dataset.choose;refresh();});
+ const notifications=notes.status===200?notes.body.items:[];
+ $("unreadCount").textContent=notes.status===200?notes.body.unread:0;
+ $("notifications").innerHTML=notifications.length?notifications.slice().reverse().map(n=>
+  '<article><span class="badge">'+(n.read?"Leída":"Pendiente")+'</span>'+
+  '<p>'+esc(n.kind)+' · Propuesta '+esc(n.proposalId)+' · rev. '+n.revision+'</p>'+
+  '<button data-read="'+esc(n.id)+'" '+(n.read?"disabled":"")+'>Marcar leída</button></article>').join(""):
+ '<article>No hay avisos accesibles para este perfil.</article>';
+ $("notifications").querySelectorAll("[data-read]").forEach(b=>b.onclick=()=>perform(async()=>{
+   const operationId=nextOp();
+   const r=await call(identity(),"POST","/api/v1/me/notifications/"+b.dataset.read+"/read",{},operationId);
+   last={fixture:identity(),method:"POST",path:"/api/v1/me/notifications/"+b.dataset.read+"/read",body:{},operationId};
+   record("Marcar aviso",r);
+ }));
+ $("outboxCount").textContent=identity()==="super"?api.inspectForTests().outbox.length:"—";
+ $("apply").disabled=!selected||dr.status!==200;
+}
+async function perform(fn){
+ if(busy)return;
+ busy=true;
+ try{await fn();await refresh();}
+ catch(e){$("result").textContent="Error de simulación: "+String(e);}
+ finally{busy=false;}
+}
+async function sendOperation(kind){
+ const {org,base}=location(),who=identity(),route=base+"/proposals";
+ let method="POST",path=route,body={},selectedProposal=selected;
+ if(kind==="create"||kind==="revise"){
+  const site=directory.sites.find(s=>s.id===location().site);
+  const organization=directory.organizations.find(o=>o.id===site.clientId);
+  const result=templates.createProposal({plan:organization.plan,brand:$("brand").value,
+   offering:organization.id==="c2"?"papelería, arte y útiles escolares":"café, postres y meriendas",
+   audience:"familias y estudiantes",type:organization.id==="c2"?"tienda":"restaurante",
+   style:"natural",goal:"contacto"});
+  if(!result.ok){$("result").textContent=result.error;return;}
+  body={proposal:result.proposal};
+ }
+ if(kind==="create")selectedProposal=null;
+ if(kind!=="create"){
+  if(!selected){$("result").textContent="Selecciona una propuesta de este sitio.";return;}
+  const p=await call(who,"GET",route+"/"+selected);
+  if(p.status!==200){record("Consultar propuesta",p);return;}
+  body.expectedRevision=p.body.proposal.revision;
+  path=route+"/"+selected+"/"+kind;
+ }
+ if(kind==="reviewApproved"){body.decision="approved";body.note="";path=route+"/"+selected+"/review";}
+ if(kind==="reviewChanges"){body.decision="changes";body.note=$("note").value;path=route+"/"+selected+"/review";}
+ if(kind==="apply"){
+  const draft=await call(who,"GET",base+"/draft");
+  if(draft.status!==200){record("Consultar borrador",draft);return;}
+  body.expectedDraftVersion=draft.body.draft.version;
+ }
+ const operationId=nextOp(),r=await call(who,method,path,body,operationId);
+ last={fixture:who,method,path,body,operationId};
+ record(kind,r);
+ if(r.status>=200&&r.status<300&&r.body.proposal)selected=r.body.proposal.id;
+}
+$("actor").onchange=()=>{selected=null;refresh();$("result").textContent="Perfil ficticio cambiado. Esto NO autentica a nadie.";};
+$("site").onchange=()=>{selected=null;$("brand").value=location().org==="c2"?"Papelería Nube":"Café Horizonte";refresh();};
+$("create").onclick=()=>perform(()=>sendOperation("create"));
+$("send").onclick=()=>perform(()=>sendOperation("submit"));
+$("approve").onclick=()=>perform(()=>sendOperation("reviewApproved"));
+$("changes").onclick=()=>perform(()=>sendOperation("reviewChanges"));
+$("revise").onclick=()=>perform(()=>sendOperation("revise"));
+$("apply").onclick=()=>perform(()=>sendOperation("apply"));
+$("retry").onclick=()=>perform(async()=>{
+ if(!last){$("result").textContent="Todavía no has realizado una operación.";return;}
+ record("Repetir operación",await call(last.fixture,last.method,last.path,last.body,last.operationId));
+});
+$("race").onclick=()=>perform(async()=>{
+ if(!selected){$("result").textContent="Primero crea y envía una propuesta.";return;}
+ const r=await call("super","GET",proposalPath()+"/"+selected);
+ if(r.status!==200){record("Leer para carrera",r);return;}
+ const expectedRevision=r.body.proposal.revision,path=proposalPath()+"/"+selected+"/review";
+ const [a,b]=await Promise.all([
+  call("owner1","POST",path,{expectedRevision,decision:"approved",note:""},nextOp()),
+  call("editor1","POST",path,{expectedRevision,decision:"changes",note:"Revisar portada de ejemplo."},nextOp())
+ ]);
+ $("result").textContent="Carrera simulada: propietario "+a.status+" / editor "+b.status+
+  ". La operación posterior debe recibir 409 si la primera se confirmó.";
+ lines.unshift($("result").textContent);$("history").innerHTML=lines.slice(0,10).map(t=>"<article>"+esc(t)+"</article>").join("");
+});
+$("refresh").onclick=()=>refresh();
+refresh();
+})();
+</script></body></html>
