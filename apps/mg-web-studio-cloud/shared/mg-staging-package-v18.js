@@ -30,6 +30,10 @@ function inspect(manifest,env,procedure,reviewFiles){
     !Array.isArray(manifest.protectedBranches)||
     !manifest.protectedBranches.includes("main"))
   block("SCOPE","El proyecto, rama protegida o estado NO GO cambiaron.");
+ const knownManifest=["format","version","project","state","purpose","sourceBranch","destinationBranch",
+  "target","authorization","execution","protectedBranches","sqlReviews","checks","rollback","noRealData","notes"];
+ if(Object.keys(manifest).some(key=>!knownManifest.includes(key)))
+  block("MANIFEST_FIELDS","El manifiesto incluye campos no previstos.");
  const auth=manifest.authorization;
  if(!obj(auth)||auth.granted!==false||auth.reference!==null||auth.approver!==null)
   block("AUTHORIZATION","No es válido incluir autorización en el paquete de revisión.");
@@ -38,7 +42,10 @@ function inspect(manifest,env,procedure,reviewFiles){
    Object.keys(target).sort().join(",")!=="maximumMonthlyUsd,plan,projectRef,provider,region")
   block("TARGET","El paquete no debe indicar proyecto, plan, región, proveedor o presupuesto aprobados.");
  const flags=manifest.execution;
- if(!obj(flags)||expectedFlags.some(x=>typeof flags[x]!=="boolean"||
+ if(obj(target)&&Object.keys(target).some(x=>["approved","url","token","key","credential","secret"].includes(x)))
+  block("TARGET_FIELDS","Se intentó agregar datos o credenciales del proyecto.");
+ if(!obj(flags)||Object.keys(flags).length!==expectedFlags.length||
+   expectedFlags.some(x=>typeof flags[x]!=="boolean"||
     flags[x]!== (x==="dryRunOnly")))
   block("EXECUTION","Algún indicador permitiría desplegar, pagar, enviar o ejecutar cambios.");
  if(manifest.noRealData!==true)block("PRIVACY","El paquete debe prohibir los datos reales.");
@@ -65,12 +72,15 @@ function inspect(manifest,env,procedure,reviewFiles){
    block("ENV_FORMAT","Catálogo de variables inválido.");
  else {
   const names=env.variables.map(x=>x&&x.name);
+  if(Object.keys(env).some(k=>!["format","mode","noValues","variables","rules"].includes(k)))
+   block("ENV_FIELDS","El catálogo contiene campos no previstos.");
+  const knownVariable=["name","scope","classification","requiredForFuture"];
   if(!unique(names)||env.variables.some(v=>
    !obj(v)||typeof v.name!=="string"||!/^MG_STAGING_[A-Z0-9_]+$/.test(v.name)||
    !["browser","backend","ops"].includes(v.scope)||
    !["public-after-approval","server-config","server-secret","future-switch"].includes(v.classification)||
    typeof v.requiredForFuture!=="boolean"||
-   ["value","default","example","secret","token","credential","apiKey"].some(k=>Object.prototype.hasOwnProperty.call(v,k))||
+   Object.keys(v).some(k=>!knownVariable.includes(k))||
    (v.classification==="server-secret"&&v.scope!=="backend")||
    (v.scope==="browser"&&v.classification!=="public-after-approval")))
     block("ENV_VALUES","Detectados valores, campos desconocidos, secrets en browser o nombres duplicados.");
@@ -78,6 +88,8 @@ function inspect(manifest,env,procedure,reviewFiles){
    if(!env.variables.some(v=>v.name===p&&v.classification==="server-secret"&&v.scope==="backend"))
     block("SECRET_SCOPE","Falta clasificación privada de "+p+".");
  }
+ if(obj(procedure)&&Object.keys(procedure).some(k=>!["format","mode","executables","sequence"].includes(k)))
+  block("PROCEDURE_FIELDS","El procedimiento tiene campos no previstos.");
  if(!obj(procedure)||procedure.format!=="mg-web-studio/staging-v18-procedure"||
    procedure.mode!=="review-only"||!Array.isArray(procedure.executables)||
    procedure.executables.length!==0||
@@ -85,7 +97,8 @@ function inspect(manifest,env,procedure,reviewFiles){
   block("PROCEDURE_FORMAT","La secuencia no puede incluir ejecutables.");
  else {
   if(!unique(procedure.sequence.map(x=>x.id))||
-   procedure.sequence.some(x=>!obj(x)||typeof x.id!=="string"||
+   procedure.sequence.some(x=>!obj(x)||Object.keys(x).some(k=>!["id","phase","kind","action"].includes(k))||
+    typeof x.id!=="string"||
     !stepPhases.includes(x.phase)||typeof x.action!=="string"||
     x.action.length<20||forbiddenCommands.test(x.action)||
     (x.phase==="BEFORE"&&x.kind==="executable")))
