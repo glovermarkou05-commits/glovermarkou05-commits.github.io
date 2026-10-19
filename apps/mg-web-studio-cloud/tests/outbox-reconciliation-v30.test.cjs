@@ -73,8 +73,8 @@ function noChange(name,fn,code){
  check(name+" no state mutation",JSON.stringify(engine.snapshot())===snap);
 }
 noChange("Foreign-tenant recipient",()=>engine.enqueue(input("event4","ownerB")),"RECIPIENT_NOT_AUTHORIZED");
-noChange("Duplicated event identifier for new recipient",()=>engine.enqueue(input("event1","ownerB")),"RECIPIENT_NOT_AUTHORIZED");
-noChange("Wrong action source",()=>engine.enqueue(input("event4","ownerB",approved,"submit")),"COMMIT_EVIDENCE_MISSING");
+noChange("Duplicated event identifier for new recipient",()=>engine.enqueue(input("event1","ownerB")),"EVENT_ID_COLLISION");
+noChange("Wrong action source",()=>engine.enqueue(input("event4","ownerB",submitted,"submit","audit_3")),"COMMIT_EVIDENCE_MISSING");
 noChange("Wrong audit id",()=>engine.enqueue(input("event4","ownerA",approved,"approve","audit_unknown")),"COMMIT_EVIDENCE_MISSING");
 noChange("Claim failed business receipt",()=>engine.enqueue(input("event4","ownerA",{...approved,committed:false})),"INVALID_ENQUEUE");
 noChange("Claim published business receipt",()=>engine.enqueue(input("event4","ownerA",{...approved,published:true})),"INVALID_ENQUEUE");
