@@ -136,6 +136,9 @@ function createRehearsal({directory,security,audit,initial,ledger}){
   const matching=state.events.filter(e=>e.id===eventId);
   if(matching.length!==1)return fail("EVENT_NOT_FOUND");
   const x=matching[0];
+  let d;try{d=directory();}catch(e){return fail("DIRECTORY_UNAVAILABLE");}
+  if(!recipientPermitted(d,x.recipientId,x.organizationId,x.siteId))
+   return fail("RECIPIENT_NOT_AUTHORIZED");
   if(!["pending","retry"].includes(x.status)||now<x.nextAt)return fail("NOT_CLAIMABLE");
   if(x.attempts>=MAX_ATTEMPTS)return fail("RETRIES_EXHAUSTED");
   const token="lease_"+eventId+"_"+(x.attempts+1)+"_"+workerId;
@@ -153,6 +156,9 @@ function createRehearsal({directory,security,audit,initial,ledger}){
   if(!source)return fail("EVENT_NOT_FOUND");
   if(source.status!=="leased"||source.leaseToken!==token||now>source.leaseUntil)
    return fail("STALE_LEASE");
+  let d;try{d=directory();}catch(e){return fail("DIRECTORY_UNAVAILABLE");}
+  if(!recipientPermitted(d,source.recipientId,source.organizationId,source.siteId))
+   return fail("RECIPIENT_NOT_AUTHORIZED");
   state=copy(state);
   const x=state.events.find(e=>e.id===eventId);
   x.leaseToken=null;x.leaseUntil=null;
