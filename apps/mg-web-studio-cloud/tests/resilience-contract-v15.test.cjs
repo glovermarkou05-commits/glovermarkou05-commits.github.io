@@ -123,8 +123,13 @@ async function main(){
  check("snapshot sin directorio denegado",!recover.validateSnapshot(checkpointA.checkpoint.state,{}).ok);
  check("snapshot sin arrays denegado",!recover.validateSnapshot({},directory).ok);
  check("checkpoint de demo no es persistencia real",typeof checkpointA.checkpoint.note==="string"&&checkpointA.checkpoint.note.includes("No es backup real"));
+ const applyFaultKeys=new Set(["fail-apply-0001"]);
  const restored=make({initialSnapshotForTests:checkpointA.checkpoint.state,
-  validateSnapshotForTests:recover.validateSnapshot});
+  validateSnapshotForTests:recover.validateSnapshot,
+  beforeCommitForTests:op=>{
+   if(applyFaultKeys.has(op.operationId)){applyFaultKeys.delete(op.operationId);return true;}
+   return false;
+  }});
  check("motor restaurado lista propuesta",(await req(restored,"owner","GET",createPath)).body.items.length===1);
  check("motor restaurado conserva estado enviado",(await req(restored,"owner","GET",proposalPath)).body.proposal.status==="submitted");
  check("motor restaurado conserva avisos",(await req(restored,"owner","GET","/api/v1/me/notifications")).body.unread===1);
@@ -149,8 +154,14 @@ async function main(){
  const pBefore=restored.inspectForTests();
  const failedApply=await req(restored,"editor","POST",proposalPath+"/apply",
   {expectedRevision:1,expectedDraftVersion:1},"fail-apply-0001");
- // Separate restored instance does not have the injected failure flag.
- check("aplicar tras restore",failedApply.status===200&&failedApply.body.draft.version===2);
+ check("simula fallo aplicando borrador",failedApply.status===503);
+ check("aplicación fallida mantiene versión",restored.inspectForTests().drafts.find(x=>x.clientId==="c1"&&x.siteId==="s1").version===1);
+ check("aplicación fallida mantiene estado approved",restored.inspectForTests().proposals[0].status==="approved");
+ check("aplicación fallida no crea outbox",restored.inspectForTests().outbox.length===pBefore.outbox.length);
+ check("aplicación fallida no registra idempotencia",restored.inspectForTests().operations.length===pBefore.operations.length);
+ const recoveredApply=await req(restored,"editor","POST",proposalPath+"/apply",
+  {expectedRevision:1,expectedDraftVersion:1},"fail-apply-0001");
+ check("aplicar tras reintento",recoveredApply.status===200&&recoveredApply.body.draft.version===2);
  check("outbox aprobado y aplicado",restored.inspectForTests().outbox.length===3);
  const cursor2=await req(restored,"owner","GET",events,null,null,{after:readEvents.body.nextCursor});
  check("sincronización por cursor recupera eventos",cursor2.body.items.length===2);
