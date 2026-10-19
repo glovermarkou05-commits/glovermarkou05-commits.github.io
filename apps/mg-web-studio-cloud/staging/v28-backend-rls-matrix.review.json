@@ -1,0 +1,260 @@
+{
+  "format": "mg-web-studio/v28-backend-rls-review",
+  "version": 28,
+  "project": "MG WEB STUDIO CLOUD",
+  "sourceBranch": "feature/mg-digital-v5-web-services",
+  "environment": "none",
+  "authorizationGranted": false,
+  "execution": {
+    "reviewOnly": true,
+    "mayRunSQL": false,
+    "mayProvision": false,
+    "mayDeploy": false,
+    "mayPublish": false,
+    "mayUsePaidAI": false,
+    "mayCharge": false
+  },
+  "disclaimer": "NOT EXECUTABLE. Every scenario needs independent proof in a future isolated environment after approval.",
+  "cases": [
+    {
+      "id": "M01",
+      "category": "workflow",
+      "objective": "Create proposal without duplicate identity",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": false
+    },
+    {
+      "id": "M02",
+      "category": "workflow",
+      "objective": "Submit draft with monotonic revision",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": false
+    },
+    {
+      "id": "M03",
+      "category": "workflow",
+      "objective": "Request changes with note validation",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": false
+    },
+    {
+      "id": "M04",
+      "category": "workflow",
+      "objective": "Revise rejected or changed proposal with exact revision",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": false
+    },
+    {
+      "id": "M05",
+      "category": "workflow",
+      "objective": "Approve only submitted proposal",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": false
+    },
+    {
+      "id": "M06",
+      "category": "workflow",
+      "objective": "Reject only submitted proposal and store reason safely",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": false
+    },
+    {
+      "id": "M07",
+      "category": "workflow",
+      "objective": "Apply approved content to draft without publishing",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": false
+    },
+    {
+      "id": "M08",
+      "category": "workflow",
+      "objective": "Reject stale draft and stale proposal revision",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": false
+    },
+    {
+      "id": "M09",
+      "category": "workflow",
+      "objective": "Exactly one Home after normalization",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": false
+    },
+    {
+      "id": "M10",
+      "category": "authorization",
+      "objective": "Foreign tenant cannot read/write or forge resource IDs",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": false
+    },
+    {
+      "id": "M11",
+      "category": "authorization",
+      "objective": "Same tenant editor limited to explicitly assigned site",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": false
+    },
+    {
+      "id": "M12",
+      "category": "authorization",
+      "objective": "Revocation after session creation prevents replay",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": false
+    },
+    {
+      "id": "M13",
+      "category": "authorization",
+      "objective": "Elevated staff action requires server-verified MFA",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": false
+    },
+    {
+      "id": "M14",
+      "category": "authorization",
+      "objective": "Client payload cannot control actor role or tenant",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": false
+    },
+    {
+      "id": "M15",
+      "category": "rls",
+      "objective": "PostgreSQL RLS read and write tests across tenant roles",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    },
+    {
+      "id": "M16",
+      "category": "rls",
+      "objective": "GRANT and column grants do not bypass RLS",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    },
+    {
+      "id": "M17",
+      "category": "rls",
+      "objective": "SECURITY DEFINER ownership, search_path and EXECUTE review",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    },
+    {
+      "id": "M18",
+      "category": "rls",
+      "objective": "Prior permissive policies removed before scoped policies",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    },
+    {
+      "id": "M19",
+      "category": "transaction",
+      "objective": "CAS/compare-and-swap atomic concurrent writes",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    },
+    {
+      "id": "M20",
+      "category": "transaction",
+      "objective": "Idempotency scoped by authenticated tenant and actor",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    },
+    {
+      "id": "M21",
+      "category": "transaction",
+      "objective": "Audit, proposal and outbox commit or rollback together",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    },
+    {
+      "id": "M22",
+      "category": "transaction",
+      "objective": "Revoked user cannot append misleading tenant audit records",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    },
+    {
+      "id": "M23",
+      "category": "security",
+      "objective": "Rejected request logs redact secrets and unverified actor",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    },
+    {
+      "id": "M24",
+      "category": "security",
+      "objective": "Cryptographically verifiable append-only audit under controlled keys",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    },
+    {
+      "id": "M25",
+      "category": "recovery",
+      "objective": "Backup restore, rollback rehearsal, RPO/RTO evidence",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    },
+    {
+      "id": "M26",
+      "category": "operations",
+      "objective": "No deployment or billing before explicit signoff",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    },
+    {
+      "id": "M27",
+      "category": "compatibility",
+      "objective": "Home slug and SQL proposal status CHECK migrated together",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    },
+    {
+      "id": "M28",
+      "category": "compatibility",
+      "objective": "Mixed version API clients and legacy events remain compatible",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    },
+    {
+      "id": "M29",
+      "category": "quality",
+      "objective": "Independent browser devices and parallel sessions",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    },
+    {
+      "id": "M30",
+      "category": "quality",
+      "objective": "Rate limits, CSRF, cookie protections and storage access tested",
+      "evidenceStatus": "NOT_EXECUTED",
+      "evidenceRef": null,
+      "requiresRealEnvironment": true
+    }
+  ]
+}
