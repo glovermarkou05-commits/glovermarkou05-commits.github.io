@@ -1,0 +1,72 @@
+{
+  "format": "mg-web-studio/staging-v18-env-catalog",
+  "mode": "names-only",
+  "noValues": true,
+  "variables": [
+    {
+      "name": "MG_STAGING_PUBLIC_BASE_URL",
+      "scope": "browser",
+      "classification": "public-after-approval",
+      "requiredForFuture": true
+    },
+    {
+      "name": "MG_STAGING_PUBLISHABLE_KEY",
+      "scope": "browser",
+      "classification": "public-after-approval",
+      "requiredForFuture": true
+    },
+    {
+      "name": "MG_STAGING_ALLOWED_ORIGIN",
+      "scope": "backend",
+      "classification": "server-config",
+      "requiredForFuture": true
+    },
+    {
+      "name": "MG_STAGING_INTERNAL_DB_URL",
+      "scope": "backend",
+      "classification": "server-secret",
+      "requiredForFuture": true
+    },
+    {
+      "name": "MG_STAGING_SERVER_SECRET_KEY",
+      "scope": "backend",
+      "classification": "server-secret",
+      "requiredForFuture": true
+    },
+    {
+      "name": "MG_STAGING_REQUEST_LOG_RETENTION_DAYS",
+      "scope": "backend",
+      "classification": "server-config",
+      "requiredForFuture": true
+    },
+    {
+      "name": "MG_STAGING_BUDGET_ALERT_USD",
+      "scope": "ops",
+      "classification": "server-config",
+      "requiredForFuture": true
+    },
+    {
+      "name": "MG_STAGING_AI_ENABLED",
+      "scope": "backend",
+      "classification": "future-switch",
+      "requiredForFuture": false
+    },
+    {
+      "name": "MG_STAGING_PAYMENTS_ENABLED",
+      "scope": "backend",
+      "classification": "future-switch",
+      "requiredForFuture": false
+    },
+    {
+      "name": "MG_STAGING_AUTO_DEPLOY",
+      "scope": "ops",
+      "classification": "future-switch",
+      "requiredForFuture": false
+    }
+  ],
+  "rules": [
+    "Ninguna variable tiene valor en GitHub.",
+    "Toda variable server-secret permanece fuera del navegador y de archivos versionados.",
+    "Los interruptores de IA, pagos y despliegue quedan desactivados hasta autorizaciones independientes."
+  ]
+}
