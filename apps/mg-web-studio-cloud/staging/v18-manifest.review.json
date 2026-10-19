@@ -1,0 +1,171 @@
+{
+  "format": "mg-web-studio/staging-v18-review",
+  "version": 18,
+  "project": "MG WEB STUDIO CLOUD",
+  "state": "NOT_AUTHORIZED",
+  "purpose": "Package review and static audit only; no provisioning, migrations, costs, publishing or real data",
+  "sourceBranch": "feature/mg-digital-v5-web-services",
+  "destinationBranch": null,
+  "target": {
+    "provider": null,
+    "projectRef": null,
+    "region": null,
+    "plan": null,
+    "maximumMonthlyUsd": null
+  },
+  "authorization": {
+    "granted": false,
+    "reference": null,
+    "approver": null
+  },
+  "execution": {
+    "dryRunOnly": true,
+    "mayProvision": false,
+    "mayRunMigrations": false,
+    "mayDeploy": false,
+    "mayPublish": false,
+    "maySendEmail": false,
+    "mayCharge": false,
+    "mayCallPaidAI": false
+  },
+  "protectedBranches": [
+    "main"
+  ],
+  "sqlReviews": [
+    "db/schema_core.review.sql",
+    "db/modelo-contenido-compartido.review.sql",
+    "db/v13-propuestas-scopes.review.sql",
+    "db/v13-endurecimiento-rls-legado.review.sql"
+  ],
+  "checks": [
+    {
+      "id": "authorization",
+      "category": "governance",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    },
+    {
+      "id": "budget",
+      "category": "governance",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    },
+    {
+      "id": "provider_region",
+      "category": "governance",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    },
+    {
+      "id": "isolated_environment",
+      "category": "isolation",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    },
+    {
+      "id": "secrets_review",
+      "category": "security",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    },
+    {
+      "id": "tenant_scope",
+      "category": "security",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    },
+    {
+      "id": "auth_mfa",
+      "category": "security",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    },
+    {
+      "id": "rls_pgtest",
+      "category": "security",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    },
+    {
+      "id": "sql_compat",
+      "category": "database",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    },
+    {
+      "id": "home_slug",
+      "category": "database",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    },
+    {
+      "id": "rollback_review",
+      "category": "recovery",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    },
+    {
+      "id": "backup_restore",
+      "category": "recovery",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    },
+    {
+      "id": "observability",
+      "category": "operations",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    },
+    {
+      "id": "privacy_fixtures",
+      "category": "operations",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    },
+    {
+      "id": "smoke_e2e",
+      "category": "qa",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    },
+    {
+      "id": "signoff",
+      "category": "governance",
+      "required": true,
+      "status": "pending",
+      "evidenceRef": null
+    }
+  ],
+  "rollback": {
+    "exerciseOnly": true,
+    "steps": [
+      "Suspender tráfico de staging (solo si posteriormente existe y hay autorización operativa).",
+      "Identificar último release y revisión compatible desde auditoría externa.",
+      "Revertir aplicación/artefacto por procedimiento aprobado; NO ejecutar SQL inverso improvisado.",
+      "Restaurar copia verificada en entorno aislado si el cambio es de datos o irreversible.",
+      "Revalidar aislamiento tenant/sitio, sesión, RLS, páginas y funciones.",
+      "Documentar incidente, tiempo de recuperación y aceptación explícita antes de reabrir."
+    ]
+  },
+  "noRealData": true,
+  "notes": [
+    "Los archivos *.review.sql son diseños no migraciones. Un humano debe corregirlos y convertirlos en migraciones probadas después de autorización.",
+    "Ninguna marca dentro de este manifiesto puede crear una autorización verdadera.",
+    "Mantener main y otros productos sin modificaciones."
+  ]
+}
