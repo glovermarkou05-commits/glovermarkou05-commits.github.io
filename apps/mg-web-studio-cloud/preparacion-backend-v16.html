@@ -1,0 +1,75 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MG WEB STUDIO CLOUD — Preparación V16</title>
+<style>
+:root{font:14px/1.5 system-ui,-apple-system,Segoe UI,sans-serif;color:#e6f0fc;background:#081827;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 80% 0,#1a415d,transparent 53%),#081827}
+main{max-width:1120px;margin:auto;padding:28px 20px 65px}h1{font-size:clamp(25px,4vw,37px);margin:6px 0;letter-spacing:-.03em}h2{font-size:17px;margin:0 0 12px}
+p{color:#b8cddd;font-size:12px;line-height:1.6}.kicker{color:#80d6f7;letter-spacing:.14em;font-size:11px;font-weight:800}
+nav{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+nav a,button{border:1px solid #365e7a;background:#16354b;color:#d9eeff;padding:10px 13px;border-radius:9px;font:inherit;font-size:12px;font-weight:750;text-decoration:none;cursor:pointer}
+.banner{padding:15px;border:1px solid #84673c;background:#52402555;color:#f5daab;border-radius:12px;font-size:12px;line-height:1.7;margin:20px 0}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}.stat,.card{background:#10283a;border:1px solid #31526d;border-radius:13px;padding:15px}
+.stat strong{display:block;font-size:23px}.stat small{display:block;font-size:11px;color:#9bbbd0}
+.layout{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+.group{padding:8px 0 12px;border-bottom:1px solid #31516a}.group h3{font-size:12px;text-transform:uppercase;color:#9eddf7}
+.item{display:flex;align-items:flex-start;gap:11px;padding:11px;border:1px solid #2d526c;background:#122f43;border-radius:10px;margin:8px 0}
+.item input{height:18px;width:18px;flex:none;accent-color:#339fd8;cursor:pointer}
+.item label{cursor:pointer;min-width:0}.item strong,.item small{display:block;font-size:12px}
+.item small{font-size:11px;color:#a4c2d6;margin-top:5px}
+.note{border-left:3px solid #4f88a9;padding-left:12px;margin:14px 0}
+a{color:#9edbff}button:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #81d8ff;outline-offset:2px}
+@media(max-width:800px){.layout,.stats{grid-template-columns:1fr}}@media(max-width:500px){main{padding:20px 12px 45px}}
+</style></head><body><main>
+<div class="kicker">MG DIGITAL SOLUTIONS · V16 · PLANIFICACIÓN</div><h1>Preparación del backend</h1>
+<p>Lista de requisitos antes de integrar SUPERADMIN, emprendedores, propuestas, notificaciones y asistencia web con IA real.</p>
+<nav><a href="./prototipo.html">SUPERADMIN</a><a href="./portal-cliente.html">Portal emprendedor</a><a href="./laboratorio-api-v14.html">API V14</a><a href="./laboratorio-recuperacion-v15.html">Recuperación V15</a></nav>
+<div class="banner"><b>NO AUTORIZA DESPLIEGUE.</b> Las casillas son anotaciones temporales y autodeclaradas, NO evidencias verificadas. Aunque marques todo, no se creará infraestructura, no se gastará dinero, no se activará IA y no se publicará. Esta vista no guarda información ni usa redes externas.</div>
+<div class="stats">
+<div class="stat"><small>Requisitos centrales anotados</small><strong id="coverage">0 / 13</strong></div>
+<div class="stat"><small>Activación de producción</small><strong id="production" style="font-size:16px">NO AUTORIZADA</strong></div>
+<div class="stat"><small>IA real</small><strong id="aiStatus" style="font-size:16px">DESACTIVADA</strong></div>
+</div>
+<div class="layout">
+<section class="card"><h2>Requisitos para revisión posterior</h2><p>Marcar una tarea sirve para organizar trabajo futuro. No certifica que esté cumplida.</p>
+<div id="gateList"></div><button id="clear" type="button">Reiniciar marcas</button><p id="notice" role="status"></p></section>
+<aside class="card"><h2>Orden recomendado</h2>
+<div class="note"><strong>1. Preparar y revisar</strong><p>Esquema, RLS, roles, migraciones, contratos, pruebas de restauración y seguridad.</p></div>
+<div class="note"><strong>2. Autorizar la infraestructura</strong><p>Proyecto independiente, costos, región y proveedor expresamente aprobados.</p></div>
+<div class="note"><strong>3. Probar en staging</strong><p>Datos ficticios, usuarios reales de prueba, MFA, grants, RLS y transacciones PostgreSQL.</p></div>
+<div class="note"><strong>4. Integrar los paneles</strong><p>Adaptador autenticado con límites de acceso y observabilidad sin información privada.</p></div>
+<div class="note"><strong>5. Publicar e incorporar IA</strong><p>Solamente después de QA, privacidad, consentimiento, aprobación de presupuesto y autorización final.</p></div>
+<h2>Documentos y pruebas</h2>
+<p><a href="./QA-ESQUEMA-RLS-V13.md">Diseño RLS V13</a></p>
+<p><a href="./QA-API-TRANSACCIONAL-V14.md">Contrato API V14</a></p>
+<p><a href="./QA-RESILIENCIA-RECUPERACION-V15.md">Recuperación V15</a></p>
+<p><a href="./QA-ASISTENTE-IA-V9.md">Asistente web de demostración</a></p>
+</aside></div></main>
+<script src="./shared/mg-readiness-v16-demo.js"></script>
+<script>
+(function(){
+"use strict";
+const $=id=>document.getElementById(id);
+const safe=x=>String(x).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));
+const engine=window.MGWebV16Readiness;
+if(!engine){$("gateList").textContent="Módulo no cargado. Abre todos los archivos desde la misma carpeta de proyecto.";return;}
+const checked={};const labels={infra:"Infraestructura",security:"Seguridad",data:"Base de datos",ops:"Operación","optional-ai":"IA opcional"};
+function render(){
+ const report=engine.assess(checked);
+ $("coverage").textContent=report.coreDeclared+" / "+report.coreTotal;
+ $("production").textContent="NO AUTORIZADA";
+ $("aiStatus").textContent="DESACTIVADA";
+ $("notice").textContent=report.message;
+ $("gateList").innerHTML=Object.keys(labels).map(group=>{
+  const items=report.items.filter(item=>item.group===group);
+  return '<div class="group"><h3>'+safe(labels[group])+'</h3>'+items.map(item=>
+   '<div class="item"><input type="checkbox" id="gate-'+safe(item.id)+'" data-gate="'+safe(item.id)+'"'+
+   (checked[item.id]?' checked':'')+'><label for="gate-'+safe(item.id)+'"><strong>'+safe(item.title)+
+   '</strong><small>'+safe(item.details)+'</small><small>'+safe(item.status)+'</small></label></div>').join("")+'</div>';
+ }).join("");
+ $("gateList").querySelectorAll("[data-gate]").forEach(control=>control.onchange=()=>{
+  checked[control.dataset.gate]=!!control.checked;render();
+ });
+}
+$("clear").onclick=()=>{Object.keys(checked).forEach(x=>delete checked[x]);render();};
+render();
+})();
+</script></body></html>
