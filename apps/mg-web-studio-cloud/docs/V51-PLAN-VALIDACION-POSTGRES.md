@@ -7,6 +7,8 @@
 
 ## Alcance
 
+**Dato de preflight leído en Supabase:** proyecto `MG WEB STUDIO CLOUD - STAGING`, ID `yefcgjtovfnsqtdjdsod`, estado `ACTIVE_HEALTHY`, PostgreSQL `17.11.0.003`, región `sa-east-1`. Este inventario de control no abrió conexión a la base ni autoriza SQL. El proyecto sigue necesitando confirmación de aislamiento y autorización específica antes de usarlo.
+
 El paquete especifica el orden y las evidencias mínimas para validar PostgreSQL 17, privilegios/RLS, los candidatos de índice de V50 y recuperación. Los scripts de catálogo de V45 son borradores; las pruebas de roles, EXPLAIN ANALYZE y restauración siguen pendientes. Ninguna evidencia está marcada como completada por esta etapa.
 
 ## Secuencia de ejecución futura

@@ -16,8 +16,9 @@
     "gates": 7,
     "sqlStatementsExecuted": 0,
     "migrationsApplied": 0,
-    "supabaseConnections": 0,
-    "restoresPerformed": 0
+    "restoresPerformed": 0,
+    "databaseConnections": 0,
+    "supabaseControlPlaneReads": 1
   },
   "status": {
     "staging": "NO_GO",
