@@ -47,7 +47,7 @@ Remediación del linter: [FK sin índice de cobertura](https://supabase.com/docs
 - Pasaron antes de aplicar: 49/49 comprobaciones estáticas V45 y 22/22 pruebas Node de V49–V51.
 - V45 se aplicó correctamente en el proyecto indicado; Supabase registró la migración.
 - Se consultaron catálogos y privilegios solo en lectura después de la instalación.
-- No se insertaron usuarios/tenants de prueba; no se corrieron pgTAP, consultas como roles de navegador, EXPLAIN ANALYZE, backups ni restores.
+- No se insertaron usuarios/tenants de prueba; no se corrieron pgTAP, consultas como roles de navegador, EXPLAIN ANALYZE, backups ni restores. El catálogo de extensiones muestra pgTAP 1.3.3 disponible pero no instalado; activarlo también modifica el esquema y sigue pendiente de autorización.
 - No se tocaron otros proyectos, producción, despliegues ni servicios pagos.
 
 ## Registro de etapas

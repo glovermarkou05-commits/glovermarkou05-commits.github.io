@@ -71,7 +71,9 @@
     "explainAnalyzeExecuted": false,
     "fixturesInserted": false,
     "backupPerformed": false,
-    "restorePerformed": false
+    "restorePerformed": false,
+    "pgtapExtensionAvailable": true,
+    "pgtapExtensionInstalled": false
   },
   "status": {
     "stagingSchemaInstalled": true,
