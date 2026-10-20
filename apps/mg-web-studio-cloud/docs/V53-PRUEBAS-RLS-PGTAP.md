@@ -18,7 +18,7 @@
 
 La suite ejercita la evaluación de RLS en PostgreSQL para claims simulados. No crea cuentas de acceso ni usa credenciales; por eso **no equivale a un login real de Supabase Auth ni a una solicitud HTTP por PostgREST**. El backend y su validación de actor siguen sin probarse.
 
-La primera ejecución del harness devolvió 47 fallos porque el generador no había aplicado el cambio de rol; la transacción igualmente revirtió los fixtures. Tras corregir el harness, la ejecución válida fue 56/56. No se cuentan los resultados de aquella ejecución inválida como fallos de política.
+Las dos ejecuciones iniciales devolvieron 47 fallos porque el generador no aplicaba el cambio de rol de forma efectiva; ambas transacciones revirtieron los fixtures. Tras corregir el harness, la ejecución válida fue 56/56. No se cuentan aquellos resultados inválidos como fallos de política.
 
 ## Limpieza comprobada
 
