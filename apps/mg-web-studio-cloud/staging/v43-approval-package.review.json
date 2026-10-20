@@ -1,0 +1,139 @@
+{
+  "format": "mg-web-studio/v43-sql-approval-review",
+  "version": 43,
+  "date": "2026-10-19",
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "mode": "GITHUB_ONLY_PREAUTHORIZATION",
+  "target": "MG WEB STUDIO CLOUD - STAGING",
+  "source": {
+    "ddl": {
+      "path": "db/v42-drafts/INSTALL_ATOMIC.review.sql.txt",
+      "githubBlobSha": "e1831c28aea9500c3571e2e3b7a4a4bed96dcc19",
+      "chars": 20465
+    },
+    "catalogReadOnly": {
+      "path": "db/v43-drafts/CATALOG_ONLY_SELECT.review.sql.txt",
+      "githubBlobSha": "b66d015f5fc21b3b43f36bb046192191f1a67d97",
+      "chars": 3454
+    }
+  },
+  "authorizationBoundaries": {
+    "githubDraftReview": true,
+    "metadataCatalogReadOnlySQL": false,
+    "databaseDDL": false,
+    "migrationHistory": false,
+    "databaseRestore": false,
+    "backendDeployment": false,
+    "publicPublishing": false,
+    "paidExternalServices": false,
+    "production": false,
+    "otherProjects": false
+  },
+  "scope": {
+    "catalogOperations": 7,
+    "catalogTransaction": "REPEATABLE READ READ ONLY; ROLLBACK",
+    "catalogAllowedData": "PG catalog and information_schema metadata only; no application rows",
+    "ddlExpectedTables": 16,
+    "ddlExpectedRlsEnable": 16,
+    "ddlExpectedSelectPolicies": 12,
+    "ddlSourceContainsActiveSql": true,
+    "ddlRunAttempts": 0,
+    "catalogRunAttempts": 0,
+    "targetIdPublicGitHubRedacted": true
+  },
+  "reviewItems": [
+    {
+      "id": "C01",
+      "priority": "critical",
+      "label": "Verify actual execution account is isolated STAGING",
+      "status": "PENDING_REAL_CATALOG"
+    },
+    {
+      "id": "C02",
+      "priority": "critical",
+      "label": "Verify object-creating roles, global and public default privileges",
+      "status": "PENDING_REAL_CATALOG"
+    },
+    {
+      "id": "C03",
+      "priority": "critical",
+      "label": "Verify public schema and mg_private object inventory before DDL",
+      "status": "PENDING_REAL_CATALOG"
+    },
+    {
+      "id": "C04",
+      "priority": "critical",
+      "label": "Agree backup/recreate procedure including separately authorized restore",
+      "status": "PENDING_HUMAN_SIGNOFF"
+    },
+    {
+      "id": "C05",
+      "priority": "critical",
+      "label": "PostgreSQL syntax parser and role-based RLS tests",
+      "status": "PENDING_REAL_QA"
+    },
+    {
+      "id": "C06",
+      "priority": "critical",
+      "label": "Explicit SQL DDL authorization for exact reviewed blob",
+      "status": "NOT_AUTHORIZED"
+    },
+    {
+      "id": "C07",
+      "priority": "high",
+      "label": "Audit tenant FK and outbox event cardinality under synthetic concurrent workflows",
+      "status": "PENDING_REAL_QA"
+    },
+    {
+      "id": "C08",
+      "priority": "high",
+      "label": "Verify MFA/server-side actor and tenant scopes, no service key in browser",
+      "status": "PENDING_BACKEND"
+    },
+    {
+      "id": "C09",
+      "priority": "high",
+      "label": "Home invariant and publication protected under concurrency",
+      "status": "PENDING_BACKEND"
+    },
+    {
+      "id": "C10",
+      "priority": "high",
+      "label": "Maintain cost cap, no paid addons, workers or production deployment",
+      "status": "BLOCKED_BY_DEFAULT"
+    }
+  ],
+  "ownerDecision": {
+    "catalogSQLApproval": null,
+    "ddlSQLApproval": null,
+    "backupAndRestoreOwner": null,
+    "recoveryMethod": null,
+    "rpo": null,
+    "rto": null,
+    "approvalReference": null,
+    "reviewedOn": null
+  },
+  "realEvidence": {
+    "projectExistencePreviouslyChecked": true,
+    "allSchemasVerifiedEmpty": false,
+    "roleOwnersVerified": false,
+    "defaultAclVerified": false,
+    "readOnlySQLQueriesRun": 0,
+    "ddlStatementsRun": 0,
+    "backupCreated": false,
+    "restoreTested": false,
+    "postgresParserTested": false,
+    "rlsRolesTested": false,
+    "backendPublished": false
+  },
+  "warning": "A coherent review packet is NEVER authorization. V42 owner=postgres is an unverified assumption. No direct SQL until separate scope-specific human permission.",
+  "decision": {
+    "reviewPackageReady": true,
+    "catalogSQLReadyToRun": false,
+    "ddlReadyToRun": false,
+    "backendReady": false,
+    "productionGo": false
+  },
+  "nextRequest": "Request a distinct authorization only for seven catalog SELECTs in the existing isolated staging; read evidence before contemplating any DDL."
+}
