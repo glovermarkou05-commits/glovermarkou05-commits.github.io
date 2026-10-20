@@ -1,0 +1,218 @@
+{
+  "format": "mg-web-studio/v40-sql-review-package",
+  "version": 40,
+  "date": "2026-10-19",
+  "project": "MG WEB STUDIO CLOUD",
+  "sourceBranch": "feature/mg-digital-v5-web-services",
+  "intendedTarget": "isolated MG WEB STUDIO CLOUD STAGING only, never production",
+  "verificationBaseline": "staging/v39-initial-readonly-inventory.review.json",
+  "assumptions": {
+    "publicTablesObservedZero": true,
+    "recordedMigrationsZero": true,
+    "allSchemasEmptyAssumed": false,
+    "projectActiveWhenInspected": true,
+    "authUsersManagedBySupabase": true,
+    "serverPostgresMajorObserved": 17
+  },
+  "decision": "REVIEW_ONLY_NOT_APPROVED",
+  "stagingProjectCreationAlreadyApproved": true,
+  "readOnlyInspectionCompleted": true,
+  "authorization": {
+    "reviewDraftsAllowed": true,
+    "executeSQL": false,
+    "applyMigration": false,
+    "deployment": false,
+    "publishProduction": false,
+    "activatePaidService": false,
+    "modifyExistingProjects": false
+  },
+  "drafts": [
+    {
+      "path": "db/v40-drafts/01_core_schema.sql.txt",
+      "sha": "9394326e8a3fb778845103490ed0f24aa1e5fef9",
+      "bytes": 5607
+    },
+    {
+      "path": "db/v40-drafts/02_proposals_audit.sql.txt",
+      "sha": "8884814bad73233dcef5324282df0dbe4983f77b",
+      "bytes": 7205
+    },
+    {
+      "path": "db/v40-drafts/03_readonly_rls.sql.txt",
+      "sha": "eb4c80d10449fb5050a166721a32b78cc1e202bd",
+      "bytes": 6522
+    }
+  ],
+  "phases": [
+    {
+      "id": "M40A",
+      "order": 1,
+      "title": "Foundation tenant/site/page",
+      "path": "db/v40-drafts/01_core_schema.sql.txt",
+      "depends": [],
+      "tables": [
+        "mg_profiles",
+        "mg_organizations",
+        "mg_memberships",
+        "mg_sites",
+        "mg_pages",
+        "mg_membership_site_scopes",
+        "mg_staff_roles",
+        "mg_audit_events"
+      ],
+      "status": "REVIEW_ONLY"
+    },
+    {
+      "id": "M40B",
+      "order": 2,
+      "title": "Canonical proposal/audit events",
+      "path": "db/v40-drafts/02_proposals_audit.sql.txt",
+      "depends": [
+        "M40A"
+      ],
+      "tables": [
+        "mg_site_draft_versions",
+        "mg_site_proposals",
+        "mg_proposal_revisions",
+        "mg_proposal_reviews",
+        "mg_proposal_notifications",
+        "mg_notification_reads",
+        "mg_proposal_outbox",
+        "mg_operation_idempotency"
+      ],
+      "status": "REVIEW_ONLY"
+    },
+    {
+      "id": "M40C",
+      "order": 3,
+      "title": "Tenant scoped read-only RLS",
+      "path": "db/v40-drafts/03_readonly_rls.sql.txt",
+      "depends": [
+        "M40A",
+        "M40B"
+      ],
+      "tables": [],
+      "status": "REVIEW_ONLY"
+    }
+  ],
+  "invariants": {
+    "canonicalHomeSlug": "home",
+    "canonicalHomePublicPath": "/",
+    "slugRegex": "^[a-z0-9]+(-[a-z0-9]+)*$",
+    "oneHomePerPublishedSiteNotYetGuaranteed": true,
+    "publishedSiteStatusDisabledByDesign": true,
+    "v20ProposalStates": [
+      "draft",
+      "submitted",
+      "needs_changes",
+      "rejected",
+      "approved",
+      "applied"
+    ],
+    "v13LegacyAliasesReadOnly": {
+      "submitted_for_review": "submitted",
+      "applied_to_draft": "applied"
+    },
+    "reviewDecisionsUnchanged": [
+      "approved",
+      "changes",
+      "rejected"
+    ],
+    "outboxEventTypesUnchanged": [
+      "submitted",
+      "approved",
+      "changes",
+      "rejected",
+      "applied"
+    ],
+    "noBrowserWrites": true,
+    "allowAuthenticatedSelectWithRls": true,
+    "noAnonGrants": true,
+    "noSecurityDefinerFns": true,
+    "noSyntheticUsersSeeded": true,
+    "noProductionData": true,
+    "allTenantScopedObjectsHaveCompositeFk": true,
+    "privateSchemaWithoutAnonAccess": true
+  },
+  "scopeExclusions": [
+    "No MG site publishing (status=published is rejected until atomic home guard and release path are tested)",
+    "No domain/SSL and no public routing",
+    "No initial identity/product/promotion/content release module; future migration after review",
+    "No direct browser writes, no backend RPC and no application users seeded",
+    "No migration of historical data; actual staging public schema was observed with zero tables",
+    "No event worker, mail, billing, paid AI, cron or outbox delivery",
+    "No Supabase service_role key in GitHub or web client",
+    "No SQL execution/migration history, no backup or recovery test performed"
+  ],
+  "sourceRisks": [
+    {
+      "id": "LEGACY_RLS_ACTIVE_SQL",
+      "reference": "db/v13-endurecimiento-rls-legado.review.sql",
+      "disposition": "QUARANTINE_NEVER_AUTO_APPLY"
+    },
+    {
+      "id": "PUBLISHED_HOME_INVARIANT",
+      "reference": "QA-COMPATIBILIDAD-HOME-V34.md",
+      "disposition": "BLOCK_PUBLICATION"
+    },
+    {
+      "id": "V13_V20_STATE_MISMATCH",
+      "reference": "QA-COMPATIBILIDAD-ESTADOS-V35.md",
+      "disposition": "NEW_EMPTY_SCHEMA_CAN_USE_V20_DIRECTLY_HISTORICAL_SCRIPTS_NOT_APPLIED"
+    },
+    {
+      "id": "PRIVILEGED_ROLE_RLS_BYPASS",
+      "reference": "db/v40-drafts/03_readonly_rls.sql.txt",
+      "disposition": "FUTURE_BACKEND_MUST_VERIFY_SERVER_SCOPES_AND_MFA"
+    },
+    {
+      "id": "NO_AUTOMATIC_BACKUPS_FREE",
+      "reference": "QA-STAGING-BASELINE-READONLY-V39.md",
+      "disposition": "MANDATORY_SEPARATE_BACKUP_AND_RESTORE_PLAN"
+    }
+  ],
+  "reviewGates": [
+    {
+      "id": "G40-1",
+      "title": "SQL code review for dependencies, defaults, grants and policy recursion",
+      "status": "PENDING"
+    },
+    {
+      "id": "G40-2",
+      "title": "Review Supabase CLI migration generator version and create migration names through CLI ONLY after approval",
+      "status": "PENDING"
+    },
+    {
+      "id": "G40-3",
+      "title": "Independent authorization naming exact SQL drafts and target, with rollback responsibilities",
+      "status": "NOT_AUTHORIZED"
+    },
+    {
+      "id": "G40-4",
+      "title": "Backups/restore and synthetic-only fixtures accepted",
+      "status": "PENDING"
+    },
+    {
+      "id": "G40-5",
+      "title": "PostgreSQL actual parser, RLS/grants, concurrency & cross-tenant test",
+      "status": "NOT_EXECUTED"
+    },
+    {
+      "id": "G40-6",
+      "title": "Production and live domain GO separately signed",
+      "status": "NO_GO"
+    }
+  ],
+  "outcomes": {
+    "sqlStatementsExecuted": 0,
+    "realSchemaTablesCreated": 0,
+    "realBackendTestsPassed": 0,
+    "postgresParserPassed": false,
+    "rlsVerifiedInPostgres": false,
+    "backupRestored": false,
+    "stagingSchemaInstalled": false,
+    "productionApproved": false,
+    "costsActivated": false
+  },
+  "nextApprovalDecision": "REQUEST_SPECIFIC_SQL_REVIEW_AND_BACKUP_PLAN_BEFORE_EXECUTION"
+}
