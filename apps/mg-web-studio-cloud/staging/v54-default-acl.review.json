@@ -8,46 +8,62 @@
     "projectName": "MG WEB STUDIO CLOUD - STAGING",
     "postgresVersion": "17.11.0.003"
   },
+  "migration": {
+    "version": "20261020191612",
+    "name": "mg_web_studio_v54_postgres_public_table_sequence_defaults",
+    "path": "supabase/migrations/20261020191612_mg_web_studio_v54_postgres_public_table_sequence_defaults.sql"
+  },
   "databaseObservation": {
     "publicDefaultAclEntries": 6,
-    "creators": [
-      "postgres",
-      "supabase_admin"
-    ],
-    "objectTypes": [
-      "tables",
-      "sequences",
-      "functions"
-    ],
-    "explicitlyGrantedBrowserRoles": [
-      "anon",
-      "authenticated"
-    ],
     "currentUser": "postgres",
     "currentUserSuperuser": false,
     "currentUserMemberOfSupabaseAdmin": false,
-    "changed": false
+    "postgresPublic": {
+      "tables": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": true
+      },
+      "sequences": {
+        "anon": false,
+        "authenticated": false,
+        "service_role": true
+      },
+      "functions": "UNCHANGED"
+    },
+    "supabaseAdminPublic": "UNCHANGED",
+    "existingPublicMgTables": 12,
+    "existingTableGrants": "UNCHANGED_AUTHENTICATED_SELECT_AND_SERVICE_ROLE_OPERATIONAL",
+    "authAndMgRelationsChecked": 17,
+    "rowsAcrossCheckedRelations": 0
   },
   "v45Trace": {
     "databaseVersion": "20261020181753",
     "sourceBlobSha": "135ff2c25d935d87e5c8e9e0f9189705cd40b411",
-    "canonicalMigrationInRepo": false,
-    "changed": false
+    "canonicalMigrationInRepo": false
   },
   "v53": {
     "databaseVersion": "20261020183045",
     "pgtapInstalled": "1.3.3",
     "rlsTestsPassed": "56/56"
   },
-  "proposed": {
-    "publicTablesAndSequences": "REVIEW_ONLY",
-    "supabaseAdminDefaults": "BLOCKED_CURRENT_ROLE",
-    "functionPublicExecute": "DEFERRED_GLOBAL_IMPACT_REVIEW",
-    "existingObjectAclChanges": false
+  "advisor": {
+    "infoFinding": "rls_enabled_no_policy",
+    "count": 4,
+    "schema": "mg_private"
   },
   "status": {
-    "ddlApplied": false,
+    "ddlApplied": true,
     "production": "NO_GO",
-    "deployment": false
-  }
+    "deployment": false,
+    "backupRestoreTest": "PENDING"
+  },
+  "pending": [
+    "supabase_admin defaults",
+    "function PUBLIC EXECUTE impact review",
+    "V45 canonical history reconciliation",
+    "backend/auth/postgrest integration",
+    "EXPLAIN and indexes",
+    "real backup/restore"
+  ]
 }
