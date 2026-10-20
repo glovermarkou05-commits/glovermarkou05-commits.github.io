@@ -1,0 +1,99 @@
+{
+  "format": "mg-web-studio/v39-staging-readonly-inventory",
+  "version": 39,
+  "date": "2026-10-19",
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "observationSource": "Supabase connected API read-only actions; no SQL queries or record downloads",
+  "target": {
+    "name": "MG WEB STUDIO CLOUD - STAGING",
+    "region": "sa-east-1",
+    "status": "ACTIVE_HEALTHY",
+    "postgresMajor": 17,
+    "referenceRedacted": true,
+    "accountFreePreviouslyVerified": true
+  },
+  "counts": {
+    "publicTables": 0,
+    "migrations": 0,
+    "deployedEdgeFunctions": 0,
+    "databaseBranches": 0,
+    "securityAdvisorLints": 0,
+    "performanceAdvisorLints": 0
+  },
+  "operationsPerformed": [
+    "get_project",
+    "list_tables in schema public",
+    "list_migrations",
+    "list_edge_functions",
+    "get_advisors security",
+    "get_advisors performance",
+    "list_extensions metadata",
+    "list_branches"
+  ],
+  "unavailableOrNotVerified": [
+    "No inspection of actual RLS policies/roles/grants: zero application tables in public",
+    "Auth configuration and MFA settings were not inspected",
+    "Secrets and billing details were not accessed",
+    "No data in auth, storage, or other application schemas were inspected",
+    "No restore, migration, isolation/concurrency, token lifecycle, or end-to-end tests were executed",
+    "No guarantee that missing advisor notices means security is proven",
+    "No verification of endpoint accessibility or public publication"
+  ],
+  "approvalBoundary": {
+    "creationApprovedAndCompleted": true,
+    "readOnlyInspectionApprovedAndCompleted": true,
+    "executeSQLApproved": false,
+    "applyMigrationsApproved": false,
+    "deployBackendApproved": false,
+    "activatePaidServicesApproved": false,
+    "publishProductionApproved": false,
+    "doNotTreatHistoricalV18V33FilesAsExecuted": true
+  },
+  "nextReviewGates": [
+    {
+      "id": "S01",
+      "name": "review_schema_without_execution",
+      "status": "BLOCKED_REQUIRES_SCOPE_AND_APPROVAL"
+    },
+    {
+      "id": "S02",
+      "name": "agree_backups_recovery_for_synthetic_database",
+      "status": "PENDING"
+    },
+    {
+      "id": "S03",
+      "name": "define_risk_review_of_legacy_active_sql",
+      "status": "PENDING"
+    },
+    {
+      "id": "S04",
+      "name": "approve_specific_postgresql_migration_and_tests",
+      "status": "NOT_AUTHORIZED"
+    },
+    {
+      "id": "S05",
+      "name": "approve_separate_backend_deploy",
+      "status": "NOT_AUTHORIZED"
+    }
+  ],
+  "prohibitions": {
+    "mayRunSql": false,
+    "mayWriteDatabase": false,
+    "mayCreateTables": false,
+    "mayDeployFunctions": false,
+    "mayPublish": false,
+    "mayBill": false,
+    "mayModifyMain": false,
+    "mayModifyOtherProjects": false,
+    "mayUseRealCustomerData": false
+  },
+  "status": {
+    "inventoryConfirmed": true,
+    "appSchemaInstalled": false,
+    "authRlsVerified": false,
+    "infrastructureReleased": false,
+    "stagingImplementationGo": false,
+    "productionGo": false
+  }
+}
