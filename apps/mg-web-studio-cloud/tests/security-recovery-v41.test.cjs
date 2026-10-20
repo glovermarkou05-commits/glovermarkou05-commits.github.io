@@ -43,7 +43,7 @@ check("Authorization blocked",initial.manifest.findings[2].priority==="P0");
 check("RLS tests pending",initial.manifest.findings[3].priority==="P0");
 check("Audit tenant FK risk",initial.manifest.findings[4].finding.includes("organization_id"));
 check("Outbox uniqueness risk",initial.manifest.findings[5].title.includes("Outbox")||initial.manifest.findings[5].title.includes("Unicidad"));
-check("service role risk",initial.manifest.findings[6].finding.includes("RLS"));
+check("service role risk",initial.manifest.findings[6].title.includes("RLS"));
 check("Home locked",initial.manifest.findings[7].finding.includes("published"));
 check("V40 overclaim tracked",initial.manifest.findings[8].finding.includes("allTenantScopedObjectsHaveCompositeFk"));
 check("V39 snapshot not forever",initial.manifest.findings[9].finding.includes("V39"));
