@@ -1,0 +1,10 @@
+"use strict";
+const test=require("node:test"),assert=require("node:assert/strict"),fs=require("node:fs"),path=require("node:path");
+const root=path.join(__dirname,"..");
+const doc=fs.readFileSync(path.join(root,"docs/V53-PRUEBAS-RLS-PGTAP.md"),"utf8");
+const sql=fs.readFileSync(path.join(root,"tests/v53-rls-runtime.test.sql"),"utf8");
+const manifest=JSON.parse(fs.readFileSync(path.join(root,"staging/v53-rls-runtime.review.json"),"utf8"));
+test("el informe registra pgTAP 1.3.3 en el proyecto y versión exactos",()=>{for(const s of ["yefcgjtovfnsqtdjdsod","20261020183045","pgtap 1.3.3","PostgreSQL 17.11.0.003"])assert.ok(doc.includes(s),s);});
+test("la suite usa transacción y rollback para los fixtures",()=>{assert.match(sql,/^BEGIN;/);assert.match(sql,/ROLLBACK;\s*$/);assert.match(doc,/quedaron en cero filas/);});
+test("la suite cubre cuatro identidades y 12 tablas con 56 aserciones",()=>{assert.match(sql,/extensions\.plan\(56\)/);for(const t of ["mg_organizations","mg_memberships","mg_membership_site_scopes","mg_sites","mg_pages","mg_site_draft_versions","mg_site_proposals","mg_proposal_revisions","mg_proposal_reviews","mg_proposal_notifications","mg_notification_reads","mg_profiles"])assert.ok(sql.includes(t),t);assert.equal(manifest.tests.passed,56);assert.equal(manifest.tests.failed,0);});
+test("el informe limita el alcance y mantiene NO GO",()=>{for(const s of ["No equivale a un login real","defaults ACL","Backend","EXPLAIN","backup/restore","NO GO"])assert.ok(doc.includes(s),s);assert.equal(manifest.status.production,"NO_GO");assert.equal(manifest.authorization.productionChange,false);});
