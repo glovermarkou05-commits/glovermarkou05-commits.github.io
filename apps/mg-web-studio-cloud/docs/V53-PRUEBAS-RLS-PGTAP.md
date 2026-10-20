@@ -26,7 +26,7 @@ Después de la prueba, `auth.users` y cada una de las 16 tablas MG quedaron en c
 
 ## Límites que continúan abiertos
 
-- **Defaults ACL:** seis entradas amplias en `pg_default_acl` para `postgres` y `supabase_admin` siguen sin corregir; evitar crear objetos públicos hasta una revisión aprobada.
+- **Defaults ACL:** V54 retiró los grants futuros de `anon` y `authenticated` en TABLES/SEQUENCES de `postgres/public`; siguen pendientes los defaults de funciones (incluido PUBLIC EXECUTE global) y los tres tipos de objetos de `supabase_admin`. No crear funciones públicas sin revisar y fijar sus grants efectivos.
 - **Trazabilidad V45:** la migración aplicada V45 sigue sin archivo canónico sincronizado; V53 sí tiene el SQL exacto versionado en la rama. No rebasar ni desplegar hasta reconciliar el historial V45.
 - **Backend:** endpoints, validación de actor/organización/sitio e integración Auth/PostgREST aún no se probaron.
 - **Rendimiento:** EXPLAIN con cardinalidad sintética y resolución de 14 alertas FK vs. 10 brechas V50 siguen pendientes.
@@ -42,7 +42,7 @@ Después de la prueba, `auth.users` y cada una de las 16 tablas MG quedaron en c
 | V48 | Recuperación incompleta; parámetros operativos pendientes. |
 | V49–V52 | Revisión estática, instalación V45 y auditoría del catálogo completadas; gates runtime documentados. |
 | V53 | pgTAP instalado solo en STAGING; matriz RLS 56/56; fixtures limpiados y cero filas confirmadas. |
-| V54 | Resolver defaults ACL y trazabilidad de migración V45 antes de objetos públicos o sincronización/despliegue. |
-| V55+ | Backend/Auth real, planes, recuperación aprobada y publicación autorizada pendientes. |
+| V54 | Defaults futuros de tablas/secuencias para `postgres/public` aplicados y verificados; V45 sigue sin fuente canónica conciliada. |
+| V55 | Auditoría de funciones en `public` y ruta de recuperación revisadas en solo lectura; sin cambios de esquema ni backup/restore. |\n| V56+ | Backend/Auth real, prueba de recuperación aprobada, defaults restantes y publicación autorizada pendientes. |
 
 Archivos reproducibles: `tests/v53-rls-runtime.test.sql`, `staging/v53-rls-runtime.review.json`, y migración V53 en `supabase/migrations/`.
