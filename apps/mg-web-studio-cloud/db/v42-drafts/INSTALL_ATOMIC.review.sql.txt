@@ -1,0 +1,448 @@
+-- MG WEB STUDIO CLOUD / V42 / ATOMIC INSTALLATION REVIEW TEXT
+-- ATTENTION: ACTIVE SQL. DO NOT EXECUTE, DO NOT USE AS A MIGRATION OR COPY
+-- INTO SUPABASE SQL EDITOR UNTIL THE USER SEPARATELY APPROVES THE EXACT FILE.
+-- This .sql.txt file stays outside supabase/migrations; GitHub design only.
+-- Isolated fresh STAGING ONLY. NO existing or production databases.
+-- Object creator 'postgres' and default ACL MUST be independently inspected.
+-- Relies on Supabase auth.users, roles anon/authenticated/service_role.
+-- No real PostgreSQL, RLS, backup or recovery test has been performed.
+-- Single BEGIN/COMMIT deliberately avoids partial success across V40 blocks.
+-- Failure before COMMIT permits transaction rollback, not recovery after commit.
+-- User/browser: NO DML. Site status published: DISABLED. No worker or billing.
+
+begin;
+
+-- ===== PRECONDITION P0: DEFAULT PRIVILEGES =====
+-- BLOCK 00: REVOKE UNWANTED FUTURE DEFAULT GRANTS
+-- WARNING: 'postgres' is an ASSUMED OBJECT-CREATING ROLE, NOT VERIFIED.
+-- This exact code MUST NOT be applied until pg_default_acl + owner are checked
+-- on the named isolated STAGING and superseded defaults/roles are reconciled.
+-- Supabase reference: https://supabase.com/docs/guides/api/securing-your-api
+alter default privileges for role postgres in schema public
+ revoke select, insert, update, delete on tables from anon, authenticated, service_role;
+alter default privileges for role postgres in schema public
+ revoke execute on functions from anon, authenticated, service_role;
+alter default privileges for role postgres in schema public
+ revoke usage, select on sequences from anon, authenticated, service_role;
+alter default privileges for role postgres in schema public
+ revoke execute on functions from public;
+
+-- ===== BLOCK 01: TENANTS / SITES / PAGES / AUDIT =====
+create schema if not exists mg_private;
+revoke all on schema mg_private from public, anon, authenticated;
+
+create table public.mg_profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  display_name text not null default '' check(char_length(display_name)<=160),
+  created_at timestamptz not null default now()
+);
+
+create table public.mg_organizations (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (char_length(name) between 2 and 160),
+  slug text not null unique check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  status text not null default 'active' check (status in ('active','suspended','archived')),
+  created_at timestamptz not null default now()
+);
+
+create table public.mg_memberships (
+  organization_id uuid not null references public.mg_organizations(id) on delete restrict,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  role text not null check (role in ('CLIENT_OWNER','CLIENT_ADMIN','CLIENT_EDITOR','CLIENT_VIEWER')),
+  status text not null default 'active' check (status in ('invited','active','revoked')),
+  created_at timestamptz not null default now(),
+  primary key (organization_id,user_id)
+);
+create index mg_v40_memberships_user_idx
+  on public.mg_memberships(user_id,organization_id) where status='active';
+
+create table public.mg_sites (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.mg_organizations(id) on delete restrict,
+  name text not null check (char_length(name) between 2 and 160),
+  slug text not null check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  status text not null default 'draft' check (status in ('draft','review','suspended')),
+  created_at timestamptz not null default now(),
+  unique(organization_id,slug),
+  unique(id,organization_id)
+);
+create index mg_v40_sites_org_idx on public.mg_sites(organization_id);
+
+create table public.mg_pages (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null,
+  site_id uuid not null,
+  slug text not null check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  title text not null check (char_length(title) between 1 and 200),
+  draft_blocks jsonb not null default '[]'::jsonb check (jsonb_typeof(draft_blocks)='array'),
+  updated_at timestamptz not null default now(),
+  unique(site_id,slug),
+  foreign key(site_id,organization_id)
+    references public.mg_sites(id,organization_id) on delete cascade
+);
+create index mg_v40_pages_org_site_idx on public.mg_pages(organization_id,site_id);
+
+-- Editors/viewers are scoped to explicitly assigned sites. Only trusted backend
+-- may assign scope/role; the Data API will not get write grants in V40.
+create table public.mg_membership_site_scopes (
+  organization_id uuid not null,
+  user_id uuid not null,
+  site_id uuid not null,
+  granted_at timestamptz not null default now(),
+  primary key (organization_id,user_id,site_id),
+  foreign key (organization_id,user_id)
+    references public.mg_memberships(organization_id,user_id) on delete cascade,
+  foreign key (site_id,organization_id)
+    references public.mg_sites(id,organization_id) on delete cascade
+);
+create index mg_v40_scopes_user_site_idx
+  on public.mg_membership_site_scopes(user_id,organization_id,site_id);
+
+-- Privileged staff never automatically gets tenant data access in browser.
+create table mg_private.mg_staff_roles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  role text not null check (role in (
+    'SUPERADMIN','OPERATIONS_ADMIN','BILLING_MANAGER','SUPPORT_AGENT','DESIGNER','AUDITOR'
+  )),
+  granted_at timestamptz not null default now()
+);
+
+create table mg_private.mg_audit_events (
+  id bigint generated always as identity primary key,
+  actor_id uuid,
+  organization_id uuid references public.mg_organizations(id) on delete restrict,
+  action text not null check (char_length(action) between 1 and 100),
+  details jsonb not null default '{}'::jsonb check (jsonb_typeof(details)='object'),
+  happened_at timestamptz not null default now()
+);
+
+-- Mandatory defense even if a later step fails. This draft creates NO policies.
+alter table public.mg_profiles enable row level security;
+alter table public.mg_organizations enable row level security;
+alter table public.mg_memberships enable row level security;
+alter table public.mg_sites enable row level security;
+alter table public.mg_pages enable row level security;
+alter table public.mg_membership_site_scopes enable row level security;
+alter table mg_private.mg_staff_roles enable row level security;
+alter table mg_private.mg_audit_events enable row level security;
+
+-- Data API writes denied for both anon and authenticated, including legacy grants.
+revoke all on table public.mg_profiles,public.mg_organizations,
+ public.mg_memberships,public.mg_sites,public.mg_pages,
+ public.mg_membership_site_scopes from public,anon,authenticated;
+revoke all on table mg_private.mg_staff_roles,mg_private.mg_audit_events
+ from public,anon,authenticated;
+
+-- Metadata and manual catalog changes by trusted server only in future stages.
+-- No seed users, tenants, credentials, public releases, routes or live HTTP here.
+
+-- ===== BLOCK 02: PROPOSALS / HISTORY / OUTBOX =====
+create table public.mg_site_draft_versions (
+  organization_id uuid not null,
+  site_id uuid not null,
+  revision bigint not null default 1 check (revision>0),
+  document jsonb not null check (jsonb_typeof(document)='object'),
+  updated_by uuid references auth.users(id) on delete set null,
+  updated_at timestamptz not null default now(),
+  primary key(organization_id,site_id),
+  foreign key(site_id,organization_id)
+    references public.mg_sites(id,organization_id) on delete restrict
+);
+
+create table public.mg_site_proposals (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null,
+  site_id uuid not null,
+  plan_code text not null check(plan_code in ('Start','Crece','Pro')),
+  revision bigint not null default 1 check(revision>0),
+  status text not null default 'draft'
+    check(status in ('draft','submitted','needs_changes','rejected','approved','applied')),
+  created_by uuid not null references auth.users(id) on delete restrict,
+  applied_draft_revision bigint check(applied_draft_revision>0),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique(id,organization_id,site_id),
+  foreign key(site_id,organization_id)
+    references public.mg_sites(id,organization_id) on delete restrict
+);
+create index mg_v40_proposals_inbox_idx on public.mg_site_proposals(
+  organization_id,site_id,status,updated_at desc
+);
+
+create table public.mg_proposal_revisions (
+  id uuid primary key default gen_random_uuid(),
+  proposal_id uuid not null,
+  organization_id uuid not null,
+  site_id uuid not null,
+  revision bigint not null check(revision>0),
+  proposal_json jsonb not null check(jsonb_typeof(proposal_json)='object'),
+  created_by uuid not null references auth.users(id) on delete restrict,
+  created_at timestamptz not null default now(),
+  unique(proposal_id,revision),
+  unique(proposal_id,revision,organization_id,site_id),
+  foreign key(proposal_id,organization_id,site_id)
+    references public.mg_site_proposals(id,organization_id,site_id) on delete restrict
+);
+create index mg_v40_revisions_site_idx
+ on public.mg_proposal_revisions(organization_id,site_id,proposal_id,revision desc);
+
+create table public.mg_proposal_reviews (
+  id uuid primary key default gen_random_uuid(),
+  proposal_id uuid not null,
+  organization_id uuid not null,
+  site_id uuid not null,
+  revision bigint not null check(revision>0),
+  decision text not null check(decision in ('approved','changes','rejected')),
+  note text not null default '' check(char_length(note)<=500),
+  reviewed_by uuid not null references auth.users(id) on delete restrict,
+  reviewed_at timestamptz not null default now(),
+  unique(proposal_id,revision),
+  foreign key(proposal_id,revision,organization_id,site_id)
+    references public.mg_proposal_revisions(proposal_id,revision,organization_id,site_id) on delete restrict,
+  check(decision='approved' or char_length(btrim(note)) between 8 and 500)
+);
+create index mg_v40_reviews_site_idx
+ on public.mg_proposal_reviews(organization_id,site_id,proposal_id,revision desc);
+
+-- These are durable *records only*. No external notifications or cron enabled.
+create table public.mg_proposal_notifications (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null,
+  site_id uuid not null,
+  proposal_id uuid not null,
+  recipient_user_id uuid not null references auth.users(id) on delete cascade,
+  event_type text not null
+    check(event_type in ('submitted','approved','changes','rejected','applied')),
+  revision bigint not null check(revision>0),
+  created_at timestamptz not null default now(),
+  unique(id,recipient_user_id),
+  foreign key(proposal_id,revision,organization_id,site_id)
+    references public.mg_proposal_revisions(proposal_id,revision,organization_id,site_id)
+    on delete restrict
+);
+create index mg_v40_notifications_recipient_idx
+  on public.mg_proposal_notifications(recipient_user_id,created_at desc);
+-- Prevent duplicated persisted notice for the same event and recipient.
+create unique index mg_v42_notification_event_recipient_key
+  on public.mg_proposal_notifications(proposal_id,revision,event_type,recipient_user_id);
+
+create table public.mg_notification_reads (
+  notification_id uuid not null,
+  recipient_user_id uuid not null,
+  read_at timestamptz not null default now(),
+  primary key(notification_id,recipient_user_id),
+  foreign key(notification_id,recipient_user_id)
+    references public.mg_proposal_notifications(id,recipient_user_id) on delete cascade
+);
+
+-- Service-only events: no grants to browsers, no secrets or message bodies.
+create table mg_private.mg_proposal_outbox (
+  id bigint generated always as identity primary key,
+  organization_id uuid not null,
+  site_id uuid not null,
+  proposal_id uuid not null,
+  revision bigint not null check(revision>0),
+  event_type text not null
+    check(event_type in ('submitted','approved','changes','rejected','applied')),
+  delivered_at timestamptz,
+  retry_count integer not null default 0 check(retry_count>=0),
+  created_at timestamptz not null default now(),
+  foreign key(proposal_id,revision,organization_id,site_id)
+    references public.mg_proposal_revisions(proposal_id,revision,organization_id,site_id)
+    on delete restrict
+);
+create index mg_v40_outbox_pending_idx
+ on mg_private.mg_proposal_outbox(created_at) where delivered_at is null;
+-- One durable event per proposal revision/type; final semantics require backend QA.
+create unique index mg_v42_outbox_business_key
+ on mg_private.mg_proposal_outbox(proposal_id,revision,event_type);
+
+create table mg_private.mg_operation_idempotency (
+  organization_id uuid not null references public.mg_organizations(id),
+  actor_user_id uuid not null references auth.users(id),
+  operation_key text not null check(char_length(operation_key) between 6 and 100),
+  request_fingerprint text not null check(char_length(request_fingerprint) between 16 and 256),
+  result_json jsonb not null check(jsonb_typeof(result_json)='object'),
+  created_at timestamptz not null default now(),
+  primary key(organization_id,actor_user_id,operation_key)
+);
+
+alter table public.mg_site_draft_versions enable row level security;
+alter table public.mg_site_proposals enable row level security;
+alter table public.mg_proposal_revisions enable row level security;
+alter table public.mg_proposal_reviews enable row level security;
+alter table public.mg_proposal_notifications enable row level security;
+alter table public.mg_notification_reads enable row level security;
+alter table mg_private.mg_proposal_outbox enable row level security;
+alter table mg_private.mg_operation_idempotency enable row level security;
+
+revoke all on table public.mg_site_draft_versions,public.mg_site_proposals,
+ public.mg_proposal_revisions,public.mg_proposal_reviews,
+ public.mg_proposal_notifications,public.mg_notification_reads
+ from public,anon,authenticated;
+revoke all on table mg_private.mg_proposal_outbox,mg_private.mg_operation_idempotency
+ from public,anon,authenticated;
+
+-- Future trusted backend must implement actor checks, MFA, CAS, idempotency,
+-- atomic business event + outbox/audit, and tenant checks BEFORE ANY writes.
+-- V27/V30 proposal_created/proposal_revised are NOT in these event enums.
+
+-- ===== BLOCK 03: READ ONLY RLS / EXPLICIT GRANTS =====
+-- Defense: ensure no accidental Data API writes. Previously granted default
+-- privileges MUST be reviewed in real PostgreSQL before future execution.
+revoke all on table
+ public.mg_profiles,public.mg_organizations,public.mg_memberships,
+ public.mg_sites,public.mg_pages,public.mg_membership_site_scopes,
+ public.mg_site_draft_versions,public.mg_site_proposals,
+ public.mg_proposal_revisions,public.mg_proposal_reviews,
+ public.mg_proposal_notifications,public.mg_notification_reads
+ from public,anon,authenticated;
+
+revoke all on schema mg_private from public,anon,authenticated;
+revoke all on table mg_private.mg_staff_roles,mg_private.mg_audit_events,
+ mg_private.mg_proposal_outbox,mg_private.mg_operation_idempotency
+ from public,anon,authenticated;
+
+-- Only SELECT; Authenticated identity is insufficient without row-level scopes.
+grant select on table
+ public.mg_profiles,public.mg_organizations,public.mg_memberships,
+ public.mg_sites,public.mg_pages,public.mg_membership_site_scopes,
+ public.mg_site_draft_versions,public.mg_site_proposals,
+ public.mg_proposal_revisions,public.mg_proposal_reviews,
+ public.mg_proposal_notifications,public.mg_notification_reads
+ to authenticated;
+
+create policy mg_v40_profiles_self on public.mg_profiles
+ for select to authenticated
+ using (user_id = (select auth.uid()));
+
+create policy mg_v40_memberships_self on public.mg_memberships
+ for select to authenticated
+ using (user_id = (select auth.uid()) and status='active');
+
+create policy mg_v40_scope_self on public.mg_membership_site_scopes
+ for select to authenticated
+ using (
+   user_id = (select auth.uid())
+   and exists (
+     select 1 from public.mg_memberships m
+     where m.organization_id=mg_membership_site_scopes.organization_id
+       and m.user_id=(select auth.uid()) and m.status='active'
+   )
+ );
+
+create policy mg_v40_org_active_member on public.mg_organizations
+ for select to authenticated
+ using (status='active' and exists (
+   select 1 from public.mg_memberships m
+   where m.organization_id=mg_organizations.id
+     and m.user_id=(select auth.uid()) and m.status='active'
+ ));
+
+create policy mg_v40_sites_scoped on public.mg_sites
+ for select to authenticated
+ using (exists (
+   select 1 from public.mg_memberships m
+   join public.mg_organizations o
+     on o.id=m.organization_id and o.status='active'
+   where m.organization_id=mg_sites.organization_id
+     and m.user_id=(select auth.uid()) and m.status='active'
+     and (
+       m.role in ('CLIENT_OWNER','CLIENT_ADMIN')
+       or (
+         m.role in ('CLIENT_EDITOR','CLIENT_VIEWER')
+         and exists (
+           select 1 from public.mg_membership_site_scopes sc
+           where sc.organization_id=m.organization_id
+             and sc.user_id=m.user_id
+             and sc.site_id=mg_sites.id
+         )
+       )
+     )
+ ));
+
+-- All site-scoped objects inherit mg_sites visible-to-current-user filtering.
+-- Composite FK ensures each object belongs to the same tenant/site.
+create policy mg_v40_pages_site_read on public.mg_pages
+ for select to authenticated
+ using (exists (
+   select 1 from public.mg_sites s
+   where s.id=mg_pages.site_id and s.organization_id=mg_pages.organization_id
+ ));
+
+create policy mg_v40_drafts_site_read on public.mg_site_draft_versions
+ for select to authenticated
+ using (exists (
+   select 1 from public.mg_sites s
+   where s.id=mg_site_draft_versions.site_id
+     and s.organization_id=mg_site_draft_versions.organization_id
+ ));
+
+create policy mg_v40_proposals_site_read on public.mg_site_proposals
+ for select to authenticated
+ using (exists (
+   select 1 from public.mg_sites s
+   where s.id=mg_site_proposals.site_id
+     and s.organization_id=mg_site_proposals.organization_id
+ ));
+
+create policy mg_v40_revisions_site_read on public.mg_proposal_revisions
+ for select to authenticated
+ using (exists (
+   select 1 from public.mg_sites s
+   where s.id=mg_proposal_revisions.site_id
+     and s.organization_id=mg_proposal_revisions.organization_id
+ ));
+
+create policy mg_v40_reviews_site_read on public.mg_proposal_reviews
+ for select to authenticated
+ using (exists (
+   select 1 from public.mg_sites s
+   where s.id=mg_proposal_reviews.site_id
+     and s.organization_id=mg_proposal_reviews.organization_id
+ ));
+
+create policy mg_v40_notifications_recipient on public.mg_proposal_notifications
+ for select to authenticated
+ using (
+   recipient_user_id=(select auth.uid())
+   and exists (
+     select 1 from public.mg_sites s
+     where s.id=mg_proposal_notifications.site_id
+       and s.organization_id=mg_proposal_notifications.organization_id
+   )
+ );
+
+create policy mg_v40_notification_reads_recipient on public.mg_notification_reads
+ for select to authenticated
+ using (
+   recipient_user_id=(select auth.uid())
+   and exists (
+     select 1 from public.mg_proposal_notifications n
+     where n.id=mg_notification_reads.notification_id
+       and n.recipient_user_id=(select auth.uid())
+   )
+ );
+
+-- The following service_role grants are for FUTURE approved backend services,
+-- not browser applications or anonymous Data API. Server actor/scope validation
+-- is REQUIRED even with service_role since it can bypass row-level security.
+grant select,insert,update,delete on table
+ public.mg_profiles,public.mg_organizations,public.mg_memberships,
+ public.mg_sites,public.mg_pages,public.mg_membership_site_scopes,
+ public.mg_site_draft_versions,public.mg_site_proposals,
+ public.mg_proposal_revisions,public.mg_proposal_reviews,
+ public.mg_proposal_notifications,public.mg_notification_reads
+ to service_role;
+grant usage on schema mg_private to service_role;
+grant select,insert,update,delete on table mg_private.mg_staff_roles,
+ mg_private.mg_audit_events,mg_private.mg_proposal_outbox,
+ mg_private.mg_operation_idempotency to service_role;
+grant usage,select on all sequences in schema mg_private to service_role;
+
+-- This draft does not create Auth users, assign staff roles, call a worker,
+-- expose drafts to anon or grant any DML to authenticated.
+-- A SQL review/pgTAP must still verify recursion, default grants, owner,
+-- PostgreSQL RLS, revoked MFA sessions and tenant/site isolation.
+
+commit;
