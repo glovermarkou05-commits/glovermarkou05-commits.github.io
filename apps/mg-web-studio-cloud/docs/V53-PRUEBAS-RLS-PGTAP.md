@@ -43,6 +43,8 @@ Después de la prueba, `auth.users` y cada una de las 16 tablas MG quedaron en c
 | V49–V52 | Revisión estática, instalación V45 y auditoría del catálogo completadas; gates runtime documentados. |
 | V53 | pgTAP instalado solo en STAGING; matriz RLS 56/56; fixtures limpiados y cero filas confirmadas. |
 | V54 | Defaults futuros de tablas/secuencias para `postgres/public` aplicados y verificados; V45 sigue sin fuente canónica conciliada. |
-| V55 | Auditoría de funciones en `public` y ruta de recuperación revisadas en solo lectura; sin cambios de esquema ni backup/restore. |\n| V56+ | Backend/Auth real, prueba de recuperación aprobada, defaults restantes y publicación autorizada pendientes. |
+| V55 | Auditoría de funciones en `public` y ruta de recuperación revisadas en solo lectura; sin cambios de esquema ni backup/restore. |
+| V56 | Ensayo de recuperación autorizado; bloqueado por falta de PostgreSQL 17/Supabase CLI/Docker en el entorno. No se creó dump ni se restauró. |
+| V57+ | Backend/Auth real, prueba de recuperación aprobada, defaults restantes y publicación autorizada pendientes. |
 
 Archivos reproducibles: `tests/v53-rls-runtime.test.sql`, `staging/v53-rls-runtime.review.json`, y migración V53 en `supabase/migrations/`.
