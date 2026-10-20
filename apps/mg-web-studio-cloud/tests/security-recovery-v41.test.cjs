@@ -117,7 +117,7 @@ const cases=[
  ["audit now has FK",x=>x.core=x.core.replace("organization_id uuid,\n  action","organization_id uuid references public.mg_organizations(id),\n  action"),"AUDIT_TENANT_FK_REVIEW_ASSUMPTION_CHANGED"],
  ["proposal event table removed",x=>x.proposal=x.proposal.replace("create table mg_private.mg_proposal_outbox","create table mg_private.mg_old_outbox"),"OUTBOX_IDEMPOTENCY_BASELINE_CHANGED"],
  ["status idempotency changed",x=>x.proposal=x.proposal.replace("primary key(organization_id,actor_user_id,operation_key)","primary key(operation_key)"),"OUTBOX_IDEMPOTENCY_BASELINE_CHANGED"],
- ["service role grant removed",x=>x.rls=x.rls.replace("to service_role;","to nobody;"),"DEFAULT_GRANTS_OR_SERVICE_ROLE_RISK_CHANGED"],
+ ["service role grant removed",x=>x.rls=x.rls.replaceAll("to service_role;","to nobody;"),"DEFAULT_GRANTS_OR_SERVICE_ROLE_RISK_CHANGED"],
  ["alter default privileges added",x=>x.rls+="\nalter default privileges for role postgres in schema public revoke execute on functions from public;","DEFAULT_GRANTS_OR_SERVICE_ROLE_RISK_CHANGED"],
  ["hardening runnable SQL",x=>x.hardening+="\nalter default privileges for role postgres revoke execute on functions from public;","HARDENING_DESIGN_INVALID"],
  ["hardening removed review disclaimer",x=>x.hardening=x.hardening.replace("NO ES MIGRACION","PUEDE EJECUTAR"),"HARDENING_DESIGN_INVALID"],
