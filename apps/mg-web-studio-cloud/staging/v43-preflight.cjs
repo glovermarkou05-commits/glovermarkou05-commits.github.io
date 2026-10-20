@@ -94,10 +94,11 @@ function assess(input){
  ds.ddl.path!==FILES.ddl||ds.catalogReadOnly.path!==FILES.catalog||
  ![ds.ddl,ds.catalogReadOnly].every(x=>/^[a-f0-9]{40}$/.test(x.githubBlobSha)&&x.chars>500))
  flag("SOURCE_PIN_MISSING");
- if(typeof input.ddl!=="string"||!ds||ds.ddl.githubBlobSha!==gitBlobSha(input.ddl)||
-  ds.ddl.chars!==input.ddl.length)flag("DDL_BLOB_CHANGED");
- if(typeof input.catalog!=="string"||!ds||ds.catalogReadOnly.githubBlobSha!==gitBlobSha(input.catalog)||
-  ds.catalogReadOnly.chars!==input.catalog.length)flag("CATALOG_BLOB_CHANGED");
+ const ddlPin=plain(ds&&ds.ddl)?ds.ddl:{},catPin=plain(ds&&ds.catalogReadOnly)?ds.catalogReadOnly:{};
+ if(typeof input.ddl!=="string"||ddlPin.githubBlobSha!==gitBlobSha(input.ddl)||
+  ddlPin.chars!==input.ddl.length)flag("DDL_BLOB_CHANGED");
+ if(typeof input.catalog!=="string"||catPin.githubBlobSha!==gitBlobSha(input.catalog)||
+  catPin.chars!==input.catalog.length)flag("CATALOG_BLOB_CHANGED");
  const p=m&&m.scope;
  if(!plain(p)||p.catalogOperations!==7||
   p.catalogTransaction!=="REPEATABLE READ READ ONLY; ROLLBACK"||
@@ -116,6 +117,7 @@ function assess(input){
  !cat.includes("pg_catalog.pg_roles")||
  !cat.includes("pg_catalog.pg_class")||
  !cat.includes("information_schema.tables")||
+ /\b(?:pg_sleep|pg_read_file|dblink|lo_export|set_config)\s*\(/i.test(cat)||
  /(?:\bINSERT\b|\bUPDATE\b|\bDELETE\b|\bDROP\b|\bCREATE\b|\bALTER\b|\bGRANT\b|\bREVOKE\b|\bDO\b|\bEXECUTE\b|\bCALL\b|\bCOPY\b|\bTRUNCATE\b|\bCOMMIT\b)/i.test(cat))
  flag("UNSAFE_CATALOG_SQL");
  const ddl=typeof input.ddl==="string"?clean(input.ddl):"";
@@ -129,6 +131,10 @@ function assess(input){
  !ddl.includes("mg_v42_notification_event_recipient_key")||
  !ddl.includes("'draft','review','suspended'"))
  flag("DDL_CONTRACT_DRIFT");
+ if(/\b(?:DROP\s+(?:TABLE|SCHEMA|FUNCTION|ROLE)|TRUNCATE\s+|DELETE\s+FROM\s+|INSERT\s+INTO\s+|CREATE\s+FUNCTION\b|SECURITY\s+DEFINER\b)/i.test(ddl)||
+  /\bGRANT\s+[^;]*\bTO\s+(?:anon|public)\s*;/i.test(ddl)||
+  /\bGRANT\s+(?:INSERT|UPDATE|DELETE|ALL)\b[^;]*\bTO\s+authenticated\s*;/i.test(ddl))
+ flag("UNSAFE_DDL_CONTENT");
  if(!Array.isArray(m&&m.reviewItems)||m.reviewItems.length!==10||
  !uniq(m.reviewItems.map(x=>x&&x.id))||
  !m.reviewItems.every(x=>x.status==="PENDING_REAL_CATALOG"||
