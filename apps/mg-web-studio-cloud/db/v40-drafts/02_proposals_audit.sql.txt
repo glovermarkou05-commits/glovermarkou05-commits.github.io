@@ -1,0 +1,151 @@
+-- MG WEB STUDIO CLOUD / V40 / DRAFT 02: CANONICAL PROPOSALS
+-- REVIEW-ONLY SQL TEXT; NOT A MIGRATION. DO NOT EXECUTE WITHOUT APPROVAL.
+-- Depends on 01_core_schema.sql.txt, same isolated and empty future STAGING.
+-- Canonical V20 statuses used from day one (no V13 data migration in empty DB).
+-- Decision/event types are independent: changes != needs_changes.
+begin;
+
+create table public.mg_site_draft_versions (
+  organization_id uuid not null,
+  site_id uuid not null,
+  revision bigint not null default 1 check (revision>0),
+  document jsonb not null check (jsonb_typeof(document)='object'),
+  updated_by uuid references auth.users(id) on delete set null,
+  updated_at timestamptz not null default now(),
+  primary key(organization_id,site_id),
+  foreign key(site_id,organization_id)
+    references public.mg_sites(id,organization_id) on delete restrict
+);
+
+create table public.mg_site_proposals (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null,
+  site_id uuid not null,
+  plan_code text not null check(plan_code in ('Start','Crece','Pro')),
+  revision bigint not null default 1 check(revision>0),
+  status text not null default 'draft'
+    check(status in ('draft','submitted','needs_changes','rejected','approved','applied')),
+  created_by uuid not null references auth.users(id) on delete restrict,
+  applied_draft_revision bigint check(applied_draft_revision>0),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique(id,organization_id,site_id),
+  foreign key(site_id,organization_id)
+    references public.mg_sites(id,organization_id) on delete restrict
+);
+create index mg_v40_proposals_inbox_idx on public.mg_site_proposals(
+  organization_id,site_id,status,updated_at desc
+);
+
+create table public.mg_proposal_revisions (
+  id uuid primary key default gen_random_uuid(),
+  proposal_id uuid not null,
+  organization_id uuid not null,
+  site_id uuid not null,
+  revision bigint not null check(revision>0),
+  proposal_json jsonb not null check(jsonb_typeof(proposal_json)='object'),
+  created_by uuid not null references auth.users(id) on delete restrict,
+  created_at timestamptz not null default now(),
+  unique(proposal_id,revision),
+  unique(proposal_id,revision,organization_id,site_id),
+  foreign key(proposal_id,organization_id,site_id)
+    references public.mg_site_proposals(id,organization_id,site_id) on delete restrict
+);
+create index mg_v40_revisions_site_idx
+ on public.mg_proposal_revisions(organization_id,site_id,proposal_id,revision desc);
+
+create table public.mg_proposal_reviews (
+  id uuid primary key default gen_random_uuid(),
+  proposal_id uuid not null,
+  organization_id uuid not null,
+  site_id uuid not null,
+  revision bigint not null check(revision>0),
+  decision text not null check(decision in ('approved','changes','rejected')),
+  note text not null default '' check(char_length(note)<=500),
+  reviewed_by uuid not null references auth.users(id) on delete restrict,
+  reviewed_at timestamptz not null default now(),
+  unique(proposal_id,revision),
+  foreign key(proposal_id,revision,organization_id,site_id)
+    references public.mg_proposal_revisions(proposal_id,revision,organization_id,site_id) on delete restrict,
+  check(decision='approved' or char_length(btrim(note)) between 8 and 500)
+);
+create index mg_v40_reviews_site_idx
+ on public.mg_proposal_reviews(organization_id,site_id,proposal_id,revision desc);
+
+-- These are durable *records only*. No external notifications or cron enabled.
+create table public.mg_proposal_notifications (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null,
+  site_id uuid not null,
+  proposal_id uuid not null,
+  recipient_user_id uuid not null references auth.users(id) on delete cascade,
+  event_type text not null
+    check(event_type in ('submitted','approved','changes','rejected','applied')),
+  revision bigint not null check(revision>0),
+  created_at timestamptz not null default now(),
+  unique(id,recipient_user_id),
+  foreign key(proposal_id,revision,organization_id,site_id)
+    references public.mg_proposal_revisions(proposal_id,revision,organization_id,site_id)
+    on delete restrict
+);
+create index mg_v40_notifications_recipient_idx
+  on public.mg_proposal_notifications(recipient_user_id,created_at desc);
+
+create table public.mg_notification_reads (
+  notification_id uuid not null,
+  recipient_user_id uuid not null,
+  read_at timestamptz not null default now(),
+  primary key(notification_id,recipient_user_id),
+  foreign key(notification_id,recipient_user_id)
+    references public.mg_proposal_notifications(id,recipient_user_id) on delete cascade
+);
+
+-- Service-only events: no grants to browsers, no secrets or message bodies.
+create table mg_private.mg_proposal_outbox (
+  id bigint generated always as identity primary key,
+  organization_id uuid not null,
+  site_id uuid not null,
+  proposal_id uuid not null,
+  revision bigint not null check(revision>0),
+  event_type text not null
+    check(event_type in ('submitted','approved','changes','rejected','applied')),
+  delivered_at timestamptz,
+  retry_count integer not null default 0 check(retry_count>=0),
+  created_at timestamptz not null default now(),
+  foreign key(proposal_id,revision,organization_id,site_id)
+    references public.mg_proposal_revisions(proposal_id,revision,organization_id,site_id)
+    on delete restrict
+);
+create index mg_v40_outbox_pending_idx
+ on mg_private.mg_proposal_outbox(created_at) where delivered_at is null;
+
+create table mg_private.mg_operation_idempotency (
+  organization_id uuid not null references public.mg_organizations(id),
+  actor_user_id uuid not null references auth.users(id),
+  operation_key text not null check(char_length(operation_key) between 6 and 100),
+  request_fingerprint text not null check(char_length(request_fingerprint) between 16 and 256),
+  result_json jsonb not null check(jsonb_typeof(result_json)='object'),
+  created_at timestamptz not null default now(),
+  primary key(organization_id,actor_user_id,operation_key)
+);
+
+alter table public.mg_site_draft_versions enable row level security;
+alter table public.mg_site_proposals enable row level security;
+alter table public.mg_proposal_revisions enable row level security;
+alter table public.mg_proposal_reviews enable row level security;
+alter table public.mg_proposal_notifications enable row level security;
+alter table public.mg_notification_reads enable row level security;
+alter table mg_private.mg_proposal_outbox enable row level security;
+alter table mg_private.mg_operation_idempotency enable row level security;
+
+revoke all on table public.mg_site_draft_versions,public.mg_site_proposals,
+ public.mg_proposal_revisions,public.mg_proposal_reviews,
+ public.mg_proposal_notifications,public.mg_notification_reads
+ from public,anon,authenticated;
+revoke all on table mg_private.mg_proposal_outbox,mg_private.mg_operation_idempotency
+ from public,anon,authenticated;
+
+-- Future trusted backend must implement actor checks, MFA, CAS, idempotency,
+-- atomic business event + outbox/audit, and tenant checks BEFORE ANY writes.
+-- V27/V30 proposal_created/proposal_revised are NOT in these event enums.
+commit;
