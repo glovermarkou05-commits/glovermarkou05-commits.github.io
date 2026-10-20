@@ -42,7 +42,7 @@ Después de la prueba, `auth.users` y cada una de las 16 tablas MG quedaron en c
 | V48 | Recuperación incompleta; parámetros operativos pendientes. |
 | V49–V52 | Revisión estática, instalación V45 y auditoría del catálogo completadas; gates runtime documentados. |
 | V53 | pgTAP instalado solo en STAGING; matriz RLS 56/56; fixtures limpiados y cero filas confirmadas. |
-| V54 | Defaults futuros de tablas/secuencias para `postgres/public` aplicados y verificados; V45 sigue sin fuente canónica conciliada. |
+| V54 | Defaults futuros de tablas/secuencias para `postgres/public` aplicados y verificados; en ese momento, la trazabilidad V45 seguía pendiente. V57 la reconcilió; la fuente canónica aún falta. |
 | V55 | Auditoría de funciones en `public` y ruta de recuperación revisadas en solo lectura; sin cambios de esquema ni backup/restore. |
 | V56 | Ensayo de recuperación autorizado; bloqueado por falta de PostgreSQL 17/Supabase CLI/Docker en el entorno. No se creó dump ni se restauró. |
 | V57 | Procedencia de V45 confirmada con blob de GitHub, historial de migraciones y logs PostgreSQL. Sin SQL ni cambios en STAGING; archivo ejecutable canónico y recuperación siguen pendientes. |
