@@ -1,0 +1,29 @@
+-- V54 REVIEW ONLY — DO NOT EXECUTE OR REGISTER AS A MIGRATION.
+-- STAGING target: yefcgjtovfnsqtdjdsod. No statements in this file are active SQL.
+-- Review follows PostgreSQL 17 ALTER DEFAULT PRIVILEGES semantics.
+--
+-- Candidate, limited to future TABLES and SEQUENCES in public.
+-- These schema-scoped REVOKEs remove explicit anon/authenticated grants while
+-- preserving the currently observed service_role defaults.
+-- Supabase current SQL session is postgres, not a member of supabase_admin;
+-- do not uncomment or apply the supabase_admin statements from this session.
+--
+-- ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+--   REVOKE ALL ON TABLES FROM anon, authenticated;
+-- ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public
+--   REVOKE ALL ON SEQUENCES FROM anon, authenticated;
+--
+-- DEFERRED: functions are not safely fixed by schema-scoped REVOKE alone.
+-- PostgreSQL globally grants EXECUTE on new functions to PUBLIC by default.
+-- Per-schema REVOKE cannot remove a global default grant. Options require
+-- separate review: global PUBLIC EXECUTE revoke for each creator role (affects
+-- future functions across schemas), or per-function REVOKE statements in every
+-- app migration and a prohibition on unreviewed public functions.
+--
+-- DEFERRED: corresponding defaults owned by supabase_admin. Current user is
+-- postgres; pg_has_role(postgres, supabase_admin, MEMBER) returned false.
+-- Use a supported privileged path before modifying this owner’s defaults.
+--
+-- Existing objects are unaffected by ALTER DEFAULT PRIVILEGES. The 16 V45
+-- tables retain their individually audited grants. Do not create public objects
+-- until a reviewed remediation is applied and verified.
