@@ -1,0 +1,49 @@
+{
+  "version": 42,
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "mode": "GITHUB_REVIEW_ONLY",
+  "sqlTarget": "STAGING_ONLY",
+  "draft": "db/v42-drafts/INSTALL_ATOMIC.review.sql.txt",
+  "status": "NO_GO",
+  "sqlExecuted": 0,
+  "postgresTests": 0,
+  "restoreTests": 0,
+  "fixesDesigned": [
+    "default ACL review",
+    "single transaction",
+    "audit FK",
+    "outbox unique event key",
+    "notification dedup"
+  ],
+  "blockingP0": [
+    "V41-01",
+    "V41-02",
+    "V41-03",
+    "V41-04",
+    "V41-10"
+  ],
+  "roadmap": {
+    "originalTasks": 13,
+    "foundationOrDesignPrepared": 4,
+    "remainingMandatory": 8,
+    "optional": 1,
+    "remainingIds": [
+      "S01",
+      "S02",
+      "D01",
+      "D02",
+      "D03",
+      "R01",
+      "Q01",
+      "P01"
+    ]
+  },
+  "authorization": {
+    "sql": false,
+    "deploy": false,
+    "production": false,
+    "paid": false
+  },
+  "disclaimer": "No SQL in Supabase, no migrations, no published site, no RLS proof."
+}
