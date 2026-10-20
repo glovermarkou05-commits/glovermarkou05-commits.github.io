@@ -1,0 +1,112 @@
+{
+  "format": "mg-web-studio/v45-permission-correction-review",
+  "version": 45,
+  "date": "2026-10-20",
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "scope": "GITHUB_DRAFT_CORRECTION_ONLY",
+  "target": "MG WEB STUDIO CLOUD - STAGING (future isolated target, no SQL execution)",
+  "sourceV42Blob": "e1831c28aea9500c3571e2e3b7a4a4bed96dcc19",
+  "sourceV44": "staging/v44-real-catalog-observations.review.json",
+  "sourceR03Facts": {
+    "postgresCurrentRoleObserved": true,
+    "defaultAclCreatingRoles": [
+      "postgres",
+      "supabase_admin"
+    ],
+    "scope": "public",
+    "entries": 6,
+    "schemaOwnerR02": "NOT_CONFIRMED",
+    "noGlobalDefaultRowsObserved": true
+  },
+  "artifacts": [
+    {
+      "path": "db/v45-drafts/INSTALL_OBJECT_SCOPED.review.sql.txt",
+      "githubBlobSha": "135ff2c25d935d87e5c8e9e0f9189705cd40b411",
+      "chars": 20572,
+      "purpose": "16-table atomic DDL draft with per-object RLS/REVOKE and no default-ACL mutations"
+    },
+    {
+      "path": "db/v45-drafts/VERIFY_SCOPED_ACL.review.sql.txt",
+      "githubBlobSha": "0173eecaa7bf4d04e9b3f8de87802ca58ac391e0",
+      "chars": 2919,
+      "purpose": "read-only post-install catalog audit for grants, RLS, schemas, default ACL and policies"
+    }
+  ],
+  "changes": [
+    "Removed four ALTER DEFAULT PRIVILEGES statements from V42; none for postgres or supabase_admin",
+    "Kept all 16 table CREATE statements and 16 RLS enable statements in one uncommitted-until-complete transaction",
+    "Kept 12 site/recipient/profile-scoped SELECT policies, with no browser DML grants",
+    "Kept per-table REVOKE from PUBLIC, anon and authenticated, plus explicit authenticated SELECT grants and approved future service role permissions",
+    "Added explicit REVOKE on sequences and functions in newly created mg_private schema",
+    "Kept published status blocked until concurrent single-Home invariant is tested",
+    "Kept audit FK and notification/outbox uniqueness from V42"
+  ],
+  "securityStatus": {
+    "perObjectSecurity": "DESIGNED_NOT_POSTGRES_TESTED",
+    "defaultACLForFutureObjects": "UNRESOLVED_VISIBLE_BROAD_DEFAULTS",
+    "postgresDefaultACLChanged": false,
+    "supabaseAdminDefaultACLChanged": false,
+    "productionRiskClosed": false,
+    "backendTenantIsolationTested": false,
+    "schemaOwnersVerified": false,
+    "backupRestored": false,
+    "oldV42NotSafeToExecute": true,
+    "onlyV45CanBeCandidateAfterSeparatelyApprovedReview": true
+  },
+  "gates": [
+    {
+      "id": "G45-01",
+      "scope": "Validate SQL with PostgreSQL and exact owner/GRANT/RLS semantics",
+      "status": "PENDING_AUTHORIZATION"
+    },
+    {
+      "id": "G45-02",
+      "scope": "Check both creator roles' future defaults and choose owner-scoped migration policy that avoids Supabase-managed side effects",
+      "status": "OPEN"
+    },
+    {
+      "id": "G45-03",
+      "scope": "Test synthetic backup and restore in a separately authorized isolated target",
+      "status": "OPEN"
+    },
+    {
+      "id": "G45-04",
+      "scope": "Approve exact V45 SQL file and STAGING target, independently of GitHub review",
+      "status": "NOT_AUTHORIZED"
+    },
+    {
+      "id": "G45-05",
+      "scope": "Run future post-install ACL read-only audit and real authenticated/anon role tests",
+      "status": "NOT_EXECUTED"
+    },
+    {
+      "id": "G45-06",
+      "scope": "Backend, workers and production require independent approvals",
+      "status": "NO_GO"
+    }
+  ],
+  "execution": {
+    "realSqlStatements": 0,
+    "migrationsApplied": 0,
+    "tablesInstalled": 0,
+    "realRlsRoleTests": 0,
+    "realBackups": 0,
+    "realRestores": 0,
+    "projectChanged": false,
+    "githubFeatureBranchOnly": true
+  },
+  "authorization": {
+    "githubReview": true,
+    "readOnlySQL": false,
+    "ddl": false,
+    "restore": false,
+    "deploy": false,
+    "publish": false,
+    "enablePaidServices": false,
+    "modifyMain": false,
+    "modifyOtherProjects": false
+  },
+  "decision": "DOCUMENTED_MITIGATION_NOT_OPERATIONAL_SIGNOFF",
+  "next": "Review and test scoped draft in isolated authorized PostgreSQL; do not assume future default ACLs are fixed."
+}
