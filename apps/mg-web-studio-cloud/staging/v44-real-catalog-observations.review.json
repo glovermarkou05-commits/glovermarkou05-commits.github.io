@@ -1,0 +1,151 @@
+{
+  "format": "mg-web-studio/v44-real-catalog-observations",
+  "version": 44,
+  "reviewedAt": "2026-10-19",
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "target": "STAGING_ONLY",
+  "authorizedScope": "Execute the seven V43 read-only catalog SELECT statements exactly once each",
+  "v43GitBlobSha": "b66d015f5fc21b3b43f36bb046192191f1a67d97",
+  "authorization": {
+    "catalogSelects": true,
+    "ddl": false,
+    "migration": false,
+    "restore": false,
+    "deploy": false,
+    "publish": false,
+    "paidServices": false,
+    "otherProjects": false
+  },
+  "execution": {
+    "catalogSelectsAttempted": 7,
+    "catalogSelectsSent": 7,
+    "catalogResultSetsRecovered": 6,
+    "multiStatementTransactionUsed": false,
+    "individualSelectsOnly": true,
+    "rollbackCommandExecuted": false,
+    "ddlStatementsRun": 0,
+    "postgresDmlRun": 0,
+    "actualBackupsPerformed": 0,
+    "appSchemaCreated": false
+  },
+  "queries": [
+    {
+      "id": "R01",
+      "status": "EXECUTED_RESULT_RETAINED",
+      "result": {
+        "serverVersion": "17.11",
+        "currentRole": "postgres",
+        "sessionRole": "postgres"
+      }
+    },
+    {
+      "id": "R02",
+      "status": "EXECUTED_RESULT_NOT_RETAINED",
+      "result": null,
+      "issue": "Tool returned a result but local response-wrapper parsing failed; no automatic retry"
+    },
+    {
+      "id": "R03",
+      "status": "EXECUTED_RESULT_RETAINED",
+      "result": {
+        "defaultAclRecords": 6,
+        "scope": "public",
+        "creatingRoles": [
+          "postgres",
+          "supabase_admin"
+        ],
+        "globalAclRowsObserved": 0,
+        "objectTypes": [
+          "S",
+          "f",
+          "r"
+        ],
+        "granteesObserved": [
+          "postgres",
+          "anon",
+          "authenticated",
+          "service_role"
+        ],
+        "risk": "New objects may inherit broad privileges for anon and authenticated from both creators; role-specific hardening required"
+      }
+    },
+    {
+      "id": "R04",
+      "status": "EXECUTED_RESULT_RETAINED",
+      "result": {
+        "roles": [
+          {
+            "name": "anon",
+            "canLogin": false,
+            "bypassRls": false
+          },
+          {
+            "name": "authenticated",
+            "canLogin": false,
+            "bypassRls": false
+          },
+          {
+            "name": "postgres",
+            "canLogin": true,
+            "bypassRls": true
+          },
+          {
+            "name": "service_role",
+            "canLogin": false,
+            "bypassRls": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "R05",
+      "status": "EXECUTED_RESULT_RETAINED",
+      "result": {
+        "mgRelationsFound": 0
+      }
+    },
+    {
+      "id": "R06",
+      "status": "EXECUTED_RESULT_RETAINED",
+      "result": {
+        "mgFunctionsFound": 0
+      }
+    },
+    {
+      "id": "R07",
+      "status": "EXECUTED_RESULT_RETAINED",
+      "result": {
+        "userTablesInPublic": 0
+      }
+    }
+  ],
+  "aftercare": {
+    "projectStatus": "ACTIVE_HEALTHY",
+    "region": "sa-east-1",
+    "publicTablesInPlatformList": 0,
+    "registeredMigrationsInPlatformList": 0,
+    "onlyMetadataRead": true
+  },
+  "interpretation": {
+    "defaultAclRolePostgresVerified": true,
+    "defaultAclRoleSupabaseAdminObserved": true,
+    "schemaOwnerConfirmed": false,
+    "v42AssumptionsComplete": false,
+    "riskRequiresScopedReview": true,
+    "noClaimThatPrivilegeGrantsExposeTablesNow": true,
+    "noClaimFullSchemaEmpty": true,
+    "notSnapshotConsistentBetweenSelects": true,
+    "stageNoGo": true,
+    "productionNoGo": true
+  },
+  "requiredBeforeAnyDDL": [
+    "Recover schema owner and default ACL details using separately approved follow-up diagnostic; do not guess",
+    "Review default ACL rules for postgres and supabase_admin and avoid breaking managed Supabase objects",
+    "Revise V42 atomic SQL if needed and regenerate exact review fingerprints",
+    "Approve backup and restore in separate isolated target",
+    "Request DDL-specific written approval tied to exact SQL bytes and target",
+    "Test DDL parser, negative grants/RLS, cross-tenant isolation and Home publication before release"
+  ],
+  "next": "V45 review actual default ACL impact and correct draft in GitHub only, keeping STAGING unchanged."
+}
