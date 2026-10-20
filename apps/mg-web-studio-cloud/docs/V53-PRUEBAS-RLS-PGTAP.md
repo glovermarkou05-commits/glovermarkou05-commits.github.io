@@ -27,7 +27,7 @@ Después de la prueba, `auth.users` y cada una de las 16 tablas MG quedaron en c
 ## Límites que continúan abiertos
 
 - **Defaults ACL:** V54 retiró los grants futuros de `anon` y `authenticated` en TABLES/SEQUENCES de `postgres/public`; siguen pendientes los defaults de funciones (incluido PUBLIC EXECUTE global) y los tres tipos de objetos de `supabase_admin`. No crear funciones públicas sin revisar y fijar sus grants efectivos.
-- **Trazabilidad V45:** la migración aplicada V45 sigue sin archivo canónico sincronizado; V53 sí tiene el SQL exacto versionado en la rama. No rebasar ni desplegar hasta reconciliar el historial V45.
+- **Trazabilidad V45:** la procedencia se reconcilió en V57 con el historial y logs PostgreSQL de STAGING. El cuerpo enviado coincide con `db/v45-drafts/INSTALL_OBJECT_SCOPED.review.sql.txt` (blob SHA `135ff2c25d935d87e5c8e9e0f9189705cd40b411`). Su encabezado de borrador/no registrar está obsoleto. No se reejecutó ni se promovió a migración activa; restauración local y estrategia canónica siguen pendientes.
 - **Backend:** endpoints, validación de actor/organización/sitio e integración Auth/PostgREST aún no se probaron.
 - **Rendimiento:** EXPLAIN con cardinalidad sintética y resolución de 14 alertas FK vs. 10 brechas V50 siguen pendientes.
 - **Recuperación:** backup/restore real, RPO/RTO, retención, destino y aprobación siguen pendientes.
@@ -45,6 +45,9 @@ Después de la prueba, `auth.users` y cada una de las 16 tablas MG quedaron en c
 | V54 | Defaults futuros de tablas/secuencias para `postgres/public` aplicados y verificados; V45 sigue sin fuente canónica conciliada. |
 | V55 | Auditoría de funciones en `public` y ruta de recuperación revisadas en solo lectura; sin cambios de esquema ni backup/restore. |
 | V56 | Ensayo de recuperación autorizado; bloqueado por falta de PostgreSQL 17/Supabase CLI/Docker en el entorno. No se creó dump ni se restauró. |
-| V57+ | Backend/Auth real, prueba de recuperación aprobada, defaults restantes y publicación autorizada pendientes. |
+| V57 | Procedencia de V45 confirmada con blob de GitHub, historial de migraciones y logs PostgreSQL. Sin SQL ni cambios en STAGING; archivo ejecutable canónico y recuperación siguen pendientes. |
+| V58+ | Backend/Auth real, prueba de recuperación aislada, defaults restantes y publicación autorizada pendientes. |
 
 Archivos reproducibles: `tests/v53-rls-runtime.test.sql`, `staging/v53-rls-runtime.review.json`, y migración V53 en `supabase/migrations/`.
+
+Registro V57 detallado: `docs/V57-TRAZABILIDAD-V45.md`.
