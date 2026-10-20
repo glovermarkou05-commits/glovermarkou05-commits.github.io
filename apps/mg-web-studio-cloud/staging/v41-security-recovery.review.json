@@ -1,0 +1,227 @@
+{
+  "format": "mg-web-studio/v41-security-recovery-review",
+  "version": 41,
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "date": "2026-10-19",
+  "target": "MG WEB STUDIO CLOUD - STAGING",
+  "scope": "Review V40 source only; never execute SQL or change Supabase",
+  "sourceDrafts": [
+    "db/v40-drafts/01_core_schema.sql.txt",
+    "db/v40-drafts/02_proposals_audit.sql.txt",
+    "db/v40-drafts/03_readonly_rls.sql.txt"
+  ],
+  "baseline": "staging/v39-initial-readonly-inventory.review.json",
+  "findings": [
+    {
+      "id": "V41-01",
+      "priority": "P0",
+      "title": "Privilegios por defecto",
+      "finding": "V40 revoca grants actuales, pero no revisa pg_default_acl y los grants automáticos para FUTURAS tablas/funciones/secuencias.",
+      "acceptance": "Auditar propietario y privilegios predeterminados, preparar hardening versionado y prueba de nuevo objeto.",
+      "status": "OPEN",
+      "realEvidence": null
+    },
+    {
+      "id": "V41-02",
+      "priority": "P0",
+      "title": "Respaldo en plan Free",
+      "finding": "No se ha probado dump/restauración; las fases V40 confirman transacciones separadas y un fallo posterior no revierte fases previas.",
+      "acceptance": "Aprobar respaldo lógico, retención, verificación de hash, restore segregado, RPO/RTO y compensación revisada.",
+      "status": "OPEN",
+      "realEvidence": null
+    },
+    {
+      "id": "V41-03",
+      "priority": "P0",
+      "title": "Autorización SQL distinta",
+      "finding": "El permiso de crear STAGING y leer metadatos NO autorizó ejecutar SQL, aplicar migraciones o desplegar.",
+      "acceptance": "Aprobación separada para borradores exactos, proyecto, propietario y límites de ejecución.",
+      "status": "OPEN",
+      "realEvidence": null
+    },
+    {
+      "id": "V41-04",
+      "priority": "P0",
+      "title": "Prueba PostgreSQL/RLS real",
+      "finding": "Las 187 verificaciones V40 son textuales; no hay prueba de parser, RLS por rol ni aislamiento real.",
+      "acceptance": "pgTAP/roles y dos tenants ficticios, denegaciones de DML, auth.uid nulo, grants/funciones/secuencias, sin despliegue.",
+      "status": "OPEN",
+      "realEvidence": null
+    },
+    {
+      "id": "V41-05",
+      "priority": "P1",
+      "title": "Integridad de auditoría",
+      "finding": "mg_private.mg_audit_events.organization_id es UUID opcional sin FK a organizaciones.",
+      "acceptance": "Definir eventos de sistema sin empresa; revisar FK/retención para eventos de empresa y el actor verificado.",
+      "status": "OPEN",
+      "realEvidence": null
+    },
+    {
+      "id": "V41-06",
+      "priority": "P1",
+      "title": "Unicidad del evento outbox",
+      "finding": "Outbox V40 tiene PK identity, pero no una restricción única por evento de negocio confirmado.",
+      "acceptance": "Diseñar idempotencia y deduplicación transaccional antes de workers, no habilitar envíos.",
+      "status": "OPEN",
+      "realEvidence": null
+    },
+    {
+      "id": "V41-07",
+      "priority": "P1",
+      "title": "service_role elude RLS",
+      "finding": "El rol de servicio recibe CRUD; se requiere autorización de negocio en servidor y no existe el backend.",
+      "acceptance": "No exponer clave de servidor; probar actor/tenant/rol/MFA y revocación en futura API.",
+      "status": "OPEN",
+      "realEvidence": null
+    },
+    {
+      "id": "V41-08",
+      "priority": "P1",
+      "title": "Home publicada no garantizada",
+      "finding": "V40 evita correctamente el status published, pero falta invariante exactly-one-Home.",
+      "acceptance": "Mantener publicación deshabilitada hasta transacción, guardia de Home y concurrencia probadas.",
+      "status": "OPEN",
+      "realEvidence": null
+    },
+    {
+      "id": "V41-09",
+      "priority": "P1",
+      "title": "Bandera de integridad demasiado amplia",
+      "finding": "La afirmación allTenantScopedObjectsHaveCompositeFk=true del manifiesto V40 es excesiva: auditoría contiene organization_id sin FK y existen relaciones por organización/indirectas.",
+      "acceptance": "Inventariar cada relación y ajustar afirmación o constraints antes de firma.",
+      "status": "OPEN",
+      "realEvidence": null
+    },
+    {
+      "id": "V41-10",
+      "priority": "P0",
+      "title": "Línea base puntual",
+      "finding": "V39 observó cero tablas en public, pero esa instantánea no demuestra que sigan ausentes al ejecutar.",
+      "acceptance": "Revalidar objeto/roles/esquemas/grants/estado Free antes de cualquier migración.",
+      "status": "OPEN",
+      "realEvidence": null
+    },
+    {
+      "id": "V41-11",
+      "priority": "P1",
+      "title": "MFA y revocación sin prueba",
+      "finding": "RLS depende de autenticación; no se verificó sesión caducada, tokens, MFA o scope contra usuarios reales.",
+      "acceptance": "Dos organizaciones con usuarios ficticios, roles cruzados y negativa ante sesiones caducadas.",
+      "status": "OPEN",
+      "realEvidence": null
+    },
+    {
+      "id": "V41-12",
+      "priority": "P1",
+      "title": "Custodia de respaldos",
+      "finding": "La propuesta no identifica propietario, cifrado, retención ni eliminación de dump sintético.",
+      "acceptance": "Mantener dump fuera de GitHub, hash, custodia cifrada, expiración, restauración y destrucción controlada.",
+      "status": "OPEN",
+      "realEvidence": null
+    }
+  ],
+  "stages": [
+    {
+      "id": "S0",
+      "status": "IN_REVIEW_ONLY",
+      "action": "review SQL docs, current Supabase guidance and safety"
+    },
+    {
+      "id": "S1",
+      "status": "NOT_AUTHORIZED",
+      "action": "specific SQL, account, backup, owner and cost approval"
+    },
+    {
+      "id": "S2",
+      "status": "NOT_EXECUTED",
+      "action": "isolate schemas, backup and validate recovery plan"
+    },
+    {
+      "id": "S3",
+      "status": "NOT_EXECUTED",
+      "action": "run permitted PostgreSQL tests with synthetic identities"
+    },
+    {
+      "id": "S4",
+      "status": "NOT_EXECUTED",
+      "action": "restore in separately authorized isolated destination"
+    },
+    {
+      "id": "S5",
+      "status": "NO_GO",
+      "action": "separate backend/production signoff"
+    }
+  ],
+  "references": [
+    {
+      "title": "Securing your API",
+      "url": "https://supabase.com/docs/guides/api/securing-your-api"
+    },
+    {
+      "title": "RLS",
+      "url": "https://supabase.com/docs/guides/database/postgres/row-level-security"
+    },
+    {
+      "title": "Database Backups",
+      "url": "https://supabase.com/docs/guides/platform/backups"
+    },
+    {
+      "title": "Changelog",
+      "url": "https://supabase.com/changelog"
+    }
+  ],
+  "recovery": {
+    "status": "NOT_TESTED",
+    "backupsMade": 0,
+    "restoreAttempts": 0,
+    "rpoApproved": false,
+    "rtoApproved": false,
+    "ownerApproved": false,
+    "riskOfPartialCommit": true,
+    "minimumChecks": [
+      "Record metadata and baseline counts",
+      "Freeze writers",
+      "Encrypted offsite snapshot and verify hash",
+      "Test restoration on another isolated authorized target",
+      "Reconfirm grants/RLS after restore",
+      "Preserve audit/outbox references and migration history"
+    ],
+    "forbidden": [
+      "Unreviewed DROP CASCADE",
+      "Production data",
+      "Secrets in GitHub",
+      "Automatic restore of current STAGING"
+    ]
+  },
+  "permissions": {
+    "githubReview": true,
+    "sqlExecution": false,
+    "migrate": false,
+    "changeStaging": false,
+    "restore": false,
+    "deploy": false,
+    "sendNotifications": false,
+    "publish": false,
+    "charge": false,
+    "modifyOtherProjects": false
+  },
+  "evidence": {
+    "realSqlExecuted": 0,
+    "realPgTest": 0,
+    "realRlsScenarios": 0,
+    "realBackupRestores": 0,
+    "physicalTablesChanged": 0,
+    "credentialsRead": 0
+  },
+  "decision": {
+    "securitySignoff": false,
+    "recoverySignoff": false,
+    "readyForSqlExecution": false,
+    "readyForBackend": false,
+    "readyForProduction": false,
+    "noGo": true
+  },
+  "next": "Address P0 findings in GitHub review, then obtain separate exact SQL authorization."
+}
