@@ -1,0 +1,156 @@
+{
+  "format": "mg-web-studio/v46-preinstall-authority-review",
+  "version": 46,
+  "date": "2026-10-20",
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "target": "ISOLATED_STAGING_ONLY",
+  "scope": "REVALIDATION_AND_APPROVAL_PREPARATION_NOT_INSTALLATION",
+  "source": {
+    "v45Install": {
+      "path": "db/v45-drafts/INSTALL_OBJECT_SCOPED.review.sql.txt",
+      "githubBlobSha": "135ff2c25d935d87e5c8e9e0f9189705cd40b411",
+      "characters": 20572
+    },
+    "v45Verify": {
+      "path": "db/v45-drafts/VERIFY_SCOPED_ACL.review.sql.txt",
+      "githubBlobSha": "0173eecaa7bf4d04e9b3f8de87802ca58ac391e0",
+      "characters": 2919
+    },
+    "v44Catalog": "staging/v44-real-catalog-observations.review.json",
+    "v45Security": "staging/v45-permission-correction.review.json"
+  },
+  "actualReadOnly": {
+    "project": "ACTIVE_HEALTHY",
+    "region": "sa-east-1",
+    "schemaPublicOwner": "pg_database_owner",
+    "schemaPrivateMgExists": false,
+    "publicUsageForAnonAndAuthenticated": true,
+    "publicCreateForAnonAndAuthenticated": false,
+    "currentSessionUsedPostgresInV44": true,
+    "defaultAclCreatorsObservedInV44": [
+      "postgres",
+      "supabase_admin"
+    ],
+    "defaultAclRowsObservedInV44": 6,
+    "observedPublicTables": 0,
+    "observedMigrationRecords": 0,
+    "schemaOwnerReadOnlySelectExecuted": 1,
+    "noClaimsOfAllSchemasEmpty": true
+  },
+  "proposedMigration": {
+    "tables": 16,
+    "rls": 16,
+    "selectPolicies": 12,
+    "defaultAclMutations": 0,
+    "transactions": 1,
+    "commits": 1,
+    "browserWritesGranted": false,
+    "publicPublishingAllowed": false,
+    "defaultAclGloballyFixed": false,
+    "futureTableDefaultAclRiskStillOpen": true
+  },
+  "gates": [
+    {
+      "id": "G46-01",
+      "name": "Public owner confirmed and expected baseline",
+      "status": "READ_ONLY_EVIDENCE_CONFIRMED"
+    },
+    {
+      "id": "G46-02",
+      "name": "Source blob matches pinned V45 and source static review",
+      "status": "SOURCE_PIN_CONFIRMED"
+    },
+    {
+      "id": "G46-03",
+      "name": "Future default privileges for postgres and supabase_admin handled by app-scoped grants (new objects still require review)",
+      "status": "PARTIAL_MITIGATION_NOT_GLOBAL_CLOSURE"
+    },
+    {
+      "id": "G46-04",
+      "name": "Documented and owner-approved Free-plan recovery policy (RPO/RTO, custody)",
+      "status": "NOT_APPROVED"
+    },
+    {
+      "id": "G46-05",
+      "name": "Backup/rebuild or restore tested on separately authorized isolated target",
+      "status": "NOT_TESTED"
+    },
+    {
+      "id": "G46-06",
+      "name": "V45 SQL actually parsed by compatible PostgreSQL",
+      "status": "NOT_TESTED"
+    },
+    {
+      "id": "G46-07",
+      "name": "Permission from user for exact V45 SQL and isolated target",
+      "status": "NOT_AUTHORIZED"
+    },
+    {
+      "id": "G46-08",
+      "name": "Real RLS/anon/authenticated/site scope/grant tests",
+      "status": "NOT_TESTED"
+    },
+    {
+      "id": "G46-09",
+      "name": "Independent authorization for server, workers and production",
+      "status": "NOT_AUTHORIZED"
+    }
+  ],
+  "recoveryProposal": {
+    "tier": "Supabase Free",
+    "selectedForPlanning": "EMPTY_SYNTHETIC_STAGING_REBUILD_PLUS_LATER_OFFSITE_LOGICAL_BACKUP",
+    "approved": false,
+    "baselineData": "No MG tables observed in public; does not prove all schemas are empty",
+    "initialRollback": "Atomic SQL transaction rolls back on failure before commit; post-commit no automatic rollback",
+    "afterCommit": "Approved compensating migration or independently restored isolation; no automatic DROP or project deletion",
+    "futureSyntheticData": "Use official Supabase CLI db dump, encrypted offsite and separate restore test with CLI flags verified against installed version",
+    "cliDocs": "https://supabase.com/docs/reference/cli/supabase-db-dump",
+    "storageObjectsIncluded": false,
+    "owner": null,
+    "rpo": null,
+    "rto": null,
+    "backupTaken": false,
+    "backupVerified": false,
+    "restoreTested": false,
+    "mayDeleteProject": false,
+    "mayCreateRestoreTarget": false
+  },
+  "approvals": {
+    "readOnlySchemaOwnerCheck": true,
+    "githubReview": true,
+    "installDDL": false,
+    "applyMigration": false,
+    "postgresTestDDL": false,
+    "backupCreation": false,
+    "restore": false,
+    "deployBackend": false,
+    "sendNotifications": false,
+    "production": false,
+    "payments": false,
+    "modifyMain": false,
+    "modifyOtherProjects": false
+  },
+  "counts": {
+    "sqlCatalogReadsPerformedInV46": 1,
+    "actualDDLStatements": 0,
+    "migrationsInstalled": 0,
+    "mgTablesInstalled": 0,
+    "rlsRealTests": 0,
+    "restoreTests": 0,
+    "additionalSupabaseChargesAuthorized": 0
+  },
+  "decision": {
+    "reviewPackagePrepared": true,
+    "designGuardrailsChecked": true,
+    "readyForExecution": false,
+    "productionGo": false,
+    "blockingConditions": [
+      "RECOVERY_NOT_APPROVED_OR_PROVEN",
+      "REAL_POSTGRES_PARSE_AND_RLS_UNTESTED",
+      "SPECIFIC_DDL_APPROVAL_REQUIRED",
+      "FUTURE_DEFAULT_ACL_REVIEW_REQUIRED"
+    ]
+  },
+  "next": "Approve a scoped recovery approach and an explicitly reviewed PostgreSQL test/DDL scope; do not infer permission from V46 draft."
+}
