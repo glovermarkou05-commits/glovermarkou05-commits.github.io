@@ -46,8 +46,9 @@ Después de la prueba, `auth.users` y cada una de las 16 tablas MG quedaron en c
 | V55 | Auditoría de funciones en `public` y ruta de recuperación revisadas en solo lectura; sin cambios de esquema ni backup/restore. |
 | V56 | Ensayo de recuperación autorizado; bloqueado por falta de PostgreSQL 17/Supabase CLI/Docker en el entorno. No se creó dump ni se restauró. |
 | V57 | Procedencia de V45 confirmada con blob de GitHub, historial de migraciones y logs PostgreSQL. Sin SQL ni cambios en STAGING; archivo ejecutable canónico y recuperación siguen pendientes. |
-| V58+ | Backend/Auth real, prueba de recuperación aislada, defaults restantes y publicación autorizada pendientes. |
+| V58 | Preparación de recuperación revisada en solo lectura: 16 tablas MG con RLS habilitada y cero filas; herramientas locales siguen ausentes; cuatro avisos informativos para tablas internas sin policies. No se realizó backup/restore. |
+| V59+ | Instalar/habilitar herramientas locales sin costo y completar recuperación aislada; después, backend/Auth real, defaults restantes y publicación autorizada. |
 
 Archivos reproducibles: `tests/v53-rls-runtime.test.sql`, `staging/v53-rls-runtime.review.json`, y migración V53 en `supabase/migrations/`.
 
-Registro V57 detallado: `docs/V57-TRAZABILIDAD-V45.md`.
+Registros detallados: `docs/V57-TRAZABILIDAD-V45.md` y `docs/V58-READINESS-RECUPERACION.md`.
