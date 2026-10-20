@@ -1,0 +1,117 @@
+-- MG WEB STUDIO CLOUD / V40 / DRAFT 01: CORE SCHEMA
+-- REVIEW-ONLY SQL TEXT (.sql.txt, deliberately OUTSIDE a migrations directory).
+-- NOT AUDITED in PostgreSQL; DO NOT EXECUTE until specifically approved.
+-- Requires Supabase managed auth.users and trusted migration owner.
+-- This is for a fresh, empty isolated STAGING, NEVER existing projects.
+-- CRITICAL: published is NOT an allowed site status in the initial draft:
+-- PostgreSQL invariant for "exactly one Home" must be designed/tested first.
+begin;
+
+create schema if not exists mg_private;
+revoke all on schema mg_private from public, anon, authenticated;
+
+create table public.mg_profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  display_name text not null default '' check(char_length(display_name)<=160),
+  created_at timestamptz not null default now()
+);
+
+create table public.mg_organizations (
+  id uuid primary key default gen_random_uuid(),
+  name text not null check (char_length(name) between 2 and 160),
+  slug text not null unique check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  status text not null default 'active' check (status in ('active','suspended','archived')),
+  created_at timestamptz not null default now()
+);
+
+create table public.mg_memberships (
+  organization_id uuid not null references public.mg_organizations(id) on delete restrict,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  role text not null check (role in ('CLIENT_OWNER','CLIENT_ADMIN','CLIENT_EDITOR','CLIENT_VIEWER')),
+  status text not null default 'active' check (status in ('invited','active','revoked')),
+  created_at timestamptz not null default now(),
+  primary key (organization_id,user_id)
+);
+create index mg_v40_memberships_user_idx
+  on public.mg_memberships(user_id,organization_id) where status='active';
+
+create table public.mg_sites (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null references public.mg_organizations(id) on delete restrict,
+  name text not null check (char_length(name) between 2 and 160),
+  slug text not null check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  status text not null default 'draft' check (status in ('draft','review','suspended')),
+  created_at timestamptz not null default now(),
+  unique(organization_id,slug),
+  unique(id,organization_id)
+);
+create index mg_v40_sites_org_idx on public.mg_sites(organization_id);
+
+create table public.mg_pages (
+  id uuid primary key default gen_random_uuid(),
+  organization_id uuid not null,
+  site_id uuid not null,
+  slug text not null check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$'),
+  title text not null check (char_length(title) between 1 and 200),
+  draft_blocks jsonb not null default '[]'::jsonb check (jsonb_typeof(draft_blocks)='array'),
+  updated_at timestamptz not null default now(),
+  unique(site_id,slug),
+  foreign key(site_id,organization_id)
+    references public.mg_sites(id,organization_id) on delete cascade
+);
+create index mg_v40_pages_org_site_idx on public.mg_pages(organization_id,site_id);
+
+-- Editors/viewers are scoped to explicitly assigned sites. Only trusted backend
+-- may assign scope/role; the Data API will not get write grants in V40.
+create table public.mg_membership_site_scopes (
+  organization_id uuid not null,
+  user_id uuid not null,
+  site_id uuid not null,
+  granted_at timestamptz not null default now(),
+  primary key (organization_id,user_id,site_id),
+  foreign key (organization_id,user_id)
+    references public.mg_memberships(organization_id,user_id) on delete cascade,
+  foreign key (site_id,organization_id)
+    references public.mg_sites(id,organization_id) on delete cascade
+);
+create index mg_v40_scopes_user_site_idx
+  on public.mg_membership_site_scopes(user_id,organization_id,site_id);
+
+-- Privileged staff never automatically gets tenant data access in browser.
+create table mg_private.mg_staff_roles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  role text not null check (role in (
+    'SUPERADMIN','OPERATIONS_ADMIN','BILLING_MANAGER','SUPPORT_AGENT','DESIGNER','AUDITOR'
+  )),
+  granted_at timestamptz not null default now()
+);
+
+create table mg_private.mg_audit_events (
+  id bigint generated always as identity primary key,
+  actor_id uuid,
+  organization_id uuid,
+  action text not null check (char_length(action) between 1 and 100),
+  details jsonb not null default '{}'::jsonb check (jsonb_typeof(details)='object'),
+  happened_at timestamptz not null default now()
+);
+
+-- Mandatory defense even if a later step fails. This draft creates NO policies.
+alter table public.mg_profiles enable row level security;
+alter table public.mg_organizations enable row level security;
+alter table public.mg_memberships enable row level security;
+alter table public.mg_sites enable row level security;
+alter table public.mg_pages enable row level security;
+alter table public.mg_membership_site_scopes enable row level security;
+alter table mg_private.mg_staff_roles enable row level security;
+alter table mg_private.mg_audit_events enable row level security;
+
+-- Data API writes denied for both anon and authenticated, including legacy grants.
+revoke all on table public.mg_profiles,public.mg_organizations,
+ public.mg_memberships,public.mg_sites,public.mg_pages,
+ public.mg_membership_site_scopes from public,anon,authenticated;
+revoke all on table mg_private.mg_staff_roles,mg_private.mg_audit_events
+ from public,anon,authenticated;
+
+-- Metadata and manual catalog changes by trusted server only in future stages.
+-- No seed users, tenants, credentials, public releases, routes or live HTTP here.
+commit;
