@@ -1,0 +1,57 @@
+{
+  "format": "mg-web-studio/v53-rls-runtime-review",
+  "version": 53,
+  "date": "2026-10-20",
+  "branch": "feature/mg-digital-v5-web-services",
+  "scope": "STAGING_PGTAP_AND_TRANSACTIONAL_SYNTHETIC_RLS_TESTS",
+  "target": {
+    "projectName": "MG WEB STUDIO CLOUD - STAGING",
+    "projectId": "yefcgjtovfnsqtdjdsod",
+    "region": "sa-east-1",
+    "postgresVersion": "17.11.0.003",
+    "status": "ACTIVE_HEALTHY"
+  },
+  "extension": {
+    "name": "pgtap",
+    "version": "1.3.3",
+    "schema": "extensions",
+    "migrationName": "mg_web_studio_v53_enable_pgtap_staging",
+    "migrationVersion": "20261020183045"
+  },
+  "tests": {
+    "planned": 56,
+    "passed": 56,
+    "failed": 0,
+    "invalidHarnessRuns": 2,
+    "validRuntimeMatrix": true,
+    "roles": [
+      "CLIENT_OWNER tenant A",
+      "CLIENT_EDITOR tenant A scoped to one site",
+      "CLIENT_VIEWER tenant A without scope",
+      "CLIENT_OWNER tenant B"
+    ],
+    "publicTablesCovered": 12,
+    "staticPrivilegeChecks": 8,
+    "authPostgrestE2e": false,
+    "fixturesTransactional": true,
+    "rollbackExecuted": true,
+    "authUsersAfter": 0,
+    "mgTableRowsAfter": 0
+  },
+  "status": {
+    "rlsRuntime": "PASSED_56_OF_56",
+    "futureDefaultAcl": "OPEN",
+    "v45MigrationHistoryReconciliation": "PENDING",
+    "backendAuthPostgrest": "NOT_TESTED",
+    "explainPlans": "PENDING",
+    "backupRestore": "PENDING",
+    "production": "NO_GO"
+  },
+  "authorization": {
+    "pgtapOnStaging": true,
+    "syntheticFixturesOnStaging": true,
+    "productionChange": false,
+    "deployment": false,
+    "paidServices": false
+  }
+}
