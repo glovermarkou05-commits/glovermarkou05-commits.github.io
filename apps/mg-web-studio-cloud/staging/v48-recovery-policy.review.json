@@ -1,0 +1,83 @@
+{
+  "format": "mg-web-studio/v48-recovery-policy-review",
+  "version": 48,
+  "date": "2026-10-20",
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "scope": "RECOVERY_POLICY_DECISIONS_ONLY_NO_DATABASE_ACTIONS",
+  "status": "WAITING_FOR_OWNER_DECISIONS",
+  "strategyProposal": "EMPTY_SYNTHETIC_STAGING_REBUILD",
+  "strategyApproved": false,
+  "dataBoundary": "SYNTHETIC_ONLY_UNTIL_A_SEPARATE_POLICY_IS_APPROVED",
+  "policy": {
+    "owner": null,
+    "retentionDays": null,
+    "rpoHours": null,
+    "rtoHours": null,
+    "isolatedRestoreTarget": null,
+    "encryptionCustody": null
+  },
+  "recoveryNotes": {
+    "preCommitFailure": "A transaction can roll back statements before COMMIT; this remains untested in PostgreSQL.",
+    "postCommitFailure": "No automatic rollback is assumed. Any compensating migration or restore needs separate review and approval.",
+    "logicalDumpLimitations": "A standard database dump does not by itself include managed auth/storage data or Storage object binaries; coverage must be specified separately."
+  },
+  "authorizations": {
+    "createBackup": false,
+    "verifyBackup": false,
+    "restoreTest": false,
+    "postgresDdlTest": false,
+    "installV45": false,
+    "applyMigration": false,
+    "production": false,
+    "paidServices": false,
+    "modifyOtherProjects": false,
+    "deleteProject": false
+  },
+  "gates": [
+    {
+      "id": "G48-01",
+      "status": "PROPOSAL_ONLY",
+      "label": "Synthetic-only rebuild strategy"
+    },
+    {
+      "id": "G48-02",
+      "status": "PENDING_OWNER",
+      "label": "Custodian and encrypted backup custody"
+    },
+    {
+      "id": "G48-03",
+      "status": "PENDING_OWNER",
+      "label": "Retention, RPO and RTO"
+    },
+    {
+      "id": "G48-04",
+      "status": "PENDING_DESTINATION",
+      "label": "Separate isolated restore target"
+    },
+    {
+      "id": "G48-05",
+      "status": "NOT_AUTHORIZED",
+      "label": "Backup/restore rehearsal"
+    },
+    {
+      "id": "G48-06",
+      "status": "NOT_AUTHORIZED",
+      "label": "PostgreSQL 17 SQL parse/DDL test"
+    },
+    {
+      "id": "G48-07",
+      "status": "NOT_AUTHORIZED",
+      "label": "V45 installation in Supabase STAGING"
+    }
+  ],
+  "decision": {
+    "policyApproved": false,
+    "backupReady": false,
+    "restoreReady": false,
+    "postgresTestReady": false,
+    "installationReady": false,
+    "productionGo": false
+  },
+  "next": "Resolve policy fields and destination explicitly. Do not infer approval for backup, restore, PostgreSQL DDL, Supabase changes or production."
+}
