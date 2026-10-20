@@ -1,0 +1,49 @@
+{
+  "format": "mg-web-studio/v55-function-and-recovery-audit",
+  "version": 55,
+  "date": "2026-10-20",
+  "branch": "feature/mg-digital-v5-web-services",
+  "target": {
+    "projectId": "yefcgjtovfnsqtdjdsod",
+    "projectName": "MG WEB STUDIO CLOUD - STAGING",
+    "postgresVersion": "17.11.0.003"
+  },
+  "functionAudit": {
+    "schema": "public",
+    "functionCount": 0,
+    "securityDefinerCount": 0,
+    "anonExecutableCount": 0,
+    "authenticatedExecutableCount": 0,
+    "postgresFutureFunctionDefaults": "ANON_AUTHENTICATED_SERVICE_ROLE_PRESENT_AND_UNCHANGED"
+  },
+  "roleBoundary": {
+    "currentUser": "postgres",
+    "currentUserSuperuser": false,
+    "currentUserMemberOfSupabaseAdmin": false,
+    "supabaseAdminSuperuser": true,
+    "supabaseAdminDefaults": "UNCHANGED"
+  },
+  "v54": {
+    "version": "20261020191612",
+    "postgresPublicTablesSequences": "ANON_AUTHENTICATED_REVOKED_SERVICE_ROLE_PRESERVED"
+  },
+  "recovery": {
+    "v41Status": "RECOVERY_NOT_TESTED",
+    "backupCreated": false,
+    "restorePerformed": false,
+    "toolingNote": "No read-only backup inventory tool in connector; restore action deliberately not called",
+    "nextCandidate": "logical export from staging; isolated local PostgreSQL 17 restore after approval"
+  },
+  "constraints": {
+    "paidServicesActivated": false,
+    "productionTouched": false,
+    "deployment": false
+  },
+  "status": {
+    "readOnlyAuditComplete": true,
+    "production": "NO_GO",
+    "recoveryTest": "PENDING",
+    "supabaseAdminDefaults": "PENDING",
+    "futureFunctionPolicy": "PENDING"
+  }
+}
