@@ -1,0 +1,54 @@
+-- MG WEB STUDIO CLOUD · V41 · REVISION DE PERMISOS POR DEFECTO
+-- TODO EL ARCHIVO SON COMENTARIOS. NO ES MIGRACION NI AUTORIZA SQL.
+-- Supabase Docs: https://supabase.com/docs/guides/api/securing-your-api
+-- Riesgo V41-01: privilegios implícitos para nuevos objetos, según rol creador
+-- y pg_default_acl. V40 revoca grants de objetos nombrados en el borrador,
+-- pero NO define qué ocurrirá al añadir una tabla/función/secuencia futura.
+--
+-- PROCEDIMIENTO FUTURO (NO EJECUTADO):
+-- 1. En STAGING aislado y bajo autorización SQL separada, inspeccionar
+--    roles creadores reales y pg_default_acl de public y mg_private.
+-- 2. Confirmar versión/plataforma: Supabase está cambiando sus defaults;
+--    NO asumir que las políticas de un proyecto equivalen a las de otro.
+-- 3. Antes de nuevas tablas, proponer para cada rol creador exacto un control
+--    de privilegios futuros. El siguiente es un EJEMPLO de la documentación,
+--    no se aplica automáticamente y el rol 'postgres' debe verificarse:
+--
+-- EJEMPLO COMENTADO 1:
+-- alter default privileges for role postgres in schema public
+--   revoke select, insert, update, delete on tables from anon, authenticated, service_role;
+--
+-- EJEMPLO COMENTADO 2:
+-- alter default privileges for role postgres in schema public
+--   revoke execute on functions from anon, authenticated, service_role;
+--
+-- EJEMPLO COMENTADO 3:
+-- alter default privileges for role postgres in schema public
+--   revoke usage, select on sequences from anon, authenticated, service_role;
+--
+-- EJEMPLO COMENTADO 4:
+-- alter default privileges for role postgres in schema public
+--   revoke execute on functions from public;
+--
+-- 4. Revalidar que roles/objetos internos administrados por Supabase mantienen
+--    las concesiones requeridas por la plataforma. Una revocación agresiva
+--    puede interrumpir servicios internos, por eso no usar scripts a ciegas.
+-- 5. Mantener un esquema de API mínimo o desactivar Data API si ningún
+--    cliente necesita lectura directa. Esta es una configuración futura.
+-- 6. Añadir prueba negativa: crear tabla/función/secuencia NUEVA controlada
+--    en aislamiento, verificar que anon/authenticated NO reciben permisos
+--    de forma implícita, y borrar solo por un plan posterior revisado.
+-- 7. Para tablas explícitamente expuestas, conceder SELECT o DML por objeto
+--    junto a RLS y políticas, no solo TO authenticated indiscriminadamente.
+-- 8. Revisar que SECURITY DEFINER y EXECUTE TO PUBLIC no se activen al crear
+--    funciones futuras; nunca distribuir service_role ni secret keys al web.
+--
+-- OTROS HALLAZGOS V41:
+-- - mg_private.mg_audit_events.organization_id no tiene FK en V40;
+--   decidir FK/retención para evitar registros huérfanos y preservar historia.
+-- - mg_private.mg_proposal_outbox no define clave única de evento de negocio;
+--   NO activar workers antes de idempotencia/atomicidad real.
+-- - published queda bloqueado hasta invariante Home y publicación real.
+--
+-- Pruebas reales de pg_default_acl, grants, RLS, MFA, backup/restore: 0.
+-- STAGING: SIN SQL EJECUTADO | PRODUCCION: NO GO.
