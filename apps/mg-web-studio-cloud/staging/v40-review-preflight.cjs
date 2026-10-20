@@ -149,9 +149,10 @@ function check(files){
  if(!siteStatus||!siteStatus.includes("'draft'")||!siteStatus.includes("'review'")||
   !siteStatus.includes("'suspended'")||siteStatus.includes("'published'"))
  add("PUBLISHED_SITE_UNSAFE");
- if(!/unique\s*\(\s*site_id\s*,\s*slug\s*\)/i.test(sources[0])||
-  !/slug\s+text\s+not\s+null\s+check\s*\(\s*slug\s*~/i.test(sources[0])||
-  !/foreign\s+key\s*\(\s*site_id\s*,\s*organization_id\s*\)/i.test(sources[0]))
+ const pageBlock=(sources[0].match(/create\s+table\s+public\.mg_pages\s*\(([\s\S]*?)\n\);/i)||[])[1]||"";
+ if(!/unique\s*\(\s*site_id\s*,\s*slug\s*\)/i.test(pageBlock)||
+  !/slug\s+text\s+not\s+null\s+check\s*\(\s*slug\s*~/i.test(pageBlock)||
+  !/foreign\s+key\s*\(\s*site_id\s*,\s*organization_id\s*\)/i.test(pageBlock))
  add("HOME_OR_TENANT_CONSTRAINT_MISSING");
  const proposalBlock=(sources[1].match(/create\s+table\s+public\.mg_site_proposals\s*\(([\s\S]*?)\n\);/i)||[])[1]||"";
  if(!/status\s+text\s+not\s+null\s+default\s+'draft'/i.test(proposalBlock)||
