@@ -1,0 +1,97 @@
+{
+  "format": "mg-web-studio/v52-install-audit-review",
+  "version": 52,
+  "date": "2026-10-20",
+  "branch": "feature/mg-digital-v5-web-services",
+  "scope": "AUTHORIZED_V45_STAGING_INSTALL_AND_READ_ONLY_CATALOG_AUDIT",
+  "target": {
+    "projectName": "MG WEB STUDIO CLOUD - STAGING",
+    "projectId": "yefcgjtovfnsqtdjdsod",
+    "region": "sa-east-1",
+    "postgresVersion": "17.11.0.003",
+    "status": "ACTIVE_HEALTHY"
+  },
+  "install": {
+    "sourcePath": "db/v45-drafts/INSTALL_OBJECT_SCOPED.review.sql.txt",
+    "sourceBlobSha": "135ff2c25d935d87e5c8e9e0f9189705cd40b411",
+    "migrationName": "mg_web_studio_v45_object_scoped_security",
+    "migrationVersion": "20261020181753",
+    "success": true,
+    "repoCanonicalMigrationAdded": false
+  },
+  "catalog": {
+    "tables": 16,
+    "publicTables": 12,
+    "privateTables": 4,
+    "rlsEnabled": 16,
+    "rows": 0,
+    "policies": 12,
+    "policiesSelectAuthenticated": 12,
+    "anonTablePrivileges": 0,
+    "authenticatedPublicSelect": 12,
+    "authenticatedDml": 0,
+    "authenticatedPrivatePrivileges": 0,
+    "privateSchemaUsageBrowser": false,
+    "privateSequences": 2,
+    "privateSequenceBrowserAccess": 0,
+    "privateSequenceServiceRoleUsageSelect": 2,
+    "owner": "postgres"
+  },
+  "serviceRole": {
+    "tablesCrudGranted": 16,
+    "applicationEndpointsTested": false
+  },
+  "defaultAcl": {
+    "entries": 6,
+    "creatorRoles": [
+      "postgres",
+      "supabase_admin"
+    ],
+    "scope": "public",
+    "objectTypes": [
+      "tables",
+      "sequences",
+      "functions"
+    ],
+    "broadPublicOrBrowserDefaults": true,
+    "changed": false
+  },
+  "advisors": {
+    "securityRlsEnabledNoPolicy": 4,
+    "performanceUnindexedForeignKeys": 14,
+    "performanceUnusedIndexes": 9,
+    "staticV50FkGapCount": 10,
+    "reconciliation": "PENDING_EXPLAIN_AND_FK_COVERAGE_REVIEW"
+  },
+  "tests": {
+    "staticV45Checks": "49/49",
+    "nodeTests": "22/22",
+    "pgTapExecuted": false,
+    "browserRoleMatrixExecuted": false,
+    "explainAnalyzeExecuted": false,
+    "fixturesInserted": false,
+    "backupPerformed": false,
+    "restorePerformed": false
+  },
+  "status": {
+    "stagingSchemaInstalled": true,
+    "aclFutureDefaults": "OPEN",
+    "migrationHistoryReconciliation": "PENDING",
+    "backend": "NOT_TESTED",
+    "rlsRuntime": "PENDING",
+    "indexPlans": "PENDING",
+    "recovery": "PENDING",
+    "production": "NO_GO"
+  },
+  "decision": "V45_INSTALLED_STAGING_CATALOG_VERIFIED_RUNTIME_GATES_PENDING",
+  "authorization": {
+    "v45StagingDdl": true,
+    "readOnlyCatalog": true,
+    "additionalDdl": false,
+    "syntheticData": false,
+    "restore": false,
+    "deployment": false,
+    "productionChange": false,
+    "paidServices": false
+  }
+}
