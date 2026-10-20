@@ -1,0 +1,48 @@
+# MG WEB STUDIO CLOUD — V53 | Prueba runtime RLS con pgTAP
+
+**Fecha:** 20 de octubre de 2026  
+**Rama:** `feature/mg-digital-v5-web-services`  
+**Proyecto:** MG WEB STUDIO CLOUD - STAGING · `yefcgjtovfnsqtdjdsod` · PostgreSQL 17.11.0.003 · sa-east-1  
+**Resultado:** 56/56 aserciones pgTAP correctas. Fixtures temporales revertidos.
+
+## Alcance ejecutado
+
+- Se verificó el proyecto de STAGING activo y pgTAP 1.3.3.
+- Se habilitó pgTAP en `extensions`; Supabase registró `mg_web_studio_v53_enable_pgtap_staging`, versión `20261020183045`.
+- La suite creó cuatro identidades sintéticas sin contraseña, dos organizaciones, tres sitios y relaciones de muestra dentro de una transacción.
+- Las consultas RLS se ejecutaron como `authenticated` mediante `SET LOCAL ROLE authenticated`, con `request.jwt.claim.sub` de cada identidad.
+- La prueba cubrió las 12 tablas públicas para owner A, editor A con scope de un solo sitio, viewer A sin scope y owner B de otro tenant.
+- Ocho aserciones adicionales revisaron grants de anon, ausencia de DML para authenticated y aislamiento del esquema `mg_private` frente a roles de navegador; se comprobó acceso de lectura de `service_role` a una tabla privada.
+
+## Interpretación
+
+La suite ejercita la evaluación de RLS en PostgreSQL para claims simulados. No crea cuentas de acceso ni usa credenciales; por eso **no equivale a un login real de Supabase Auth ni a una solicitud HTTP por PostgREST**. El backend y su validación de actor siguen sin probarse.
+
+La primera ejecución del harness devolvió 47 fallos porque el generador no había aplicado el cambio de rol; la transacción igualmente revirtió los fixtures. Tras corregir el harness, la ejecución válida fue 56/56. No se cuentan los resultados de aquella ejecución inválida como fallos de política.
+
+## Limpieza comprobada
+
+Después de la prueba, `auth.users` y cada una de las 16 tablas MG quedaron en cero filas. El script finaliza con `ROLLBACK`. No se modificaron políticas, grants, filas de usuario persistentes, ni otros proyectos.
+
+## Límites que continúan abiertos
+
+- **Defaults ACL:** seis entradas amplias en `pg_default_acl` para `postgres` y `supabase_admin` siguen sin corregir; evitar crear objetos públicos hasta una revisión aprobada.
+- **Trazabilidad V45:** la migración aplicada V45 sigue sin archivo canónico sincronizado; V53 sí tiene el SQL exacto versionado en la rama. No rebasar ni desplegar hasta reconciliar el historial V45.
+- **Backend:** endpoints, validación de actor/organización/sitio e integración Auth/PostgREST aún no se probaron.
+- **Rendimiento:** EXPLAIN con cardinalidad sintética y resolución de 14 alertas FK vs. 10 brechas V50 siguen pendientes.
+- **Recuperación:** backup/restore real, RPO/RTO, retención, destino y aprobación siguen pendientes.
+- **Producción/publicación:** NO GO. No se cambió producción, no se desplegó y no se activó ningún servicio pago.
+
+## Registro
+
+| Etapa | Estado |
+|---|---|
+| V46 | 72/72 comprobaciones estáticas reportadas. |
+| V47 | 8/8 pruebas locales reportadas. |
+| V48 | Recuperación incompleta; parámetros operativos pendientes. |
+| V49–V52 | Revisión estática, instalación V45 y auditoría del catálogo completadas; gates runtime documentados. |
+| V53 | pgTAP instalado solo en STAGING; matriz RLS 56/56; fixtures limpiados y cero filas confirmadas. |
+| V54 | Resolver defaults ACL y trazabilidad de migración V45 antes de objetos públicos o sincronización/despliegue. |
+| V55+ | Backend/Auth real, planes, recuperación aprobada y publicación autorizada pendientes. |
+
+Archivos reproducibles: `tests/v53-rls-runtime.test.sql`, `staging/v53-rls-runtime.review.json`, y migración V53 en `supabase/migrations/`.
