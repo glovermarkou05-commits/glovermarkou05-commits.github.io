@@ -1,36 +1,47 @@
-# MG WEB STUDIO CLOUD — V54 | Revisión de defaults ACL y trazabilidad
+# MG WEB STUDIO CLOUD — V54 | Defaults ACL y trazabilidad
 
 **Fecha:** 20 de octubre de 2026  
 **Rama:** `feature/mg-digital-v5-web-services`  
-**Proyecto inspeccionado:** MG WEB STUDIO CLOUD - STAGING · `yefcgjtovfnsqtdjdsod` · PostgreSQL 17.11.0.003  
-**Estado:** análisis de solo lectura; ningún ACL se modificó.
+**Proyecto:** MG WEB STUDIO CLOUD - STAGING · `yefcgjtovfnsqtdjdsod` · PostgreSQL 17.11.0.003  
+**Estado:** V54 aplicado y verificado solo en STAGING. Producción y publicación siguen **NO GO**.
 
-## Hallazgos confirmados
+## Cambio V54 aplicado
 
-La consulta a `pg_default_acl` devolvió seis entradas en el esquema `public`: tablas, secuencias y funciones para creadores `postgres` y `supabase_admin`. Sus ACL explícitos incluyen `anon`, `authenticated` y `service_role`. Se conservaron sin cambios las entradas de `storage`, `graphql`, `graphql_public`, `realtime`, `auth` y `extensions`.
+Migración registrada en Supabase con versión `20261020191612`, nombre `mg_web_studio_v54_postgres_public_table_sequence_defaults`. Fuente canónica: `supabase/migrations/20261020191612_mg_web_studio_v54_postgres_public_table_sequence_defaults.sql`.
 
-La sesión disponible ejecuta como `postgres`, que no es superusuario. `pg_has_role(postgres, supabase_admin, MEMBER)` devolvió false. No se tiene una ruta aprobada para cambiar los defaults pertenecientes a `supabase_admin`; no se intentó conceder membresía ni elevar privilegios.
+El cambio se limita a los defaults para objetos futuros creados por `postgres` dentro de `public`:
 
-PostgreSQL 17 establece que los defaults por esquema se suman a los globales: un REVOKE por esquema no elimina un privilegio concedido globalmente. En particular, EXECUTE se concede normalmente a PUBLIC para funciones nuevas. Retirar ese permiso exige un cambio global para el rol creador, con efecto en todos los esquemas donde ese rol cree funciones, o revocaciones específicas por función. Por eso el arreglo de funciones queda separado y bloqueado para revisión de impacto. [Documentación PostgreSQL 17: ALTER DEFAULT PRIVILEGES](https://www.postgresql.org/docs/17/sql-alterdefaultprivileges.html).
+- Revoca los privilegios por defecto de `anon` y `authenticated` sobre TABLES.
+- Revoca los privilegios por defecto de `anon` y `authenticated` sobre SEQUENCES.
+- Conserva los defaults de `service_role`.
+- No cambia funciones, grants de objetos existentes, otros esquemas ni defaults de `supabase_admin`.
 
-## Propuesta de alcance para la próxima puerta
+## Verificación posterior
 
-1. Preflight en STAGING de usuario efectivo, membresías, seis entradas de `public` y privilegios desglosados por ACL.
-2. Si se autoriza y la capacidad del rol lo permite, retirar futuros grants explícitos de `anon` y `authenticated` sobre TABLES y SEQUENCES creadas en `public` por `postgres`. Mantener la concesión actual de `service_role` solo si sigue aprobada.
-3. No modificar defaults de `supabase_admin` con la sesión actual; definir un camino privilegiado soportado primero.
-4. Resolver funciones por separado: no considerar suficiente un REVOKE por esquema para PUBLIC. Hasta aprobar la estrategia, no añadir funciones a `public`; usar revocaciones por objeto revisadas o una decisión global con análisis de impacto.
-5. Después de cualquier cambio autorizado, comprobar `pg_default_acl` y crear objetos temporales de prueba en una transacción para confirmar los privilegios efectivos. Ese test requerirá autorización de DDL.
-6. No tocar los ACL de objetos existentes V45; defaults solo aplican a objetos futuros.
+- `pg_default_acl`: en TABLES y SEQUENCES de `postgres/public` ya no aparecen `anon` ni `authenticated`; `service_role` permanece. Los defaults de funciones de `postgres` permanecen como estaban.
+- Las tres entradas de `supabase_admin/public` (TABLES, SEQUENCES y FUNCTIONS) conservan sus ACL previos.
+- Los grants de las 12 tablas MG en `public` siguen intactos: `authenticated` conserva SELECT y `service_role` conserva sus privilegios operativos.
+- `auth.users` y las 16 tablas MG de `public` y `mg_private`: 0 filas cada una.
+- Security Advisor devuelve 4 avisos INFO `rls_enabled_no_policy` en tablas `mg_private`; se mantienen aisladas del esquema expuesto y sin políticas deliberadamente. No se modificaron en V54.
+- No se ejecutó backup, restore, despliegue ni cambio en producción.
 
-El archivo `staging/v54-default-acl-remediation.review.sql.txt` contiene el candidato comentado. Todas las líneas DDL están comentadas y no se deben registrar como migración ni ejecutar.
+## Límites y trabajo pendiente
 
-## Trazabilidad V45 y V53
+PostgreSQL suma los defaults por esquema a los globales: un REVOKE por esquema no puede quitar un grant global. Las funciones nuevas reciben normalmente EXECUTE para PUBLIC; la mitigación requiere una decisión de alcance global por rol creador o revocaciones por función. Se deja pendiente el análisis de impacto y no se agregaron cambios a funciones.
 
-- Se volvió a leer la fuente V45 en la rama; su blob sigue siendo `135ff2c25d935d87e5c8e9e0f9189705cd40b411`, igual al hash informado al aplicar.
-- Supabase registra V45 `20261020181753` y V53 `20261020183045`.
-- V53 ya tiene su fuente en `supabase/migrations/`; V45 sigue en `db/v45-drafts/INSTALL_OBJECT_SCOPED.review.sql.txt` y no se creó copia canónica. No se rebasó, sincronizó ni desplegó.
-- La conciliación requiere decidir cómo incorporar V45 al historial del repositorio sin ejecutarla de nuevo en STAGING ni en otro proyecto.
+La sesión STAGING disponible opera como `postgres`, no es superusuario y no pertenece a `supabase_admin`. No se cambió ni se intentó elevar el rol propietario de esos defaults.
 
-## Puertas pendientes
+La migración V45 sigue registrada en Supabase como `20261020181753`, pero su fuente permanece en `db/v45-drafts/INSTALL_OBJECT_SCOPED.review.sql.txt`; aún no existe copia canónica en `supabase/migrations/`. No se reejecutó ni se alteró su historial.
 
-Defaults ACL en `public`, autoridad para modificar defaults de `supabase_admin`, función pública/PUBLIC EXECUTE, reconciliación canónica V45, backend/Auth/PostgREST, EXPLAIN e índices, y prueba real de backup/restore siguen abiertos. Producción y publicación siguen **NO GO**.
+## Registro de etapas
+
+| Etapa | Estado |
+|---|---|
+| V45 — esquema y RLS base | Aplicado previamente en STAGING; fuente canónica pendiente de conciliación |
+| V53 — pgTAP y RLS runtime | 56/56 aserciones; fixtures transaccionales revertidos |
+| V54 — defaults de tablas/secuencias | Aplicado y verificado en STAGING |
+| Defaults de `supabase_admin` | Pendiente; requiere una ruta privilegiada soportada |
+| Defaults/ejecución pública de funciones | Pendiente; requiere revisión de impacto |
+| Backend/Auth/PostgREST, EXPLAIN/índices y restore real | Pendiente |
+| Producción/publicación | NO GO; requiere autorización específica |
+
