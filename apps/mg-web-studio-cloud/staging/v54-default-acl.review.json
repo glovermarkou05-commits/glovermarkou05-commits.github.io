@@ -1,0 +1,53 @@
+{
+  "format": "mg-web-studio/v54-default-acl-review",
+  "version": 54,
+  "date": "2026-10-20",
+  "branch": "feature/mg-digital-v5-web-services",
+  "target": {
+    "projectId": "yefcgjtovfnsqtdjdsod",
+    "projectName": "MG WEB STUDIO CLOUD - STAGING",
+    "postgresVersion": "17.11.0.003"
+  },
+  "databaseObservation": {
+    "publicDefaultAclEntries": 6,
+    "creators": [
+      "postgres",
+      "supabase_admin"
+    ],
+    "objectTypes": [
+      "tables",
+      "sequences",
+      "functions"
+    ],
+    "explicitlyGrantedBrowserRoles": [
+      "anon",
+      "authenticated"
+    ],
+    "currentUser": "postgres",
+    "currentUserSuperuser": false,
+    "currentUserMemberOfSupabaseAdmin": false,
+    "changed": false
+  },
+  "v45Trace": {
+    "databaseVersion": "20261020181753",
+    "sourceBlobSha": "135ff2c25d935d87e5c8e9e0f9189705cd40b411",
+    "canonicalMigrationInRepo": false,
+    "changed": false
+  },
+  "v53": {
+    "databaseVersion": "20261020183045",
+    "pgtapInstalled": "1.3.3",
+    "rlsTestsPassed": "56/56"
+  },
+  "proposed": {
+    "publicTablesAndSequences": "REVIEW_ONLY",
+    "supabaseAdminDefaults": "BLOCKED_CURRENT_ROLE",
+    "functionPublicExecute": "DEFERRED_GLOBAL_IMPACT_REVIEW",
+    "existingObjectAclChanges": false
+  },
+  "status": {
+    "ddlApplied": false,
+    "production": "NO_GO",
+    "deployment": false
+  }
+}
