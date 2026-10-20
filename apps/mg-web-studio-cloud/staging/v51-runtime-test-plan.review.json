@@ -1,0 +1,39 @@
+{
+  "format": "mg-web-studio/v51-runtime-validation-plan",
+  "version": 51,
+  "date": "2026-10-20",
+  "branch": "feature/mg-digital-v5-web-services",
+  "scope": "DOCUMENTATION_AND_STATIC_PROTOCOL_TESTS_ONLY",
+  "sourceV45": {
+    "blobSha": "135ff2c25d935d87e5c8e9e0f9189705cd40b411",
+    "status": "REVIEW_DRAFT_UNEXECUTED"
+  },
+  "artifacts": [
+    "docs/V51-PLAN-VALIDACION-POSTGRES.md",
+    "tests/v51-runtime-validation-plan.test.cjs"
+  ],
+  "results": {
+    "gates": 7,
+    "sqlStatementsExecuted": 0,
+    "migrationsApplied": 0,
+    "supabaseConnections": 0,
+    "restoresPerformed": 0
+  },
+  "status": {
+    "staging": "NO_GO",
+    "production": "NO_GO",
+    "recoveryPolicyV48": "PENDING",
+    "specificAuthorizationRequiredForRuntime": true
+  },
+  "decision": "RUNTIME_PLAN_ONLY",
+  "authorization": {
+    "githubDevelopmentBranchCommit": true,
+    "readOnlySql": false,
+    "ddl": false,
+    "migration": false,
+    "restore": false,
+    "deployment": false,
+    "productionChange": false,
+    "paidServices": false
+  }
+}
