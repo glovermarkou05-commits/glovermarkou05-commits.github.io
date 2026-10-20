@@ -1,0 +1,42 @@
+{
+  "format": "mg-web-studio/v50-index-audit-review",
+  "version": 50,
+  "date": "2026-10-20",
+  "branch": "feature/mg-digital-v5-web-services",
+  "scope": "STATIC_GITHUB_DRAFT_REVIEW_ONLY",
+  "source": {
+    "path": "db/v45-drafts/INSTALL_OBJECT_SCOPED.review.sql.txt",
+    "blobSha": "135ff2c25d935d87e5c8e9e0f9189705cd40b411"
+  },
+  "artifacts": [
+    "docs/V50-AUDITORIA-INDICES-POSTGRES.md",
+    "tests/v50-postgres-index-review.test.cjs"
+  ],
+  "results": {
+    "tables": 16,
+    "foreignKeys": 23,
+    "uncoveredForeignKeys": 10,
+    "rlsFilterIndexGaps": 1,
+    "sqlExecuted": 0,
+    "migrationsApplied": 0,
+    "postgresConnections": 0
+  },
+  "status": {
+    "candidateIndexesNeedRuntimePlans": true,
+    "sqlV45Modified": false,
+    "stagingRuntimeQa": "PENDING_SPECIFIC_AUTHORIZATION",
+    "restoreTest": "PENDING",
+    "production": "NO_GO"
+  },
+  "decision": "DOCUMENT_CANDIDATES_ONLY",
+  "authorization": {
+    "developmentBranchReview": true,
+    "readOnlySQL": false,
+    "ddl": false,
+    "migration": false,
+    "restore": false,
+    "deployment": false,
+    "productionChange": false,
+    "paidServices": false
+  }
+}
