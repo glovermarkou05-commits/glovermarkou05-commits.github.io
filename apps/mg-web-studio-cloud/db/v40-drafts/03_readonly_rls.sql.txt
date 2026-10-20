@@ -1,0 +1,164 @@
+-- MG WEB STUDIO CLOUD / V40 / DRAFT 03: EXPLICIT READ-ONLY RLS
+-- REVIEW-ONLY SQL TEXT; DO NOT EXECUTE WITHOUT A SEPARATE STAGING SQL APPROVAL.
+-- Depends on drafts 01, 02. NO authenticated/anon writes, NO anon SELECT.
+-- No SECURITY DEFINER, no public RPC, no event worker or publish function.
+-- All trusted service_role usage must be server-only and scope-checked at backend.
+begin;
+
+-- Defense: ensure no accidental Data API writes. Previously granted default
+-- privileges MUST be reviewed in real PostgreSQL before future execution.
+revoke all on table
+ public.mg_profiles,public.mg_organizations,public.mg_memberships,
+ public.mg_sites,public.mg_pages,public.mg_membership_site_scopes,
+ public.mg_site_draft_versions,public.mg_site_proposals,
+ public.mg_proposal_revisions,public.mg_proposal_reviews,
+ public.mg_proposal_notifications,public.mg_notification_reads
+ from public,anon,authenticated;
+
+revoke all on schema mg_private from public,anon,authenticated;
+revoke all on table mg_private.mg_staff_roles,mg_private.mg_audit_events,
+ mg_private.mg_proposal_outbox,mg_private.mg_operation_idempotency
+ from public,anon,authenticated;
+
+-- Only SELECT; Authenticated identity is insufficient without row-level scopes.
+grant select on table
+ public.mg_profiles,public.mg_organizations,public.mg_memberships,
+ public.mg_sites,public.mg_pages,public.mg_membership_site_scopes,
+ public.mg_site_draft_versions,public.mg_site_proposals,
+ public.mg_proposal_revisions,public.mg_proposal_reviews,
+ public.mg_proposal_notifications,public.mg_notification_reads
+ to authenticated;
+
+create policy mg_v40_profiles_self on public.mg_profiles
+ for select to authenticated
+ using (user_id = (select auth.uid()));
+
+create policy mg_v40_memberships_self on public.mg_memberships
+ for select to authenticated
+ using (user_id = (select auth.uid()) and status='active');
+
+create policy mg_v40_scope_self on public.mg_membership_site_scopes
+ for select to authenticated
+ using (
+   user_id = (select auth.uid())
+   and exists (
+     select 1 from public.mg_memberships m
+     where m.organization_id=mg_membership_site_scopes.organization_id
+       and m.user_id=(select auth.uid()) and m.status='active'
+   )
+ );
+
+create policy mg_v40_org_active_member on public.mg_organizations
+ for select to authenticated
+ using (status='active' and exists (
+   select 1 from public.mg_memberships m
+   where m.organization_id=mg_organizations.id
+     and m.user_id=(select auth.uid()) and m.status='active'
+ ));
+
+create policy mg_v40_sites_scoped on public.mg_sites
+ for select to authenticated
+ using (exists (
+   select 1 from public.mg_memberships m
+   join public.mg_organizations o
+     on o.id=m.organization_id and o.status='active'
+   where m.organization_id=mg_sites.organization_id
+     and m.user_id=(select auth.uid()) and m.status='active'
+     and (
+       m.role in ('CLIENT_OWNER','CLIENT_ADMIN')
+       or (
+         m.role in ('CLIENT_EDITOR','CLIENT_VIEWER')
+         and exists (
+           select 1 from public.mg_membership_site_scopes sc
+           where sc.organization_id=m.organization_id
+             and sc.user_id=m.user_id
+             and sc.site_id=mg_sites.id
+         )
+       )
+     )
+ ));
+
+-- All site-scoped objects inherit mg_sites visible-to-current-user filtering.
+-- Composite FK ensures each object belongs to the same tenant/site.
+create policy mg_v40_pages_site_read on public.mg_pages
+ for select to authenticated
+ using (exists (
+   select 1 from public.mg_sites s
+   where s.id=mg_pages.site_id and s.organization_id=mg_pages.organization_id
+ ));
+
+create policy mg_v40_drafts_site_read on public.mg_site_draft_versions
+ for select to authenticated
+ using (exists (
+   select 1 from public.mg_sites s
+   where s.id=mg_site_draft_versions.site_id
+     and s.organization_id=mg_site_draft_versions.organization_id
+ ));
+
+create policy mg_v40_proposals_site_read on public.mg_site_proposals
+ for select to authenticated
+ using (exists (
+   select 1 from public.mg_sites s
+   where s.id=mg_site_proposals.site_id
+     and s.organization_id=mg_site_proposals.organization_id
+ ));
+
+create policy mg_v40_revisions_site_read on public.mg_proposal_revisions
+ for select to authenticated
+ using (exists (
+   select 1 from public.mg_sites s
+   where s.id=mg_proposal_revisions.site_id
+     and s.organization_id=mg_proposal_revisions.organization_id
+ ));
+
+create policy mg_v40_reviews_site_read on public.mg_proposal_reviews
+ for select to authenticated
+ using (exists (
+   select 1 from public.mg_sites s
+   where s.id=mg_proposal_reviews.site_id
+     and s.organization_id=mg_proposal_reviews.organization_id
+ ));
+
+create policy mg_v40_notifications_recipient on public.mg_proposal_notifications
+ for select to authenticated
+ using (
+   recipient_user_id=(select auth.uid())
+   and exists (
+     select 1 from public.mg_sites s
+     where s.id=mg_proposal_notifications.site_id
+       and s.organization_id=mg_proposal_notifications.organization_id
+   )
+ );
+
+create policy mg_v40_notification_reads_recipient on public.mg_notification_reads
+ for select to authenticated
+ using (
+   recipient_user_id=(select auth.uid())
+   and exists (
+     select 1 from public.mg_proposal_notifications n
+     where n.id=mg_notification_reads.notification_id
+       and n.recipient_user_id=(select auth.uid())
+   )
+ );
+
+-- The following service_role grants are for FUTURE approved backend services,
+-- not browser applications or anonymous Data API. Server actor/scope validation
+-- is REQUIRED even with service_role since it can bypass row-level security.
+grant select,insert,update,delete on table
+ public.mg_profiles,public.mg_organizations,public.mg_memberships,
+ public.mg_sites,public.mg_pages,public.mg_membership_site_scopes,
+ public.mg_site_draft_versions,public.mg_site_proposals,
+ public.mg_proposal_revisions,public.mg_proposal_reviews,
+ public.mg_proposal_notifications,public.mg_notification_reads
+ to service_role;
+grant usage on schema mg_private to service_role;
+grant select,insert,update,delete on table mg_private.mg_staff_roles,
+ mg_private.mg_audit_events,mg_private.mg_proposal_outbox,
+ mg_private.mg_operation_idempotency to service_role;
+grant usage,select on all sequences in schema mg_private to service_role;
+
+-- This draft does not create Auth users, assign staff roles, call a worker,
+-- expose drafts to anon or grant any DML to authenticated.
+-- A SQL review/pgTAP must still verify recursion, default grants, owner,
+-- PostgreSQL RLS, revoked MFA sessions and tenant/site isolation.
+commit;
