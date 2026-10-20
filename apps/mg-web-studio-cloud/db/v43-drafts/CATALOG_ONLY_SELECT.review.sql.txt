@@ -1,0 +1,81 @@
+-- MG WEB STUDIO CLOUD / V43 / READ-ONLY CATALOG INVENTORY
+-- REVIEW ONLY. NOT AUTHORIZED TO EXECUTE. NO SQL HAS BEEN RUN.
+-- Intended target: exclusively MG WEB STUDIO CLOUD - STAGING.
+-- DO NOT RUN ON PRODUCTION, OTHER PROJECTS OR AN UNVERIFIED ACCOUNT.
+-- Contains only catalog SELECT statements in a READ ONLY transaction.
+-- Results contain role names and object metadata: review privately, do not
+-- commit raw outputs, tokens or connection info to a public repository.
+-- Needs a separate express authorization for read-only SQL.
+-- This does NOT authorize V42 DDL, any migration, functions or publication.
+
+BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ READ ONLY;
+
+-- R01: Current database, executor and PostgreSQL engine metadata only.
+SELECT current_database() AS database_name,
+       current_user AS executing_role,
+       session_user AS session_role,
+       current_setting('server_version') AS server_version;
+
+-- R02: Exact schema owners. Beware: PUBLIC schema defaults vary.
+SELECT n.nspname AS schema_name,
+       pg_get_userbyid(n.nspowner) AS schema_owner,
+       n.nspacl::text AS schema_acl
+FROM pg_catalog.pg_namespace AS n
+WHERE n.nspname IN ('public','mg_private')
+ORDER BY n.nspname;
+
+-- R03: Owner-specific *global and per-schema* default privileges.
+-- A schema-specific REVOKE alone cannot be assumed to cancel any
+-- grants inherited from a global default ACL. Verify catalog facts.
+SELECT d.defaclrole::regrole::text AS creating_role,
+       coalesce(n.nspname,'<global>') AS acl_scope,
+       d.defaclobjtype AS object_type,
+       d.defaclacl::text AS default_grants
+FROM pg_catalog.pg_default_acl AS d
+LEFT JOIN pg_catalog.pg_namespace AS n ON n.oid=d.defaclnamespace
+WHERE n.nspname='public' OR d.defaclnamespace=0
+ORDER BY creating_role,acl_scope,object_type;
+
+-- R04: Known data-api roles and their capabilities (no credentials).
+SELECT r.rolname AS role_name,
+       r.rolcanlogin AS can_login,
+       r.rolbypassrls AS can_bypass_rls
+FROM pg_catalog.pg_roles AS r
+WHERE r.rolname IN ('postgres','anon','authenticated','service_role')
+ORDER BY r.rolname;
+
+-- R05: Existing application-prefixed objects, status, owner and grants.
+-- Captures objects in public and the private MG schema, not row data.
+SELECT n.nspname AS schema_name,
+       c.relname AS object_name,
+       c.relkind AS object_kind,
+       c.relrowsecurity AS rls_enabled,
+       pg_get_userbyid(c.relowner) AS object_owner,
+       c.relacl::text AS object_grants
+FROM pg_catalog.pg_class AS c
+JOIN pg_catalog.pg_namespace AS n ON n.oid=c.relnamespace
+WHERE n.nspname IN ('public','mg_private')
+  AND (c.relname LIKE 'mg\_%' ESCAPE '\' OR n.nspname='mg_private')
+ORDER BY n.nspname,c.relname;
+
+-- R06: Existing MG functions only (metadata, not execution).
+SELECT n.nspname AS schema_name,
+       p.proname AS function_name,
+       pg_get_userbyid(p.proowner) AS function_owner,
+       p.prosecdef AS security_definer,
+       p.proacl::text AS execute_grants
+FROM pg_catalog.pg_proc AS p
+JOIN pg_catalog.pg_namespace AS n ON n.oid=p.pronamespace
+WHERE n.nspname IN ('public','mg_private')
+  AND p.proname LIKE 'mg\_%' ESCAPE '\'
+ORDER BY n.nspname,p.proname;
+
+-- R07: All user tables in public, even non-MG tables, for conflict scan.
+SELECT t.table_schema,t.table_name
+FROM information_schema.tables AS t
+WHERE t.table_schema='public'
+  AND t.table_type='BASE TABLE'
+ORDER BY t.table_name;
+
+-- Read-only closeout (no changes to commit).
+ROLLBACK;
