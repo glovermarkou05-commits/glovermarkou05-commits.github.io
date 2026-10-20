@@ -45,7 +45,11 @@ function verify(m,ddl,recovery){
  p.tables!==16||p.rls!==16||p.selectPolicies!==12||
  p.defaultAclMutations!==0||p.transactions!==1||p.commits!==1||
  p.browserWritesGranted!==false||p.publicPublishingAllowed!==false||
- p.defaultAclGloballyFixed!==false||p.futureTableDefaultAclRiskStillOpen!==true)
+ p.defaultAclGloballyFixed!==false||p.futureTableDefaultAclRiskStillOpen!==true||
+ !/status\s+in\s*\(\s*'draft'\s*,\s*'review'\s*,\s*'suspended'\s*\)/i.test(s)||
+ /status\s+in\s*\([^)]*'published'/i.test(s)||
+ !/create\s+unique\s+index\s+mg_v42_outbox_business_key/i.test(s)||
+ !/create\s+unique\s+index\s+mg_v42_notification_event_recipient_key/i.test(s))
  warn("DDL_CONTRACT");
  if(/\b(?:drop\s+table|truncate\s+|delete\s+from|create\s+function|security\s+definer)\b/i.test(s)||
  /grant\s+(?:all|insert|update|delete)\b[^;]+to\s+authenticated\s*;/i.test(s)||
