@@ -4,7 +4,7 @@
 // Accept ONLY a transport-validated envelope with complete, bounded bodyBytes.
 // The future network transport must preserve rawHeaders and bound streaming reads.
 const { randomUUID } = require('node:crypto');
-const UUID = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
+const UUID = '[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}';
 const ROUTE = new RegExp(`^/api/v1/organizations/(${UUID})/sites/(${UUID})/access$`);
 const TOKEN_NAME = /^[!#$%&'*+.^_`|~0-9A-Za-z-]{1,128}$/;
 const ACCEPTABLE_DENIALS = Object.freeze({
