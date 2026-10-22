@@ -1,0 +1,206 @@
+{
+  "version": "V67",
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "environment": "NOT_SELECTED",
+  "networkAuthorized": false,
+  "databaseAccessAuthorized": false,
+  "restoreAuthorized": false,
+  "deploymentAuthorized": false,
+  "allEvidenceIndependentlyVerified": false,
+  "decision": "NO_GO",
+  "cases": [
+    {
+      "id": "HTTP-01",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "HTTP-02",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "HTTP-03",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "HTTP-04",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "HTTP-05",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "HTTP-06",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "HTTP-07",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "HTTP-08",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "HTTP-09",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "HTTP-10",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "HTTP-11",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "HTTP-12",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "HTTP-13",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "HTTP-14",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "LOAD-01",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "LOAD-02",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "LOAD-03",
+      "evidenceType": "real_http",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "OBS-01",
+      "evidenceType": "review",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "OBS-02",
+      "evidenceType": "review",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "OBS-03",
+      "evidenceType": "review",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "OBS-04",
+      "evidenceType": "review",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "AUTH-01",
+      "evidenceType": "real_auth",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "AUTH-02",
+      "evidenceType": "real_auth",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "AUTH-03",
+      "evidenceType": "real_auth",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "DATA-01",
+      "evidenceType": "real_database",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "DATA-02",
+      "evidenceType": "real_database",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "REC-01",
+      "evidenceType": "restore",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "REC-02",
+      "evidenceType": "restore",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "REC-03",
+      "evidenceType": "restore",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "REC-04",
+      "evidenceType": "restore",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "OPS-01",
+      "evidenceType": "approval",
+      "status": "PENDING",
+      "evidenceRef": null
+    },
+    {
+      "id": "OPS-02",
+      "evidenceType": "approval",
+      "status": "PENDING",
+      "evidenceRef": null
+    }
+  ]
+}
