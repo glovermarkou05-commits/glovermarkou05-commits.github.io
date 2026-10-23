@@ -1,0 +1,71 @@
+name: MG Web Studio V79 Local Capacity Survey - Offline
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v79-local-capacity.yml
+      - apps/mg-web-studio-cloud/server/lab-capacity-v79.cjs
+      - apps/mg-web-studio-cloud/scripts/measure-pg-lab-capacity-v79.cjs
+      - apps/mg-web-studio-cloud/tests/lab-capacity-v79.test.cjs
+      - apps/mg-web-studio-cloud/tests/measure-pg-lab-capacity-v79.test.cjs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v79-offline
+  cancel-in-progress: true
+
+jobs:
+  v79-native:
+    name: Node 22 mock Windows hardware and V70-V78 regressions
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      NODE_ENV: test
+      V70_TEST_ISOLATION: "1"
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout feature commit without stored credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Static syntax and harmless local CLI help
+        run: |
+          node --version
+          node --check server/lab-capacity-v79.cjs
+          node --check scripts/measure-pg-lab-capacity-v79.cjs
+          node --check tests/lab-capacity-v79.test.cjs
+          node --check tests/measure-pg-lab-capacity-v79.test.cjs
+          node scripts/measure-pg-lab-capacity-v79.cjs --help
+      - name: V79 mocked Windows storage memory and CPU, network blocked
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/lab-capacity-v79.test.cjs tests/measure-pg-lab-capacity-v79.test.cjs
+      - name: Regression V78 six-approval lab planning
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pg-lab-authorization-v78.test.cjs tests/pg-lab-runbook-v78.test.cjs
+      - name: Regression V77 PostgreSQL evidence matrix
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pg-catalog-evidence-v77.test.cjs tests/tenant-evidence-matrix-v77.test.cjs
+      - name: Regression V76 security and recovery
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pg-security-review-v76.test.cjs tests/pg-recovery-plan-v76.test.cjs
+      - name: Regression V75 session read-only
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pg-session-reader-v75.test.cjs tests/pg-session-integration-v75.test.cjs
+      - name: Regression V74 JWKS and sessions
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pinned-auth-contract-v74.test.cjs tests/pinned-auth-integration-v74.test.cjs
+      - name: Regression V73 bounded providers
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/bounded-provider-v73.test.cjs tests/resilient-session-integration-v73.test.cjs
+      - name: Regression V72 rotation
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/rotating-session-verifier-v72.test.cjs tests/rotating-session-integration-v72.test.cjs
+      - name: Regression V71 signed JWT
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/jwt-public-verifier-v71.test.cjs tests/jwt-tenant-integration-v71.test.cjs
+      - name: Regression V70 seven native suites
+        run: node scripts/run-v70-native-regressions.cjs --run-local-tests
