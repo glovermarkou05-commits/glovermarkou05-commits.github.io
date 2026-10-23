@@ -1,0 +1,55 @@
+name: MG Web Studio V74 Pinned Auth Contracts - Offline
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v74-auth-contract.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v74-offline
+  cancel-in-progress: true
+
+jobs:
+  v74-native:
+    name: Node 22 V74 pinned auth and prior synthetic regressions
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      NODE_ENV: test
+      V70_TEST_ISOLATION: "1"
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout feature branch without stored credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify syntax
+        run: |
+          node --version
+          node --check server/pinned-auth-contract-v74.cjs
+          node --check tests/pinned-auth-contract-v74.test.cjs
+          node --check tests/pinned-auth-integration-v74.test.cjs
+      - name: Test V74 pinned auth and native tenant integration offline
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pinned-auth-contract-v74.test.cjs tests/pinned-auth-integration-v74.test.cjs
+      - name: Regression V73 offline providers
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/bounded-provider-v73.test.cjs tests/resilient-session-integration-v73.test.cjs
+      - name: Regression V72 session and key rotation
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/rotating-session-verifier-v72.test.cjs tests/rotating-session-integration-v72.test.cjs
+      - name: Regression V71 JWT cryptography
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/jwt-public-verifier-v71.test.cjs tests/jwt-tenant-integration-v71.test.cjs
+      - name: Regression seven V70 suites
+        run: node scripts/run-v70-native-regressions.cjs --run-local-tests
