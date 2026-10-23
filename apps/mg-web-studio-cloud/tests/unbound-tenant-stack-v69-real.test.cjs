@@ -18,7 +18,7 @@ function makeFixture() {
       sqlCalls++;
       assert.match(text, /^SELECT\b/);
       assert.ok(values.every(x => typeof x === 'string'));
-      if (text.includes('mg_organizations')) return {rows:[{id:ORG,status:'active'}]};
+      if (text.includes('mg_organizations')) return {rows:values[0]===ORG?[{id:ORG,status:'active'}]:[]};
       if (text.includes('mg_sites')) return {rows:[{id:SITE,organizationId:ORG,status:'draft'}]};
       if (text.includes('mg_memberships')) return {rows:[{userId:ACTOR,organizationId:ORG,role:'CLIENT_VIEWER',status:active?'active':'revoked'}]};
       if (text.includes('mg_membership_site_scopes')) return {rows:scoped?[{userId:ACTOR,organizationId:ORG,siteId:SITE}]:[]};
