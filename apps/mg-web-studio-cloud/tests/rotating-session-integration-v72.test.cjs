@@ -34,7 +34,7 @@ function setup(){
    throw Error('unexpected SQL');
   },makeRequestId:()=> 'v72-id'});
  async function request(token=signed()){
-  const req=Object.assign(new EventEmitter(),{method:'GET',url:/api/v1/organizations/${ORG}/sites/${SITE}/access,
+  const req=Object.assign(new EventEmitter(),{method:'GET',url:`/api/v1/organizations/${ORG}/sites/${SITE}/access`,
    rawHeaders:['Authorization','Bearer '+token],rawTrailers:[],complete:false,readableEnded:false,socket:{remoteAddress:'127.0.0.1'}});
   const res={headersSent:false,writableEnded:false,destroyed:false,
    writeHead(status,headers){this.status=status;this.headers=headers;this.headersSent=true;},
