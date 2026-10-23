@@ -83,7 +83,7 @@ test('not_after expired blocks valid signed JWT before tenant SQL',async()=>{
 test('not_after future grants only a short-lived session attestation',async()=>{
  const f=fixture();f.rows([{subject:SUBJECT,sessionId:SESSION,notAfterEpoch:String(NOW+1)}]);
  assert.equal((await f.request()).status,200);
- const data=await f.pg.readSession({subject:SUBJECT,sessionId:SESSION});
+ const data=await f.pg.readSession({subject:SUBJECT,sessionId:SESSION,signal:new AbortController().signal});
  assert.equal(data.expiresAtSec,NOW+1);
 });
 test('malformed session row fails closed and does not authorize tenant',async()=>{
