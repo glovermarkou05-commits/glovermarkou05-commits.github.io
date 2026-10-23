@@ -1,0 +1,46 @@
+name: MG Web Studio V70 Native Security Tests
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v70-native.yml
+      - apps/mg-web-studio-cloud/server/**
+      - apps/mg-web-studio-cloud/tests/unbound-tenant-stack-v69-real.test.cjs
+      - apps/mg-web-studio-cloud/tests/unbound-tenant-stack-v70-native.test.cjs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-v70-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-no-network-tests:
+    name: Node 22 isolated security regression
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      NODE_ENV: test
+      # No Supabase/project access keys; never use a DB URL or deployment secret.
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout exact feature branch commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Show Node version
+        run: node --version
+      - name: Run native original-module integration only
+        run: node --test tests/unbound-tenant-stack-v69-real.test.cjs tests/unbound-tenant-stack-v70-native.test.cjs
