@@ -6,6 +6,9 @@ on:
       - feature/mg-digital-v5-web-services
     paths:
       - .github/workflows/mg-web-studio-v74-auth-contract.yml
+      - apps/mg-web-studio-cloud/server/pinned-auth-contract-v74.cjs
+      - apps/mg-web-studio-cloud/tests/pinned-auth-contract-v74.test.cjs
+      - apps/mg-web-studio-cloud/tests/pinned-auth-integration-v74.test.cjs
   workflow_dispatch:
 
 permissions:
