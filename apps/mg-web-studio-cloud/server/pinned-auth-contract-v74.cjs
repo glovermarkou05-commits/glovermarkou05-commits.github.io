@@ -6,7 +6,7 @@
 const {isIP} = require('node:net');
 const {createResilientSessionVerifierV73} = require('./resilient-session-verifier-v73.cjs');
 const KEY_ID = /^[a-zA-Z0-9_-]{1,80}$/;
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const plain = x => x !== null && typeof x === 'object' && !Array.isArray(x) &&
   [Object.prototype, null].includes(Object.getPrototypeOf(x));
 const integer = (x,a,b) => Number.isSafeInteger(x) && x>=a && x<=b;
