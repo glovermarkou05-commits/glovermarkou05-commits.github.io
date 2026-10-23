@@ -3,7 +3,7 @@
 // Offline-first trust boundary: providers are explicit, server-owned callbacks.
 // No network clients, HTTP listeners, Supabase credentials or SQL inside V72.
 const { createJwtPublicVerifierV71 } = require('./jwt-public-verifier-v71.cjs');
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ID = /^[A-Za-z0-9_-]{1,80}$/;
 const NO_GO = Object.freeze({ environment: 'SYNTHETIC_ONLY',
   jwksNetworkConnected: false, sessionStoreConnected: false,
