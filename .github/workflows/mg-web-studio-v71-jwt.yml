@@ -1,0 +1,49 @@
+name: MG Web Studio V71 Offline JWT Cryptography
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v71-jwt.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v71-crypto
+  cancel-in-progress: true
+
+jobs:
+  v71-asymmetric-jwt:
+    name: Node 22 ES256-RS256 isolated verification
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      NODE_ENV: test
+      V70_TEST_ISOLATION: "1"
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout feature commit without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Select Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Display native version and verify static syntax
+        run: |
+          node --version
+          node --check server/jwt-public-verifier-v71.cjs
+          node --check tests/jwt-public-verifier-v71.test.cjs
+          node --check tests/jwt-tenant-integration-v71.test.cjs
+      - name: Execute local generated-key signature and real-module tests with network blocked
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/jwt-public-verifier-v71.test.cjs tests/jwt-tenant-integration-v71.test.cjs
+      - name: Regression V70 seven suites, offline
+        run: node scripts/run-v70-native-regressions.cjs --run-local-tests
