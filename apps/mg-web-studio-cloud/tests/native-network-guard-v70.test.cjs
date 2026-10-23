@@ -69,10 +69,15 @@ test('CLI refuses accidental execution with no explicit flag',()=>{
     {encoding:'utf8',timeout:2000});
   assert.equal(r.status,2);assert.match(r.stderr,/Usage:/);
 });
-test('CLI check blocks a missing checkout instead of declaring PASS',()=>{
+test('CLI check reports checkout completeness without granting release approval',()=>{
   const r=spawnSync(process.execPath,[resolve(__dirname,'../scripts/run-v70-native-regressions.cjs'),'--check'],
     {encoding:'utf8',timeout:2000});
-  assert.equal(r.status,2);
+  const expectedMissing=createPlan().missing.length;
+  assert.equal(r.status,expectedMissing ? 2 : 0);
   const report=JSON.parse(r.stdout);
-  assert.equal(report.missingSuites,7);assert.equal(report.readiness,'NO_GO');
+  assert.equal(report.missingSuites,expectedMissing);
+  assert.equal(report.plannedSuites,7);
+  assert.equal(report.networkAuthorized,false);
+  assert.equal(report.deploymentAuthorized,false);
+  assert.equal(report.readiness,'NO_GO');
 });
