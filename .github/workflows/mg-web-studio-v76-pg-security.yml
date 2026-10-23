@@ -1,0 +1,64 @@
+name: MG Web Studio V76 PG17 Security Preflight - Offline
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v76-pg-security.yml
+      - apps/mg-web-studio-cloud/server/pg-security-review-v76.cjs
+      - apps/mg-web-studio-cloud/server/pg-recovery-plan-v76.cjs
+      - apps/mg-web-studio-cloud/tests/pg-security-review-v76.test.cjs
+      - apps/mg-web-studio-cloud/tests/pg-recovery-plan-v76.test.cjs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v76-offline
+  cancel-in-progress: true
+
+jobs:
+  v76-native:
+    name: Node 22 PG17 synthetic security and recovery preflight
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      NODE_ENV: test
+      V70_TEST_ISOLATION: "1"
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Use Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify V76 source syntax
+        run: |
+          node --version
+          node --check server/pg-security-review-v76.cjs
+          node --check server/pg-recovery-plan-v76.cjs
+          node --check tests/pg-security-review-v76.test.cjs
+          node --check tests/pg-recovery-plan-v76.test.cjs
+      - name: V76 offline privilege and recovery tests under blocked network
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pg-security-review-v76.test.cjs tests/pg-recovery-plan-v76.test.cjs
+      - name: Regression V75 signed auth.sessions reader
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pg-session-reader-v75.test.cjs tests/pg-session-integration-v75.test.cjs
+      - name: Regression V74 pinned auth
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pinned-auth-contract-v74.test.cjs tests/pinned-auth-integration-v74.test.cjs
+      - name: Regression V73 bounded providers
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/bounded-provider-v73.test.cjs tests/resilient-session-integration-v73.test.cjs
+      - name: Regression V72 session rotation
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/rotating-session-verifier-v72.test.cjs tests/rotating-session-integration-v72.test.cjs
+      - name: Regression V71 signed JWT
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/jwt-public-verifier-v71.test.cjs tests/jwt-tenant-integration-v71.test.cjs
+      - name: Regression V70 seven suites
+        run: node scripts/run-v70-native-regressions.cjs --run-local-tests
