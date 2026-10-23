@@ -6,7 +6,7 @@ const http = require('node:http');
 const {assembleUnboundTenantHttpV69} = require('../server/unbound-tenant-stack-v69.cjs');
 const ORG='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const SITE='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
-const URL=/api/v1/organizations/${ORG}/sites/${SITE}/access;
+const URL=`/api/v1/organizations/${ORG}/sites/${SITE}/access`;
 const OPTIONS=Object.freeze({insecureHTTPParser:false,joinDuplicateHeaders:false,
   maxHeaderSize:16384,requireHostHeader:true,headersTimeout:5000,
   requestTimeout:10000,keepAliveTimeout:1000});
