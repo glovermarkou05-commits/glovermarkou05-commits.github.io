@@ -1,0 +1,51 @@
+name: MG Web Studio V72 Offline Key Rotation and Session Guard
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v72-offline-rotation.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v72-offline
+  cancel-in-progress: true
+
+jobs:
+  v72-native:
+    name: Node 22 V72 generated-key and session tests
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      NODE_ENV: test
+      V70_TEST_ISOLATION: "1"
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout branch without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Select Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate syntax without network
+        run: |
+          node --version
+          node --check server/rotating-session-verifier-v72.cjs
+          node --check tests/rotating-session-verifier-v72.test.cjs
+          node --check tests/rotating-session-integration-v72.test.cjs
+      - name: Run V72 rotation and session tests in offline Node
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/rotating-session-verifier-v72.test.cjs tests/rotating-session-integration-v72.test.cjs
+      - name: Recheck original V71 cryptography and V69 integration offline
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/jwt-public-verifier-v71.test.cjs tests/jwt-tenant-integration-v71.test.cjs
+      - name: Recheck seven previous V70 regression suites
+        run: node scripts/run-v70-native-regressions.cjs --run-local-tests
