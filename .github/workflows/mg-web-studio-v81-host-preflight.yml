@@ -1,0 +1,75 @@
+name: MG Web Studio V81 Windows Host Feasibility - Offline
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v81-host-preflight.yml
+      - apps/mg-web-studio-cloud/server/pg-host-feasibility-v81.cjs
+      - apps/mg-web-studio-cloud/scripts/inspect-pg-host-v81.cjs
+      - apps/mg-web-studio-cloud/tests/pg-host-feasibility-v81.test.cjs
+      - apps/mg-web-studio-cloud/tests/inspect-pg-host-v81.test.cjs
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v81-offline
+  cancel-in-progress: true
+
+jobs:
+  v81-native:
+    name: Node 22 Windows host probe mocks and V70-V80 regressions
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      NODE_ENV: test
+      V70_TEST_ISOLATION: "1"
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout with no persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check V81 syntax and CLI help without running host probes
+        run: |
+          node --version
+          node --check server/pg-host-feasibility-v81.cjs
+          node --check scripts/inspect-pg-host-v81.cjs
+          node --check tests/pg-host-feasibility-v81.test.cjs
+          node --check tests/inspect-pg-host-v81.test.cjs
+          node scripts/inspect-pg-host-v81.cjs --help
+      - name: V81 synthetic host + injected PowerShell Docker query tests
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pg-host-feasibility-v81.test.cjs tests/inspect-pg-host-v81.test.cjs
+      - name: V80 low footprint regression
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pg-lab-safety-gate-v80.test.cjs tests/pg-lab-isolation-v80.test.cjs
+      - name: V79 host resource probe regression
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/lab-capacity-v79.test.cjs tests/measure-pg-lab-capacity-v79.test.cjs
+      - name: V78 lab approvals and runbook regression
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pg-lab-authorization-v78.test.cjs tests/pg-lab-runbook-v78.test.cjs
+      - name: V77 catalog evidence regression
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pg-catalog-evidence-v77.test.cjs tests/tenant-evidence-matrix-v77.test.cjs
+      - name: V76 privileges and recovery regression
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pg-security-review-v76.test.cjs tests/pg-recovery-plan-v76.test.cjs
+      - name: V75 session reader regression
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pg-session-reader-v75.test.cjs tests/pg-session-integration-v75.test.cjs
+      - name: V74 pinned authentication regression
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/pinned-auth-contract-v74.test.cjs tests/pinned-auth-integration-v74.test.cjs
+      - name: V73 bounded provider regression
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/bounded-provider-v73.test.cjs tests/resilient-session-integration-v73.test.cjs
+      - name: V72 rotating session regression
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/rotating-session-verifier-v72.test.cjs tests/rotating-session-integration-v72.test.cjs
+      - name: V71 JWT regression
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/jwt-public-verifier-v71.test.cjs tests/jwt-tenant-integration-v71.test.cjs
+      - name: V70 native suite regression
+        run: node scripts/run-v70-native-regressions.cjs --run-local-tests
