@@ -9,7 +9,7 @@ const LIMITS = Object.freeze({
   minSystemReserveMiB:8192,minLabWorkspaceMiB:12288
 });
 const KEYS=Object.freeze(['source','platform','cpuCount','totalRamMiB','availableRamMiB',
-  'systemFreeMiB','targetFreeMiB','samePhysicalDisk','targetBusType',
+  'systemFreeMiB','targetFreeMiB','sameVolume','targetBusType',
   'targetFilesystem','protectedContainer']);
 const CONTAINER_KEYS=Object.freeze(['name','state','health']);
 const NAME='supabase_db_bazar_online_4r_local_only';
@@ -29,8 +29,8 @@ function assessPgHostFeasibilityV81(snapshot) {
     snapshot.platform!=='win32'||!pos(snapshot.cpuCount)||snapshot.cpuCount>1024||
     !['totalRamMiB','availableRamMiB','systemFreeMiB','targetFreeMiB'].every(k=>pos(snapshot[k]))||
     snapshot.totalRamMiB<1||snapshot.availableRamMiB>snapshot.totalRamMiB||
-    typeof snapshot.samePhysicalDisk!=='boolean'||
-    (snapshot.samePhysicalDisk&&snapshot.systemFreeMiB!==snapshot.targetFreeMiB)||
+    typeof snapshot.sameVolume!=='boolean'||
+    (snapshot.sameVolume&&snapshot.systemFreeMiB!==snapshot.targetFreeMiB)||
     typeof snapshot.targetBusType!=='string'||snapshot.targetBusType.length>20||
     typeof snapshot.targetFilesystem!=='string'||snapshot.targetFilesystem.length>20||
     !exact(snapshot.protectedContainer,CONTAINER_KEYS)) {
@@ -45,10 +45,10 @@ function assessPgHostFeasibilityV81(snapshot) {
     if(snapshot.targetFilesystem.toUpperCase()!=='NTFS') codes.push('TARGET_NOT_NTFS');
     if(snapshot.targetFreeMiB<LIMITS.minLabWorkspaceMiB)
       codes.push('TARGET_SPACE_INSUFFICIENT');
-    // If the target and Windows share one physical disk, subtract BOTH reserves
+    // If the target and Windows share one filesystem volume, subtract BOTH reserves
     // from the SAME free-space counter. A previous V80 minimum did not do this.
     const reserve=LIMITS.minSystemReserveMiB+
-      (snapshot.samePhysicalDisk?LIMITS.minLabWorkspaceMiB:0);
+      (snapshot.sameVolume?LIMITS.minLabWorkspaceMiB:0);
     if(snapshot.systemFreeMiB<reserve) codes.push('SYSTEM_RESERVE_INSUFFICIENT');
     const p=snapshot.protectedContainer;
     if(p.name!==NAME||p.state!=='running'||p.health!=='healthy')
@@ -69,7 +69,7 @@ function createRecordedWindowsSnapshotV81() {
   return Object.freeze({
     source:'READ_ONLY_WINDOWS_PROBE',platform:'win32',
     cpuCount:8,totalRamMiB:7864,availableRamMiB:799,
-    systemFreeMiB:17203,targetFreeMiB:17203,samePhysicalDisk:true,
+    systemFreeMiB:17203,targetFreeMiB:17203,sameVolume:true,
     targetBusType:'UNKNOWN',targetFilesystem:'NTFS',
     protectedContainer:Object.freeze({name:NAME,state:'running',health:'healthy'})
   });
