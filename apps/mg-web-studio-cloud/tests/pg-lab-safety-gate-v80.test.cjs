@@ -46,10 +46,10 @@ test('fewer than 2 available processors block',()=>{
  reject(x=>x.capacity.availableCpus=1,'HOST_CPU_LOW');
 });
 test('low system disk space blocks even when workspace has plenty',()=>{
- reject(x=>x.capacity.systemDiskFreeBytes=7*GiB,'HOST_SYSTEM_DISK_LOW');
+ reject(x=>{x.capacity.sameDisk=false;x.capacity.systemDiskFreeBytes=7*GiB;},'HOST_SYSTEM_DISK_LOW');
 });
 test('less than 12 GiB workspace space blocks',()=>{
- reject(x=>x.capacity.workspaceDiskFreeBytes=11*GiB,'LAB_WORKSPACE_DISK_LOW');
+ reject(x=>{x.capacity.sameDisk=false;x.capacity.workspaceDiskFreeBytes=11*GiB;},'LAB_WORKSPACE_DISK_LOW');
 });
 test('invalid or fabricated CPU/RAM shape fails closed',()=>{
  reject(x=>x.capacity.availableCpus='eight','HOST_CAPACITY_INVALID');
