@@ -105,3 +105,20 @@ El éxito prueba el código **con datos simulados**, no PostgreSQL real, salud a
 4. Antes de ejecutar SQL, revisar compatibilidad del esquema PG17 y los contratos de V77. Las pruebas con dos empresas, catálogo RLS y restauración requieren evidencias reales posteriores.
 
 **Cierre técnico:** V81 está terminada en **código y CI**. **32/32 controles operativos V67 siguen PENDING**. No se modificó Supabase, BAZAR, Lovable ni producción.
+
+## 7. Corrección posterior del diagnóstico V81 (24/10/2026)
+
+Un primer intento real ejecutado por el usuario desde Windows con Docker context `desktop-linux` produjo `observation:null`, `OBSERVATION_MALFORMED` y `NO_GO`. Este resultado **no es evidencia de que BAZAR-ONLINE esté detenido**, solo que una operación interna del recolector falló o produjo datos ininterpretables. La versión inicial suprimía completamente el motivo.
+
+Se implementó una mejora de seguridad y diagnóstico:
+
+- `diagnosticStage` en la salida; `null` si la colección termina sin lanzar una excepción; en caso de error, uno de `WINDOWS_QUERY`, `WINDOWS_JSON`, `DOCKER_QUERY` o `DOCKER_JSON`, además de `INVALID_ARGUMENTS` en llamadas incorrectas de la librería.
+- Las excepciones de PowerShell/Docker, rutas, contraseñas, stderr y salidas completas **no se imprimen**; únicamente el nombre fijo de la etapa.
+- Se admite una marca BOM UTF-8 al principio del resultado PowerShell para evitar un error de análisis espurio.
+- Se añadieron seis pruebas para cuatro fases de error, BOM y rechazo de argumentos que pudieran alterar el propósito del diagnóstico.
+
+**Última ejecución de CI aprobada:** https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/40134998537, `44/44` V81 y **526/526** con todas las regresiones, 0 fallos. Este CI solo utiliza procesos simulados y no reprodujo el error en Windows real.
+
+Para repetir la medición, basta **descargar de nuevo solo** `scripts/inspect-pg-host-v81.cjs` al directorio anterior y ejecutar el mismo comando con `--target-drive=C`. La dependencia `server/pg-host-feasibility-v81.cjs` no cambió. Compartir la salida `diagnosticStage` permite reparar la consulta concreta sin arriesgar BAZAR-ONLINE.
+
+**El dictamen operativo no cambia:** laboratorio PG17 sin aprovisionar, `NO_GO`, 32 verificaciones V67 pendientes, seis permisos V78 PENDING. Sin instalación ni cambios Docker/Supabase.
