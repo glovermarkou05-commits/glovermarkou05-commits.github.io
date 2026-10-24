@@ -112,3 +112,58 @@ test('PowerShell and Docker access never changes BAZAR or other resources',()=>{
   assert.ok(!x.args.some(y=>['stop','rm','start','restart','exec','run','volume','compose'].includes(y)));
  }
 });
+
+test('PowerShell command failure emits only safe diagnostic stage',()=>{
+ let stage=null,output='';
+ const h=harness();
+ const run=(file,args)=>{if(file==='powershell.exe')throw Error('private Windows error PASSWORD123');return h.run(file,args);};
+ const rc=main([],s=>output+=s,{run,onDiagnostic:s=>stage=s});
+ const data=JSON.parse(output);
+ assert.equal(rc,1);assert.equal(stage,'WINDOWS_QUERY');
+ assert.equal(data.diagnosticStage,'WINDOWS_QUERY');
+ assert.equal(data.assessment.decision,'NO_GO');
+ assert.ok(!output.includes('PASSWORD123'));
+});
+test('Windows JSON invalid returns WINDOWS_JSON without raw value',()=>{
+ let output='';
+ const h=harness({psOutput:'sensitive-invalid-input'});
+ main([],s=>output+=s,{run:h.run});
+ const data=JSON.parse(output);
+ assert.equal(data.diagnosticStage,'WINDOWS_JSON');
+ assert.equal(data.observation,null);
+ assert.ok(!output.includes('sensitive-invalid-input'));
+});
+test('Docker command failure returns DOCKER_QUERY without stderr',()=>{
+ let output='';
+ const h=harness({docker:false});
+ main([],s=>output+=s,{run:h.run});
+ const data=JSON.parse(output);
+ assert.equal(data.diagnosticStage,'DOCKER_QUERY');
+ assert.equal(data.assessment.decision,'NO_GO');
+ assert.ok(!output.includes('secret details'));
+});
+test('invalid Docker JSON returns DOCKER_JSON without printing data',()=>{
+ let output='';
+ const h=harness({dockerOutput:'sensitive-not-json'});
+ main([],s=>output+=s,{run:h.run});
+ const data=JSON.parse(output);
+ assert.equal(data.diagnosticStage,'DOCKER_JSON');
+ assert.ok(!output.includes('sensitive-not-json'));
+});
+test('UTF8 BOM from PowerShell must not prevent valid observation',()=>{
+ let output='';
+ const h=harness({psOutput:'\uFEFF'+ps()});
+ const rc=main([],s=>output+=s,{run:h.run});
+ assert.equal(rc,0);
+ const data=JSON.parse(output);
+ assert.equal(data.diagnosticStage,null);
+ assert.equal(data.observation.cpuCount,8);
+ assert.equal(data.assessment.decision,'NO_GO');
+});
+test('arguments cannot override protected container or allow mutation',()=>{
+ let output='';
+ const h=harness();
+ const rc=main(['--target-drive=C','--docker=stop'],s=>output+=s,{run:h.run});
+ assert.equal(rc,2);assert.equal(h.commands.length,0);
+ assert.ok(!output.includes('stop'));
+});
