@@ -1,0 +1,114 @@
+'use strict';
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const {collectHostSnapshotV81,main}=require('../scripts/inspect-pg-host-v81.cjs');
+const NAME='supabase_db_bazar_online_4r_local_only';
+const ps=()=>JSON.stringify({platform:'win32',cpuCount:8,totalRamMiB:7864,
+ availableRamMiB:799,systemFreeMiB:17203,targetFreeMiB:17203,
+ sameVolume:true,targetBusType:'SATA',targetFilesystem:'NTFS'});
+function harness({docker=true,psOutput=ps(),dockerOutput=JSON.stringify({
+ Names:NAME,Status:'Up 38 hours (healthy)'})}={}){
+ const commands=[];
+ const run=(file,args)=>{commands.push({file,args});
+  if(file==='powershell.exe')return psOutput;
+  if(file==='docker.exe') {
+    if(!docker)throw Error('Docker inaccessible secret details');
+    return dockerOutput+'\n';
+  }
+  throw Error('Unexpected process invoked');
+ };
+ return {run,commands};
+}
+test('valid C preflight reads only PowerShell metrics and Docker ps',()=>{
+ const h=harness();const s=collectHostSnapshotV81({run:h.run});
+ assert.equal(s.protectedContainer.health,'healthy');
+ assert.equal(s.availableRamMiB,799);
+ assert.equal(h.commands.length,2);
+ assert.deepEqual(h.commands.map(x=>x.file),['powershell.exe','docker.exe']);
+ assert.deepEqual(h.commands[1].args,[
+  'ps','--filter','name='+NAME,'--format','{{json .}}']);
+});
+test('powershell arguments disallow profiles and do not use shell',()=>{
+ const h=harness();collectHostSnapshotV81({run:h.run});
+ const p=h.commands[0];
+ assert.deepEqual(p.args.slice(0,3),['-NoProfile','-NonInteractive','-Command']);
+ assert.ok(p.args[3].includes('Get-CimInstance Win32_OperatingSystem'));
+ assert.ok(p.args[3].includes('Get-Volume -DriveLetter C'));
+ assert.ok(p.args[3].includes('Get-Disk'));
+ assert.ok(!p.args[3].includes('Stop-Process'));
+});
+test('E is inspected strictly using same read-only commands and detected as USB',()=>{
+ const h=harness({psOutput:JSON.stringify({platform:'win32',cpuCount:8,totalRamMiB:7864,
+  availableRamMiB:799,systemFreeMiB:17203,targetFreeMiB:102170,
+  sameVolume:false,targetBusType:'USB',targetFilesystem:'exFAT'})});
+ const s=collectHostSnapshotV81({drive:'E',run:h.run});
+ assert.equal(s.targetBusType,'USB');assert.equal(s.sameVolume,false);
+ assert.ok(h.commands[0].args[3].includes('Get-Partition -DriveLetter E'));
+});
+test('untrusted drive name is rejected before subprocess execution',()=>{
+ for(const drive of ['C;Write-Host','c','E:\\','\\\\server','',123,null]){
+  const h=harness();
+  assert.equal(collectHostSnapshotV81({drive,run:h.run}),null);
+  assert.equal(h.commands.length,0);
+ }
+});
+test('docker unavailable yields unavailable observation without exposing errors',()=>{
+ const h=harness({docker:false});
+ assert.equal(collectHostSnapshotV81({run:h.run}),null);
+});
+test('Docker ps empty results never claim protected BAZAR healthy',()=>{
+ const h=harness({dockerOutput:''});const s=collectHostSnapshotV81({run:h.run});
+ assert.equal(s.protectedContainer.state,'unknown');
+ assert.equal(s.protectedContainer.health,'unknown');
+});
+test('unhealthy Docker container cannot be called healthy',()=>{
+ const h=harness({dockerOutput:JSON.stringify({Names:NAME,Status:'Up 2 hours (unhealthy)'})});
+ const s=collectHostSnapshotV81({run:h.run});
+ assert.equal(s.protectedContainer.health,'unknown');
+});
+test('a different container name never qualifies for BAZAR protection',()=>{
+ const h=harness({dockerOutput:JSON.stringify({Names:'other',Status:'Up (healthy)'})});
+ const s=collectHostSnapshotV81({run:h.run});
+ assert.equal(s.protectedContainer.health,'unknown');
+});
+test('PowerShell error and arbitrary output fail closed',()=>{
+ for(const psOutput of ['', 'secret password','[]','null']){
+  const h=harness({psOutput});const s=collectHostSnapshotV81({run:h.run});
+  // Invalid shapes can reach the pure evaluator but cannot be approved.
+  if(s!==null) {
+    const {assessPgHostFeasibilityV81}=require('../server/pg-host-feasibility-v81.cjs');
+    assert.equal(assessPgHostFeasibilityV81(s).resourceCandidate,false);
+  }
+ }
+});
+test('help and unknown flag never probe resources',()=>{
+ let t='';const out=x=>t+=x;
+ assert.equal(main(['--help'],out,{run:()=>{throw Error('must not call')}}),0);
+ assert.match(t,/SOLO LECTURA/);
+ t='';
+ assert.equal(main(['--run-docker'],out,{run:()=>{throw Error('must not call')}}),2);
+});
+test('valid synthetic CLI reports only sanitized capacity, not command strings',()=>{
+ const h=harness();let output='';
+ const rc=main(['--target-drive=C'],x=>output+=x,{run:h.run});
+ const res=JSON.parse(output);
+ assert.equal(rc,0);assert.equal(res.drive,'C');
+ assert.equal(res.observation.availableRamMiB,799);
+ assert.equal(res.assessment.decision,'NO_GO');
+ assert.equal(res.assessment.resourceCandidate,false);
+ assert.ok(!output.includes('powershell.exe'));
+ assert.equal(h.commands.length,2);
+});
+test('missing Docker returns no observation and NO_GO',()=>{
+ const h=harness({docker:false});let output='';
+ const rc=main([],x=>output+=x,{run:h.run});
+ assert.equal(rc,1);const r=JSON.parse(output);
+ assert.equal(r.observation,null);assert.equal(r.assessment.decision,'NO_GO');
+});
+test('PowerShell and Docker access never changes BAZAR or other resources',()=>{
+ const h=harness();collectHostSnapshotV81({run:h.run});
+ assert.equal(h.commands[1].args[0],'ps');
+ for(const x of h.commands){
+  assert.ok(!x.args.some(y=>['stop','rm','start','restart','exec','run','volume','compose'].includes(y)));
+ }
+});
