@@ -28,14 +28,27 @@ const psForDrive=drive=>[
  "}",
  "$obj | ConvertTo-Json -Compress"
 ].join('\n');
-function collectHostSnapshotV81({drive='C',run=pass}={}) {
-  if(typeof drive!=='string'||!/^[A-Z]$/.test(drive)||typeof run!=='function')
+function collectHostSnapshotV81({drive='C',run=pass,onDiagnostic=()=>{}}={}) {
+  const signal=code=>{
+    if(typeof onDiagnostic==='function')onDiagnostic(code);
+  };
+  if(typeof drive!=='string'||!/^[A-Z]$/.test(drive)||typeof run!=='function'){
+    signal('INVALID_ARGUMENTS');
     return null;
+  }
+  let stage='WINDOWS_QUERY';
   try {
-    const source=JSON.parse(run('powershell.exe',[
-      '-NoProfile','-NonInteractive','-Command',psForDrive(drive)]));
+    const raw=run('powershell.exe',[
+      '-NoProfile','-NonInteractive','-Command',psForDrive(drive)]);
+    stage='WINDOWS_JSON';
+    // Some PowerShell hosts may prefix UTF-8 output with a BOM.
+    const source=JSON.parse(raw.replace(/^\uFEFF/,'').trim());
+    if(!source||typeof source!=='object'||Array.isArray(source))
+      throw Error('invalid observation');
+    stage='DOCKER_QUERY';
     const containers=run('docker.exe',['ps','--filter','name='+NAME,
       '--format','{{json .}}']);
+    stage='DOCKER_JSON';
     const record=containers.split(/\r?\n/).filter(Boolean).map(x=>JSON.parse(x))
       .find(x=>x.Names===NAME);
     return {
@@ -48,7 +61,11 @@ function collectHostSnapshotV81({drive='C',run=pass}={}) {
       protectedContainer:{name:NAME,state:record?'running':'unknown',
         health:record && /\(healthy\)/.test(record.Status)?'healthy':'unknown'}
     };
-  }catch{return null;}
+  }catch{
+    // Stage only. Never forward native exception, stderr, environment or raw JSON.
+    signal(stage);
+    return null;
+  }
 }
 const HELP='V81 — Diagnostico Windows y BAZAR (SOLO LECTURA)\n'+
  'Uso: node scripts/inspect-pg-host-v81.cjs [--target-drive=C|D|E...]\n'+
@@ -59,10 +76,15 @@ function main(args=process.argv.slice(2),write=x=>process.stdout.write(x),opts={
     write(HELP);return 2;
   }
   const drive=args.length?args[0].slice(-1):'C';
-  const obs=collectHostSnapshotV81({...opts,drive});
+  let diagnosticStage=null;
+  const originalDiagnostic=opts.onDiagnostic;
+  const obs=collectHostSnapshotV81({...opts,drive,onDiagnostic:code=>{
+    diagnosticStage=code;
+    if(typeof originalDiagnostic==='function')originalDiagnostic(code);
+  }});
   const report=assessPgHostFeasibilityV81(obs);
   // Only normalized fields and fixed issue codes leave this CLI.
-  write(JSON.stringify({drive,observation:report.observationShapeValid?{
+  write(JSON.stringify({drive,diagnosticStage,observation:report.observationShapeValid?{
     cpuCount:obs.cpuCount,totalRamMiB:obs.totalRamMiB,
     availableRamMiB:obs.availableRamMiB,systemFreeMiB:obs.systemFreeMiB,
     targetFreeMiB:obs.targetFreeMiB,sameVolume:obs.sameVolume,
