@@ -6,8 +6,18 @@
 const {execFileSync}=require('node:child_process');
 const {assessPgHostFeasibilityV81}=require('../server/pg-host-feasibility-v81.cjs');
 const NAME='supabase_db_bazar_online_4r_local_only';
-const pass=(file,args)=>execFileSync(file,args,{timeout:8000,encoding:'utf8',
-  windowsHide:true,maxBuffer:1024*128,stdio:['ignore','pipe','pipe']});
+// On a memory-constrained Windows host, WMI/CIM and Storage cmdlets may
+// legitimately take longer than 8 seconds. Keep finite timeouts and no shell.
+const COMMAND_TIMEOUT_MS=Object.freeze({powershell:30000,docker:12000});
+const invokeReadOnlyV81=(file,args,exec=execFileSync)=>{
+  if(file!=='powershell.exe'&&file!=='docker.exe')
+    throw Error('unsupported read-only executable');
+  return exec(file,args,{timeout:file==='powershell.exe'?
+    COMMAND_TIMEOUT_MS.powershell:COMMAND_TIMEOUT_MS.docker,
+    encoding:'utf8',windowsHide:true,maxBuffer:1024*128,
+    shell:false,stdio:['ignore','pipe','pipe']});
+};
+const pass=(file,args)=>invokeReadOnlyV81(file,args);
 const psForDrive=drive=>[
  "$ErrorActionPreference='Stop'",
  "$os=Get-CimInstance Win32_OperatingSystem",
@@ -97,4 +107,4 @@ function main(args=process.argv.slice(2),write=x=>process.stdout.write(x),opts={
   return report.observationShapeValid?0:1;
 }
 if(require.main===module)process.exitCode=main();
-module.exports={collectHostSnapshotV81,main};
+module.exports={collectHostSnapshotV81,main,invokeReadOnlyV81,COMMAND_TIMEOUT_MS};
