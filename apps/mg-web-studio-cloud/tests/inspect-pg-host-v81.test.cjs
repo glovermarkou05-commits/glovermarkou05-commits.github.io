@@ -167,3 +167,23 @@ test('arguments cannot override protected container or allow mutation',()=>{
  assert.equal(rc,2);assert.equal(h.commands.length,0);
  assert.ok(!output.includes('stop'));
 });
+
+test('slow Windows CIM scan gets a bounded 30 second window without shell',()=>{
+ const {invokeReadOnlyV81,COMMAND_TIMEOUT_MS}=require('../scripts/inspect-pg-host-v81.cjs');
+ let seen;
+ const run=(file,args,opts)=>{seen={file,args,opts};return 'ok';};
+ assert.equal(invokeReadOnlyV81('powershell.exe',['-NoProfile'],run),'ok');
+ assert.equal(seen.opts.timeout,30000);
+ assert.equal(COMMAND_TIMEOUT_MS.powershell,30000);
+ assert.equal(seen.opts.shell,false);
+ assert.deepEqual(seen.opts.stdio,['ignore','pipe','pipe']);
+});
+test('Docker ps remains time-limited and unknown commands are forbidden',()=>{
+ const {invokeReadOnlyV81,COMMAND_TIMEOUT_MS}=require('../scripts/inspect-pg-host-v81.cjs');
+ let call;
+ invokeReadOnlyV81('docker.exe',['ps'],(file,args,opts)=>{call={file,args,opts};return '';});
+ assert.equal(call.opts.timeout,12000);
+ assert.equal(COMMAND_TIMEOUT_MS.docker,12000);
+ assert.equal(call.opts.shell,false);
+ assert.throws(()=>invokeReadOnlyV81('cmd.exe',['/c','whoami'],()=>{throw Error('must not call')}),/unsupported/);
+});
