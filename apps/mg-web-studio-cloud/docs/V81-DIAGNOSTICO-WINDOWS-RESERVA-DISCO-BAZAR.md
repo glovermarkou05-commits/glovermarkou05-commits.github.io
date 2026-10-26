@@ -122,3 +122,11 @@ Se implementó una mejora de seguridad y diagnóstico:
 Para repetir la medición, basta **descargar de nuevo solo** `scripts/inspect-pg-host-v81.cjs` al directorio anterior y ejecutar el mismo comando con `--target-drive=C`. La dependencia `server/pg-host-feasibility-v81.cjs` no cambió. Compartir la salida `diagnosticStage` permite reparar la consulta concreta sin arriesgar BAZAR-ONLINE.
 
 **El dictamen operativo no cambia:** laboratorio PG17 sin aprovisionar, `NO_GO`, 32 verificaciones V67 pendientes, seis permisos V78 PENDING. Sin instalación ni cambios Docker/Supabase.
+
+## 8. V81.1 — Consulta de Windows intermitente (26/10/2026)
+
+En una nueva ejecución local, el usuario recibió `diagnosticStage:WINDOWS_QUERY` y `NO_GO`. **La etapa significa que no pudo ejecutarse la consulta PowerShell/CIM**, no que la base PostgreSQL esté caída. Una ejecución anterior había recuperado válidamente NVMe, NTFS, 8 CPU, ~792 MiB de RAM libre y un contenedor BAZAR `healthy`.
+
+El programa tenía un límite de **8.000 ms** para la lectura conjunta de las consultas CIM y Storage de Windows. En sistemas con poca memoria puede ser insuficiente. La mejora limita PowerShell a **30.000 ms** y Docker `ps` a **12.000 ms**, ambos con `shell:false`, lectura sola y sin registrar excepciones privadas. **Es una mitigación de un posible timeout, no la confirmación de la causa concreta**. Si vuelve a surgir `WINDOWS_QUERY` se debe comprobar por separado `Get-CimInstance Win32_OperatingSystem`, `Get-CimInstance Win32_Processor`, `Get-Volume -DriveLetter C` y `Get-Partition -DriveLetter C | Get-Disk`, midiendo duración y errores localmente.
+
+Validación GitHub Actions: https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/40357469424 — **528/528 PASS**, incluidos dos tests nuevos que validan timeouts finitos sin shell, y todas las regresiones V70–V81; las llamadas Windows/Docker son simuladas en CI. El usuario todavía debe repetir el diagnóstico local con el script actualizado. Permisos V78 pendientes; V67 **32/32 pendientes**; **NO_GO** para laboratorio real.
