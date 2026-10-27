@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071321">
+  <meta name="description" content="FINZY de MG Digital Solutions: organiza tus cuentas, ingresos, gastos, transferencias y presupuestos. Conoce el avance de la app Android y su experiencia por WhatsApp.">
+  <title>FINZY | Control de finanzas personales · MG Digital Solutions</title>
+  <style>
+    :root{--bg:#06101c;--bg2:#091727;--card:#102640;--line:rgba(255,255,255,.09);--text:#f6fbff;--muted:#a7bdd2;--cyan:#48c8ff;--blue:#7182ff;--good:#5ce6b5}
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--text);background:radial-gradient(ellipse at 80% 1%,rgba(72,200,255,.12),transparent 32%),linear-gradient(180deg,#06101c,#091727 58%,#06101c);line-height:1.65}
+    a{color:inherit;text-decoration:none}button{font:inherit}
+    .container{width:min(calc(100% - 40px),1120px);margin:0 auto}
+    .nav{position:sticky;top:0;z-index:8;background:rgba(6,16,28,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--line)}
+    .nav-inner{min-height:78px;display:flex;align-items:center;justify-content:space-between;gap:18px}
+    .brand{display:flex;align-items:center;gap:12px;font-weight:900;letter-spacing:1px}
+    .logo{display:grid;place-items:center;width:44px;height:44px;border-radius:14px;color:#06101c;font-weight:950;background:linear-gradient(135deg,var(--cyan),var(--blue))}
+    .brand small{display:block;font-size:.66rem;letter-spacing:3px;color:var(--muted)}
+    .links{display:flex;align-items:center;gap:22px;color:#c8d6e8;font-size:.9rem}
+    .links a:hover,.textlink:hover{color:var(--cyan)}
+    .btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 20px;min-height:44px;border-radius:13px;font-weight:800;border:1px solid var(--line);background:rgba(255,255,255,.04);cursor:pointer}
+    .btn.primary{border:0;background:linear-gradient(135deg,var(--cyan),var(--blue));color:#06101c;box-shadow:0 14px 32px rgba(72,200,255,.15)}
+    .btn:focus-visible,a:focus-visible,button:focus-visible{outline:3px solid var(--cyan);outline-offset:3px}
+    .hero{padding:98px 0 70px}
+    .hero-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:44px;align-items:center}
+    .eyebrow{display:inline-block;color:var(--cyan);font-weight:800;letter-spacing:2px;font-size:.78rem;margin-bottom:14px}
+    h1{font-size:clamp(2.7rem,5.2vw,4.6rem);line-height:1.09;letter-spacing:-1.9px;margin:0 0 22px}
+    h1 span{background:linear-gradient(115deg,var(--cyan),#afb5ff);background-clip:text;color:transparent}
+    .lead{font-size:1.12rem;color:var(--muted);max-width:610px;margin:0 0 24px}
+    .actions{display:flex;flex-wrap:wrap;gap:12px}
+    .fine{color:var(--muted);font-size:.87rem;margin:20px 0 0}
+    .panel,.card{border:1px solid var(--line);border-radius:24px;background:linear-gradient(145deg,rgba(16,38,64,.94),rgba(9,23,39,.96));box-shadow:0 25px 64px rgba(0,0,0,.18)}
+    .panel{padding:24px}
+    .mock-head{display:flex;align-items:center;justify-content:space-between;gap:15px;margin-bottom:24px;color:#b9cee0;font-size:.83rem}
+    .mock-head b{color:var(--cyan)}
+    .balance{border-radius:20px;padding:25px;background:linear-gradient(145deg,#193c62,#122940);margin-bottom:16px}
+    .balance small{display:block;color:#b4cbdd}.balance strong{font-size:2.55rem;letter-spacing:-1px}
+    .mock-row{display:flex;align-items:center;justify-content:space-between;padding:14px 3px;border-bottom:1px solid var(--line);gap:10px;font-size:.9rem}
+    .mock-row:last-child{border-bottom:0}.mock-row small{display:block;color:#99b6cc}.mock-row b{font-variant-numeric:tabular-nums}
+    .plus{color:var(--good)}.minus{color:#ffbfaf}
+    section.block{padding:68px 0}
+    .section-title{font-size:clamp(1.9rem,3.3vw,2.7rem);line-height:1.18;letter-spacing:-.8px;margin:0 0 16px}
+    .sub{max-width:770px;color:var(--muted);margin:0 0 28px}
+    .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    .card{padding:27px}
+    .card .number{font-size:.74rem;font-weight:850;color:var(--cyan);letter-spacing:2px}
+    .card h3{font-size:1.16rem;margin:13px 0 10px}.card p{color:var(--muted);margin:0}
+    .split{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .info{padding:29px;background:rgba(72,200,255,.06);border:1px solid rgba(72,200,255,.15);border-radius:22px}
+    .info h3{margin:0 0 8px}.info p{margin:0;color:var(--muted)}
+    .accordion{display:grid;gap:10px}
+    details{background:rgba(16,38,64,.7);border:1px solid var(--line);border-radius:16px;padding:0 21px}
+    summary{cursor:pointer;font-weight:750;padding:19px 0;list-style:none}
+    summary::-webkit-details-marker{display:none}summary::after{content:"+";float:right;color:var(--cyan);font-size:1.3rem}details[open] summary::after{content:"−"}
+    details p{margin:0 0 21px;color:var(--muted)}
+    .cta{padding:36px;border-radius:24px;border:1px solid rgba(72,200,255,.22);background:linear-gradient(120deg,rgba(72,200,255,.13),rgba(112,130,255,.09))}
+    .cta h2{margin:0 0 12px;font-size:2rem}.cta p{color:var(--muted);margin:0 0 22px}
+    footer{margin-top:60px;border-top:1px solid var(--line);padding:33px 0;color:var(--muted);font-size:.87rem}
+    .foot{display:flex;justify-content:space-between;gap:22px;flex-wrap:wrap}
+    .foot a{color:#d9e6f6}
+    @media(max-width:900px){.hero-grid{grid-template-columns:1fr}.hero{padding:66px 0 48px}.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:620px){.links{gap:11px;flex-wrap:wrap;font-size:.8rem}.nav-inner{align-items:flex-start;flex-direction:column;padding:13px 0}.grid,.split{grid-template-columns:1fr}.panel{padding:18px}.card{padding:22px}.hero{padding:46px 0}.cta{padding:25px}h1{letter-spacing:-1px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+  </style>
+</head>
+<body>
+  <header class="nav"><div class="container nav-inner">
+    <a class="brand" href="index.html" aria-label="MG Digital Solutions, inicio"><span class="logo">MG</span><span>MG DIGITAL<small>SOLUTIONS</small></span></a>
+    <nav class="links" aria-label="Navegación de productos"><a href="index.html">Inicio</a><a href="ventry.html">Ventry</a><a href="mg-club-plus.html">MG CLUB+</a><a href="#funciones">Funciones</a><a href="#contacto">Contacto</a></nav>
+  </div></header>
+  <main>
+    <section class="hero"><div class="container hero-grid"><div>
+      <div class="eyebrow">FINZY · MG DIGITAL SOLUTIONS</div>
+      <h1>Tu dinero, <span>más claro y organizado.</span></h1>
+      <p class="lead">FINZY te ayuda a consultar cuentas y saldos, registrar ingresos y gastos, revisar movimientos y planificar presupuestos desde una experiencia sencilla para tus finanzas personales.</p>
+      <div class="actions"><a class="btn primary" href="https://finzy593.lovable.app/" target="_blank" rel="noopener noreferrer">Conocer FINZY en la web ↗</a><a class="btn" href="#funciones">Explorar funciones</a></div>
+      <p class="fine">App Android 1.1.0 compilada e instalada en pruebas internas. La disponibilidad pública en Google Play y la URL oficial de descarga se confirmarán antes de habilitar un botón o código QR.</p>
+    </div>
+    <div class="panel" aria-label="Vista ilustrativa, no contiene datos reales">
+      <div class="mock-head"><b>FINZY</b><span>Panel de ejemplo · USD</span></div>
+      <div class="balance"><small>Saldo combinado de ejemplo</small><strong>$1.250,00</strong><small>Vista conceptual</small></div>
+      <div class="mock-row"><span>Ingreso <small>Registro ilustrativo</small></span><b class="plus">+$400,00</b></div>
+      <div class="mock-row"><span>Alimentación <small>Gasto ilustrativo</small></span><b class="minus">−$25,00</b></div>
+      <div class="mock-row"><span>Transferencia <small>Entre cuentas · ejemplo</small></span><b>$50,00</b></div>
+    </div></div></section>
+    <section class="block" id="funciones"><div class="container"><div class="eyebrow">CONTROL PERSONAL</div><h2 class="section-title">Todo lo importante, en un mismo lugar.</h2><p class="sub">Organiza movimientos y consulta el detalle de tus cuentas con una interfaz práctica. Las funciones disponibles pueden variar entre la web y las compilaciones Android de prueba.</p>
+      <div class="grid">
+        <article class="card"><div class="number">01 / CUENTAS</div><h3>Saldos y cuentas</h3><p>Consulta tus cuentas, movimientos y saldos, con filtros para analizar cada cuenta.</p></article>
+        <article class="card"><div class="number">02 / MOVIMIENTOS</div><h3>Ingresos, gastos y transferencias</h3><p>Registra operaciones y revisa su efecto en cada saldo.</p></article>
+        <article class="card"><div class="number">03 / PLANIFICACIÓN</div><h3>Presupuestos</h3><p>Organiza categorías, objetivos y límites de gasto para monitorear tu dinero.</p></article>
+        <article class="card"><div class="number">04 / SEGURIDAD</div><h3>Acceso a tu información</h3><p>Acceso mediante los métodos habilitados en la edición correspondiente y recuperación de cuenta.</p></article>
+        <article class="card"><div class="number">05 / WHATSAPP</div><h3>Registro conversacional</h3><p>Se han probado comandos de registro por WhatsApp vinculados a cuentas autorizadas. Su alcance operativo se valida antes de un lanzamiento general.</p></article>
+        <article class="card"><div class="number">06 / ANDROID</div><h3>Aplicación móvil</h3><p>La versión Android QA ha sido compilada e instalada en un dispositivo de prueba, con inicio de sesión y consulta de cuentas verificados.</p></article>
+      </div>
+    </div></section>
+    <section class="block"><div class="container"><div class="split">
+      <div class="info"><h3>Organización y respaldo</h3><p>Los respaldos y las opciones de exportación se revisan según la versión. Los formatos PDF y Excel se anunciarán cuando hayan superado las pruebas correspondientes.</p></div>
+      <div class="info"><h3>Descarga oficial</h3><p>Cuando exista una ficha pública de FINZY en Google Play, habilitaremos un enlace directo y un código QR verificado para evitar confusiones con otras aplicaciones de nombre similar.</p></div>
+    </div></div></section>
+    <section class="block" id="faq"><div class="container"><div class="eyebrow">PREGUNTAS FRECUENTES</div><h2 class="section-title">Lo que necesitas saber de FINZY.</h2><div class="accordion">
+      <details><summary>¿Puedo usar FINZY en Android?</summary><p>Sí, existe una compilación Android QA instalada y probada internamente. La disponibilidad en Google Play se verificará con un enlace oficial antes de publicarla como descarga pública.</p></details>
+      <details><summary>¿Puedo registrar movimientos desde WhatsApp?</summary><p>Se han realizado pruebas de registro y consulta desde WhatsApp. Para utilizarlo se requiere una cuenta vinculada y autorización; el alcance disponible depende de la versión.</p></details>
+      <details><summary>¿FINZY permite respaldar y exportar información?</summary><p>El proyecto incluye trabajo en respaldo y recuperación. Las exportaciones en PDF o Excel se mostrarán como funciones disponibles cuando se completen sus pruebas operativas.</p></details>
+      <details><summary>¿Puedo ver los movimientos de cada cuenta?</summary><p>La aplicación permite acceder al detalle de las cuentas y aplicar filtros para revisar sus movimientos, según la versión.</p></details>
+    </div></div></section>
+    <section class="block" id="contacto"><div class="container"><div class="cta"><div class="eyebrow">MG DIGITAL SOLUTIONS</div><h2>Conoce FINZY.</h2><p>Consulta las posibilidades de la aplicación y su estado de disponibilidad con nuestro equipo comercial.</p><div class="actions"><a class="btn primary" href="https://wa.me/593962257679?text=Hola%2C%20quiero%20informaci%C3%B3n%20sobre%20FINZY%20de%20MG%20Digital%20Solutions." target="_blank" rel="noopener noreferrer">Consultar por WhatsApp ↗</a><a class="btn" href="index.html#portafolio">Ver otros productos</a></div></div></div></section>
+  </main>
+  <footer><div class="container foot"><span>© 2026 MG Digital Solutions · FINZY · V5</span><div><a href="index.html">Inicio</a> · <a href="ventry.html">Ventry</a> · <a href="mg-club-plus.html">MG CLUB+</a> · <a href="mailto:mgdigitalsolutions593@gmail.com">Correo</a></div></div></footer>
+</body>
+</html>
