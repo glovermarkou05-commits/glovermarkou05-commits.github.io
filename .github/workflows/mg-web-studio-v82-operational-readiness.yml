@@ -51,6 +51,8 @@ jobs:
           node scripts/review-v67-readiness-v82.cjs --summary
       - name: V82 canonical handoff inventory and CLI tests - network guard
         run: node --require ./server/native-network-guard-v70.cjs --test tests/v67-operational-pack-v82.test.cjs tests/review-v67-readiness-v82.test.cjs
+      - name: V67 original evidence catalogue and pending matrix contracts
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/security-acceptance-v67.test.cjs tests/v67-evidence-template.test.cjs
       - name: V81 host feasibility regressions
         run: node --require ./server/native-network-guard-v70.cjs --test tests/pg-host-feasibility-v81.test.cjs tests/inspect-pg-host-v81.test.cjs
       - name: V80 low-footprint regressions
