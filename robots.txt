@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://glovermarkou05-commits.github.io/sitemap.xml
