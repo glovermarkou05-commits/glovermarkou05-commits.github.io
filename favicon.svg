@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" role="img" aria-label="MG Digital Solutions">
+  <defs><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#55d8ff"/><stop offset="1" stop-color="#7182ff"/></linearGradient></defs>
+  <rect width="64" height="64" rx="18" fill="#06101c"/><rect x="3" y="3" width="58" height="58" rx="16" fill="url(#mg)"/>
+  <path d="M16 42V21h5.2l10.6 13.2L42.4 21H48v21h-6V30.3L32 42.4 22 30.3V42z" fill="#071321"/>
+</svg>
