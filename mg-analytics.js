@@ -1,6 +1,6 @@
-/* MG Digital Solutions · V7 · medición opcional con consentimiento previo.
+/* MG Digital Solutions · V8 · medición comercial opcional con consentimiento previo.
  * Sin backend ni almacenamiento de formularios. No envía datos personales.
- * Inactivo hasta configurar GA4 con un ID G-... válido.
+ * El ID GA4 se configura en mg-analytics-config.js; cualquier evento requiere consentimiento.
  */
 (function () {
   "use strict";
@@ -30,16 +30,41 @@
     if (file === "finzy.html") return "finzy";
     return "mg_digital_solutions";
   }
-  // Solo nombres y parámetros permitidos; no se incluyen cédulas, mensajes, correos, teléfonos ni URLs con consulta.
+  // V8: modelo de eventos comerciales, sin datos personales ni textos libres.
+  // Los valores enviados se limitan a enumeraciones conocidas, no a campos de formularios.
+  const allowedProducts = ["ventry", "mg_club_plus", "finzy", "mg_digital_solutions"];
+  const allowedMethods = ["whatsapp", "email", "section"];
+  const allowedLocations = ["inicio", "problemas", "ventry", "sectores", "casos", "confianza",
+    "soluciones", "demo", "planes", "portafolio", "nosotros", "contacto", "producto",
+    "flujo", "avances", "modulos", "comparar", "funcionamiento", "diferenciales",
+    "implementacion", "preguntas", "faq", "navigation", "other"];
+  const allowedEvents = ["select_product", "contact_click", "contact_intent", "contact_form_prepared", "cta_click"];
+  function productFromPath(path) {
+    const name = path.split("/").pop().toLowerCase();
+    if (name === "ventry.html") return "ventry";
+    if (name === "mg-club-plus.html") return "mg_club_plus";
+    if (name === "finzy.html") return "finzy";
+    return null;
+  }
+  function ctaLocation(target) {
+    const section = target && typeof target.closest === "function" ? target.closest("section[id]") : null;
+    const id = section && section.id ? section.id.toLowerCase() : "navigation";
+    return allowedLocations.includes(id) ? id : "other";
+  }
+  function safeEnum(value, list) {
+    return typeof value === "string" && list.includes(value) ? value : null;
+  }
   function track(name, details) {
     if (!enabled || choice !== "granted" || !started || typeof window.gtag !== "function") return false;
-    if (!/^(?:select_product|contact_click|contact_intent|contact_form_prepared)$/.test(name)) return false;
-    const params = {
-      source_page: currentProduct(),
-      page_path: location.pathname,
-      ...(details && details.product ? { product: String(details.product).slice(0, 35) } : {}),
-      ...(details && details.contact_method ? { contact_method: String(details.contact_method).slice(0, 20) } : {})
-    };
+    if (!allowedEvents.includes(name)) return false;
+    const info = details && typeof details === "object" ? details : {};
+    const product = safeEnum(info.product, allowedProducts);
+    const method = safeEnum(info.contact_method, allowedMethods);
+    const cta = safeEnum(info.cta_location, allowedLocations);
+    const params = { source_page: currentProduct(), page_path: location.pathname };
+    if (product) params.product = product;
+    if (method) params.contact_method = method;
+    if (cta) params.cta_location = cta;
     window.gtag("event", name, params);
     return true;
   }
@@ -121,28 +146,54 @@
     footer.appendChild(preferencesButton);
   }
   function handleClick(event) {
-    const a = event.target.closest && event.target.closest("a[href]");
+    const target = event.target;
+    const element = target && typeof target.closest === "function" ? target : null;
+    if (!element) return;
+    const area = ctaLocation(element);
+    const button = element.closest("button#waFloat");
+    if (button) {
+      track("cta_click", { product: currentProduct(), cta_location: area });
+      track("contact_click", { product: currentProduct(), contact_method: "whatsapp", cta_location: area });
+      return;
+    }
+    const a = element.closest("a[href]");
     if (!a) return;
+    if (a.id === "waBtn") {
+      track("cta_click", { product: currentProduct(), cta_location: area });
+      track("contact_click", { product: currentProduct(), contact_method: "whatsapp", cta_location: area });
+      return;
+    }
     const href = a.getAttribute("href") || "";
     let u;
     try { u = new URL(href, location.href); } catch (_) { return; }
-    if (u.hostname === "wa.me" || u.hostname === "api.whatsapp.com") {
-      track("contact_click", { contact_method: "whatsapp" });
-    } else if (u.protocol === "mailto:") {
-      track("contact_click", { contact_method: "email" });
-    } else if (u.origin === location.origin) {
-      const product = u.pathname.split("/").pop();
-      if (product === "ventry.html" || product === "mg-club-plus.html" || product === "finzy.html") {
-        if (u.pathname !== location.pathname) track("select_product", { product: product.replace(".html", "") });
-      } else if (u.hash === "#contacto" || u.hash === "#demo") {
-        track("contact_intent", { contact_method: "section" });
-      }
+    const targetProduct = u.origin === location.origin ? productFromPath(u.pathname) : null;
+    const isContactSection = u.origin === location.origin && (u.hash === "#contacto" || u.hash === "#demo");
+    const isWhatsApp = u.hostname === "wa.me" || u.hostname === "api.whatsapp.com";
+    const isEmail = u.protocol === "mailto:";
+    // Un botón de navegación interna no es una oportunidad de venta confirmada.
+    const isCommercialCta = isContactSection || isWhatsApp || isEmail ||
+      Boolean(targetProduct && u.pathname !== location.pathname);
+    if (isCommercialCta) track("cta_click", {
+      product: targetProduct || currentProduct(), cta_location: area
+    });
+    if (isWhatsApp || isEmail) {
+      track("contact_click", {
+        product: currentProduct(), contact_method: isWhatsApp ? "whatsapp" : "email",
+        cta_location: area
+      });
+    } else if (isContactSection) {
+      // Priorizar el hash: soluciona los enlaces a #demo/#contacto en la propia página de producto.
+      track("contact_intent", {
+        product: currentProduct(), contact_method: "section", cta_location: area
+      });
+    } else if (targetProduct && u.pathname !== location.pathname) {
+      track("select_product", { product: targetProduct, cta_location: area });
     }
   }
   function init() {
     document.addEventListener("click", handleClick, true);
     document.addEventListener("submit", function (e) {
-      if (e.target && e.target.id === "demoForm") track("contact_form_prepared", { contact_method: "whatsapp" });
+      if (e.target && e.target.id === "demoForm") track("contact_form_prepared", { product: currentProduct(), contact_method: "whatsapp", cta_location: ctaLocation(e.target) });
     }, true);
     if (!enabled) return;
     addStyles();
