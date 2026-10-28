@@ -52,7 +52,8 @@ function fixture(){
  const sites=new Map([[SITE_A,{org:ORG_A,status:'draft'}],
   [SITE_A2,{org:ORG_A,status:'draft'}],
   [SITE_B,{org:ORG_B,status:'draft'}]]);
- const scopes=new Set([USER_A+'|'+ORG_A+'|'+SITE_A]);
+ const scopes=new Set([USER_A+'|'+ORG_A+'|'+SITE_A,
+  USER_B+'|'+ORG_B+'|'+SITE_B]);
  const counts={jwks:0,session:0,query:0};
  function issue({subject=USER_A,sessionId=subject===USER_B?SESSION_B:SESSION_A,
   overrides={},key='first',kid=key==='first'?'v88-first':'v88-second',
@@ -161,7 +162,7 @@ test('independent second signed user accesses only own organization B',async()=>
  const f=fixture(),r=await f.hit({
   token:f.issue({subject:USER_B}),org:ORG_B,site:SITE_B});
  assert.equal(r.status,200);
- assert.equal(f.counts.query,3); // editor does not need a site scope lookup
+ assert.equal(f.counts.query,4); // editor requires an assigned site scope too
 });
 test('user A signature cannot access organization B / site B',async()=>{
  const f=fixture(),r=await f.hit({org:ORG_B,site:SITE_B});
