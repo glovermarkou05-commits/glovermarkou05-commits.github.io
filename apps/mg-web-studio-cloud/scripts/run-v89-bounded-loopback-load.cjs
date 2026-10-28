@@ -122,7 +122,7 @@ async function holdTwo(h,onBeforeRelease){
  return {slots,ready,started,peak,active,notify};
 }
 async function runCase01(){
- let active=0,peak=0,started=0;
+ let active=0,peak=0,started=0,hold=true;
  const releases=[];
  let signal;
  const twoStarted=new Promise(resolve=>{signal=resolve;});
@@ -130,7 +130,7 @@ async function runCase01(){
   authorize:async()=>{
    active++;started++;peak=Math.max(peak,active);
    if(started===2)signal();
-   await new Promise(resolve=>releases.push(resolve));
+   if(hold)await new Promise(resolve=>releases.push(resolve));
    active--;
    return context();
   }});
@@ -142,17 +142,18 @@ async function runCase01(){
   const over=await h.request();
   ensure(over.status===503&&over.code==='RETRY_LATER','LOAD01_503');
   ensure(started===2&&peak===2,'LOAD01_INFLIGHT_CAP');
+  hold=false;
   releases.splice(0).forEach(resolve=>resolve());
   const done=await Promise.all([first,second]);
   ensure(done.every(r=>r.status===200),'LOAD01_OWN_SUCCESS');
-  // Recovery is proven by the V66 guard's "admitted" event, avoiding
-  // reblocking the authorize function for a new request.
+  const recovery=await h.request();
+  ensure(recovery.status===200,'LOAD01_RECOVERY_AFTER_RELEASE');
   const admitted=h.events.filter(x=>x==='admitted').length;
-  ensure(admitted===2&&h.events.includes('overloaded'),'LOAD01_ADMISSION');
+  ensure(admitted===3&&h.events.includes('overloaded'),'LOAD01_ADMISSION');
   ensure(active===0,'LOAD01_RELEASED');
   ensure(h.peakSockets<=MAX_SOCKETS,'LOAD01_SOCKET_CAP');
   return {id:'LOAD-01',passed:true,expectedOverload:503,
-   admitted,deniedOverload:1,peakInFlight:peak,
+   admitted,deniedOverload:1,recoveredAfterRelease:true,peakInFlight:peak,
    socketPeak:h.peakSockets};
  }finally{
   releases.splice(0).forEach(resolve=>resolve());
@@ -241,7 +242,7 @@ async function main(){
   version:'V89',realLocalHttp:true,externalNetwork:false,
   realAuth:false,realDatabase:false,restore:false,production:false,
   source:'real V63 V64 V65 V66 Node HTTP',maxSockets:MAX_SOCKETS,
-  maxConcurrent:2,probeCount:11,groupsTested:3,groupsPassed:3,
+  maxConcurrent:2,probeCount:12,groupsTested:3,groupsPassed:3,
   load03FullCapacityCertification:false,formalV67Verified:0,
   formalV67Pending:32,decision:'NO_GO',elapsedMs,results
  })+'\n');
