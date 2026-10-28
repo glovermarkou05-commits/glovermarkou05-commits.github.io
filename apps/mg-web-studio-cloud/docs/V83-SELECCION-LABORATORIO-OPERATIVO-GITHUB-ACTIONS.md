@@ -5,6 +5,8 @@
 **Estado:** **OPCIÓN PREFERIDA IDENTIFICADA — EJECUCIÓN NO AUTORIZADA (NO_GO)**  
 **Alcance de V83:** seleccionar plataforma, coste, riesgos, matriz de aptitud de pruebas y pasos de autorización. **No crear ni iniciar PostgreSQL 17, no abrir servidores HTTP, no cambiar BAZAR, no conectar Supabase y no publicar.**
 
+> **ACTUALIZACIÓN DE ESTADO (V84, 27/10/2026):** el usuario **autorizó seleccionar GitHub Actions como entorno de pruebas temporales** con datos ficticios, sin instalar ni arrancar PostgreSQL todavía. La primera medición **real** del runner GitHub Actions Ubuntu fue aprobada en https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/40630510664: 4 CPU, 15.989 MiB RAM total, 14.950 MiB RAM disponible y 87.773 MiB libres observados en el volumen de trabajo (no garantizados en futuras ejecuciones). Pasaron 609 pruebas sintéticas/de contrato. La propuesta V83 de selección queda **resuelta**, pero **no** equivale a autorizar PG17, SQL, red de pruebas, restore o producción: esos seis permisos V78 siguen pendientes, al igual que las 32 verificaciones V67. Detalles en `docs/V84-MEDICION-REAL-RUNNER-GITHUB-ACTIONS.md`.
+
 ## 1. Verificaciones reales del entorno del usuario
 
 - Repositorio GitHub confirmado mediante API: `glovermarkou05-commits/glovermarkou05-commits.github.io`, visibilidad **PUBLIC**, rama predeterminada **main**.
