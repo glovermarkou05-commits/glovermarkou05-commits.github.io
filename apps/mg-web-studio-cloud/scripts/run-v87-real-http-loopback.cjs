@@ -127,6 +127,7 @@ async function main(){
   process.stdout.write('V87 PROBE: '+id+'\n');
   const before=fixture.counters();
   const r=await sendPacket(address.port,payload,{timeoutMs});
+  process.stdout.write('V87 OBSERVED: '+id+' status='+String(r.status)+' responseBytes='+r.bytes+'\n');
   limitedOutcome(r,accepted,id);
   if(expectJson!==null)validJson(r,id,expectJson);
   if(unhandled){
@@ -205,7 +206,7 @@ if(require.main===module){
  },EXIT_TIMEOUT);
  main().catch(e=>{
   const internalCode=typeof e.code==='string'&&/^ERR_[A-Z0-9_]+$/.test(e.code)?e.code:'UNCLASSIFIED';
-  const permitted=/^V87_(?:ASSERTION_FAILED|SOCKET)_[A-Z0-9_]+$/.test(e.message);
+  const permitted=/^V87_(?:ASSERTION_FAILED|SOCKET)_[A-Z0-9_-]+$/.test(e.message);
   process.stderr.write(permitted?e.message+'\n':'V87_RUNNER_ERROR_'+internalCode+'\n');
   process.exitCode=1;
  }).finally(()=>clearTimeout(deadline));
