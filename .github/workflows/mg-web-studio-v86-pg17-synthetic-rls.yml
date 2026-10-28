@@ -1,0 +1,60 @@
+name: MG Web Studio V86 Real PG17 Synthetic RLS Isolation
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v86-pg17-synthetic-rls.yml
+      - apps/mg-web-studio-cloud/sql/v86-setup-synthetic-tenants.sql
+      - apps/mg-web-studio-cloud/sql/v86-verify-rls.sql
+      - apps/mg-web-studio-cloud/scripts/run-v86-synthetic-rls.sh
+      - apps/mg-web-studio-cloud/tests/v86-synthetic-rls-contract.test.cjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v86-disposable-sql-only
+  cancel-in-progress: false
+
+jobs:
+  synthetic-rls:
+    name: Disposable PG17 role/tenant/site SQL checks only - no public port
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.ref == 'refs/heads/feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      NODE_ENV: test
+      MG_V86_SCOPE: MG_V86_SQL_AND_SYNTHETIC_ONLY
+      V70_TEST_ISOLATION: "1"
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout code without retained credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install test Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate SQL and bootstrap scope offline before PostgreSQL
+        run: |
+          bash -n scripts/run-v86-synthetic-rls.sh
+          node --require ./server/native-network-guard-v70.cjs --test tests/v86-synthetic-rls-contract.test.cjs
+      - name: Runner capacity preflight; no SQL or database connections
+        run: node --require ./server/native-network-guard-v70.cjs scripts/inspect-gh-runner-v84.cjs --json
+      - name: Create two fictional tenants, assert real PostgreSQL RLS, and destroy database
+        run: bash scripts/run-v86-synthetic-rls.sh
+      - name: Final check that the temporary PostgreSQL container is removed
+        if: always()
+        run: |
+          if docker container inspect mg-webstudio-v86-pg17-synthetic-only >/dev/null 2>&1; then
+            echo 'V86 FAILURE: ephemeral PostgreSQL container still exists' >&2
+            exit 1
+          fi
+          echo 'V86 FINAL CLEANUP: container absent'
+          echo 'V67 real operational review: 32 PENDING; no production approval'
