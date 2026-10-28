@@ -1,11 +1,11 @@
 # MG Digital Solutions — V7: medición y conversiones
 
-Estado: **código preparado, medición externa DESACTIVADA** hasta que el propietario configure un ID de Google Analytics 4 real.
+Estado: **Google Analytics 4 conectado con ID `G-JCXNZ6W46C`**. La etiqueta solo se carga tras el consentimiento del visitante; la recepción de datos debe comprobarse en GA4.
 
 ## Qué incluye V7
 
 1. Las cuatro páginas `index.html`, `ventry.html`, `mg-club-plus.html` y `finzy.html` cargan dos scripts locales diferidos.
-2. `mg-analytics-config.js` tiene el identificador GA4 vacío. No se conecta a Google y no aparece un banner innecesario mientras esté vacío.
+2. `mg-analytics-config.js` contiene el identificador público `G-JCXNZ6W46C`. La conexión técnica está configurada y se muestra un aviso de consentimiento al visitante sin preferencias guardadas.
 3. `mg-analytics.js` registra eventos solo cuando la configuración contiene un ID válido y el visitante **acepta** las estadísticas.
 4. `privacidad.html` describe el funcionamiento, formularios y la medición opcional; cada página enlaza el aviso.
 5. Con GA4 activo el visitante puede **aceptar o rechazar**; el botón para revisar la decisión aparece en el pie. El consentimiento se guarda localmente.
@@ -23,19 +23,19 @@ Estado: **código preparado, medición externa DESACTIVADA** hasta que el propie
 
 Eventos limitados a: `source_page`, `page_path`, `product`, `contact_method`. **No** copiar campos del formulario, cédulas, teléfonos, correos o textos libres a Analytics.
 
-## Activación manual de GA4 (requiere cuenta Google)
+## Configuración de GA4 (completada) y validación operativa
 
 1. Entrar a https://analytics.google.com/ con la cuenta empresarial.
 2. Crear **Cuenta → Propiedad GA4 → Flujo de datos web**.
 3. URL web: `https://glovermarkou05-commits.github.io/`.
 4. Nombre sugerido del flujo: **MG Digital Solutions Web**.
-5. Copiar el **ID de medición**, que comienza por `G-`. NO copiar credenciales, API secrets ni claves privadas.
-6. Cambiar solo `ga4MeasurementId: ""` en `mg-analytics-config.js` a `ga4MeasurementId: "G-XXXXXXXXXX"`.
+5. ID de medición confirmado: `G-JCXNZ6W46C`. NO guardar aquí credenciales, API secrets ni claves privadas.
+6. `ga4MeasurementId` ya está configurado con `G-JCXNZ6W46C`; no es necesario modificarlo nuevamente.
 7. Publicar y abrir la web en una sesión limpia. Confirmar que ninguna llamada a `googletagmanager.com` aparece **antes** de aceptar; aceptar y comprobar actividad en **Informes → Tiempo real** de GA4.
 8. Rechazar y comprobar que no se carga el script en una visita nueva. Verificar el botón de preferencias para modificar la decisión.
 9. Revisar el funcionamiento en móvil y los enlaces de WhatsApp.
 
-No hay un ID configurado todavía: **no existen estadísticas activas ni un panel de visitas que pudiera inventarse**.
+El ID está configurado. **Todavía no se ha confirmado mediante el panel de GA4 la recepción real de eventos**; esa comprobación requiere una visita con consentimiento y revisión de *Tiempo real*.
 
 ## Alcance y restricciones
 
