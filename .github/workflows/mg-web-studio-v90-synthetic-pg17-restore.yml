@@ -1,0 +1,65 @@
+name: MG Web Studio V90 Two Ephemeral PG17 Backup Restore
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v90-synthetic-pg17-restore.yml
+      - apps/mg-web-studio-cloud/scripts/run-v90-pg17-synthetic-restore.sh
+      - apps/mg-web-studio-cloud/sql/v90-target-roles-only.sql
+      - apps/mg-web-studio-cloud/sql/v90-canonical-snapshot.sql
+      - apps/mg-web-studio-cloud/tests/v90-pg17-restore-contract.test.cjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v90-disposable-backup-and-restore
+  cancel-in-progress: false
+
+jobs:
+  isolated-synthetic-backup-restore:
+    name: Isolated PG17 source and destination, fake pg_dump and pg_restore only
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.ref == 'refs/heads/feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      NODE_ENV: test
+      MG_V90_SCOPE: MG_V90_SYNTHETIC_RESTORE_ONLY
+      V70_TEST_ISOLATION: "1"
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout development branch without credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: V90 offline scope and cleanup safety tests without Docker
+        run: |
+          bash -n scripts/run-v90-pg17-synthetic-restore.sh
+          node --require ./server/native-network-guard-v70.cjs --test tests/v90-pg17-restore-contract.test.cjs
+      - name: Verify runner capacity before creating temporary databases
+        run: node --require ./server/native-network-guard-v70.cjs scripts/inspect-gh-runner-v84.cjs --json
+      - name: Back up synthetic PG17 source and restore to isolated PG17 destination
+        run: bash scripts/run-v90-pg17-synthetic-restore.sh
+      - name: Verify both disposable containers are absent
+        if: always()
+        run: |
+          failed=0
+          for name in mg-webstudio-v90-source mg-webstudio-v90-destination; do
+            if docker container inspect "$name" >/dev/null 2>&1; then
+              echo 'V90 FAILURE: temporary PG17 container remains' >&2
+              failed=1
+            fi
+          done
+          if [[ "$failed" != 0 ]]; then exit 1; fi
+          echo 'V90 FINAL: both temporary PG17 containers absent'
+          echo 'V90 archive was in RUNNER_TEMP, discarded by script; not uploaded'
+          echo 'V67 32 formal controls pending; no production or live restore authorization'
