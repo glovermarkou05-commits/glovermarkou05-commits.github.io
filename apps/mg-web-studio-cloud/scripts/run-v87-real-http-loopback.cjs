@@ -203,8 +203,8 @@ if(require.main===module){
   process.exit(1);
  },EXIT_TIMEOUT);
  main().catch(e=>{
-  process.stderr.write(/^V87_ASSERTION_FAILED_[A-Z0-9_]+$/.test(e.message)
-   ?e.message+'\n':'V87_RUNNER_ERROR\n');
+  process.stderr.write(/^V87_(?:ASSERTION_FAILED|SOCKET)_[A-Z0-9_]+$/.test(e.message)
+   ?e.message+'\n':'V87_RUNNER_ERROR_'+(['TypeError','RangeError','SyntaxError','Error'].includes(e.name)?e.name.toUpperCase():'UNKNOWN')+'\n');
   process.exitCode=1;
  }).finally(()=>clearTimeout(deadline));
 }
