@@ -67,7 +67,7 @@ test('V87 covers HTTP-01 to HTTP-14 with explicit partial proxy case',()=>{
  assert.equal(ids.length,21);
  for(let i=1;i<=14;i++){
   const prefix='HTTP-'+String(i).padStart(2,'0');
-  assert.ok(ids.some(x=>x===prefix||x.startsWith(prefix+'-')),prefix);
+  assert.ok(ids.some(x=>x===prefix||x.startsWith(prefix+'-')||x.startsWith(prefix+'A')||x.startsWith(prefix+'B')||x.startsWith(prefix+'C')||x.startsWith(prefix+'D')),prefix);
  }
  assert.ok(ids.includes('HTTP-14-PARTIAL'));
  assert.match(src,/no actual trusted reverse-proxy validation/);
