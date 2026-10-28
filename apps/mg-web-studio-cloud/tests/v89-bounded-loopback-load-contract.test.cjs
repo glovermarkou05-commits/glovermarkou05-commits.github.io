@@ -115,5 +115,5 @@ test('bounded observations and public error schema avoid leak of request data',(
  assert.match(source,/ensure\(Object\.keys\(parsed\)\.length===3,'PUBLIC_FIELDS'\)/);
  assert.match(source,/!body\.includes\(AUTH\)/);
  assert.match(source,/V89_UNCLASSIFIED_FAILURE/);
- assert.match(source,/only 127\.0\.0\.1/);
+ assert.match(source,/HOST='127\.0\.0\.1'/);
 });
