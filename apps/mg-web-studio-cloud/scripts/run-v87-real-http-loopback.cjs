@@ -71,8 +71,28 @@ function sendPacket(port,payload,{timeoutMs=3500}={}){
    const raw=Buffer.concat(fragments).toString('latin1');
    const match=/^HTTP\/1\.1 (\d{3})\b/.exec(raw);
    const sep=raw.indexOf('\r\n\r\n');
-   resolve({status:match?Number(match[1]):null,
-    body:sep<0?'':raw.slice(sep+4),
+   const headers=sep<0?'':raw.slice(0,sep);
+   const payload=sep<0?'':raw.slice(sep+4);
+   let body=payload;
+   if(/\r\ntransfer-encoding:\s*chunked\s*(?:\r\n|$)/i.test(headers)){
+    body='';
+    let pos=0;
+    for(let i=0;i<16;i++){
+     const endLine=payload.indexOf('\r\n',pos);
+     assert(endLine>=pos&&endLine-pos<=16,'CHUNK_SIZE_LINE');
+     const line=payload.slice(pos,endLine).split(';')[0];
+     assert(/^[0-9a-f]+$/i.test(line),'CHUNK_SIZE_FORMAT');
+     const size=parseInt(line,16);
+     assert(Number.isSafeInteger(size)&&size<=MAX_BYTES,'CHUNK_SIZE_BOUNDS');
+     if(size===0)break;
+     const from=endLine+2,to=from+size;
+     assert(to+2<=payload.length&&payload.slice(to,to+2)==='\r\n','CHUNK_DELIMITER');
+     body+=payload.slice(from,to);
+     assert(body.length<=MAX_BYTES,'CHUNK_BODY_BOUNDS');
+     pos=to+2;
+    }
+   }
+   resolve({status:match?Number(match[1]):null,body,
     durationMs:Math.round(performance.now()-start),bytes});
   };
   socket.setTimeout(timeoutMs,()=>conclude('TIMEOUT'));
