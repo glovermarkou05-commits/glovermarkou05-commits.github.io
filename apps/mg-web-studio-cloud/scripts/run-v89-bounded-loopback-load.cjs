@@ -112,15 +112,6 @@ function context(){
   userId:USER,organizationId:ORG,siteId:SITE,role:'CLIENT_VIEWER'
  })});
 }
-async function holdTwo(h,onBeforeRelease){
- const slots=[];
- let started=0,peak=0,active=0;
- let notify;
- const ready=new Promise(resolve=>{notify=resolve;});
- // Caller constructs authorize separately; this helper uses only the shared
- // hold handles supplied by caller, never spawns extra requests.
- return {slots,ready,started,peak,active,notify};
-}
 async function runCase01(){
  let active=0,peak=0,started=0,hold=true;
  const releases=[];
