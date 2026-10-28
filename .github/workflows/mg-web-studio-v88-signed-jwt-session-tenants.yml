@@ -1,0 +1,63 @@
+name: MG Web Studio V88 Signed JWT Session and Tenant Integration
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v88-signed-jwt-session-tenants.yml
+      - apps/mg-web-studio-cloud/tests/v88-signed-jwt-session-tenants.test.cjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v88-ephemeral-jwt
+  cancel-in-progress: false
+
+jobs:
+  signed-jwt-v88:
+    name: Real ES256 cryptography and simulated session revocation; no network
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.ref == 'refs/heads/feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      NODE_ENV: test
+      V70_TEST_ISOLATION: "1"
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout no retained token
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run V88 real cryptographic signatures and synthetic session/tenant assertions
+        run: |
+          node --check tests/v88-signed-jwt-session-tenants.test.cjs
+          node --require ./server/native-network-guard-v70.cjs --test tests/v88-signed-jwt-session-tenants.test.cjs
+      - name: Regress prior V71-V75 verifier and tenant auth contracts
+        run: |
+          node --require ./server/native-network-guard-v70.cjs --test \
+            tests/jwt-public-verifier-v71.test.cjs \
+            tests/jwt-tenant-integration-v71.test.cjs \
+            tests/rotating-session-verifier-v72.test.cjs \
+            tests/rotating-session-integration-v72.test.cjs \
+            tests/bounded-provider-v73.test.cjs \
+            tests/resilient-session-integration-v73.test.cjs \
+            tests/pinned-auth-contract-v74.test.cjs \
+            tests/pinned-auth-integration-v74.test.cjs \
+            tests/pg-session-reader-v75.test.cjs \
+            tests/pg-session-integration-v75.test.cjs
+      - name: Record security scope without leaking JWT or key material
+        if: always()
+        run: |
+          echo 'V88 uses ephemeral ES256 signing keys, fake JWKS and session provider'
+          echo 'No external network, no live identities, no production session database'
+          echo 'V88 is crypto-integrated but not a live identity-provider verification'
+          echo 'V67 formal operational review: 32 PENDING; production NO_GO'
