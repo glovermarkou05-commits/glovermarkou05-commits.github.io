@@ -1,0 +1,54 @@
+name: MG Web Studio V89 Tiny Bounded Loopback Load
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v89-bounded-loopback-load.yml
+      - apps/mg-web-studio-cloud/scripts/run-v89-bounded-loopback-load.cjs
+      - apps/mg-web-studio-cloud/tests/v89-bounded-loopback-load-contract.test.cjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v89-small-local-load
+  cancel-in-progress: false
+
+jobs:
+  small-local-http:
+    name: V89 12 small 127.0.0.1 requests, V66 limits and tiny memory sample
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.ref == 'refs/heads/feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    env:
+      NODE_ENV: test
+      MG_V89_SCOPE: MG_V89_SMALL_LOOPBACK_LOAD
+      V70_TEST_ISOLATION: "1"
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout branch with no persistent credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preflight safety contracts - network prohibited
+        run: |
+          node --check scripts/run-v89-bounded-loopback-load.cjs
+          node --require ./server/native-network-guard-v70.cjs --test tests/v89-bounded-loopback-load-contract.test.cjs
+      - name: Real local HTTP V89 checks with strict 4 socket and 2 in-flight cap
+        run: node scripts/run-v89-bounded-loopback-load.cjs
+      - name: Record unchanged operational authorization boundary
+        if: always()
+        run: |
+          echo 'V89 only 127.0.0.1, fake authorized context, 12 requests, max 4 sockets'
+          echo 'V89 no real database, identity provider, production, or restore'
+          echo 'V89 LOAD-03 remains a single small memory/socket sample, not a stress certification'
+          echo 'V67 formal controls: 32 PENDING; no production approval'
