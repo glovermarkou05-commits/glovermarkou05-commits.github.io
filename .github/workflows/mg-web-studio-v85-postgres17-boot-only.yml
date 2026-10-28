@@ -1,0 +1,59 @@
+name: MG Web Studio V85 PostgreSQL 17 Ephemeral Boot Only
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v85-postgres17-boot-only.yml
+      - apps/mg-web-studio-cloud/scripts/start-pg17-ephemeral-v85.sh
+      - apps/mg-web-studio-cloud/tests/start-pg17-ephemeral-v85.test.cjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v85-pg17-boot-only
+  cancel-in-progress: false
+
+jobs:
+  postgres17-startup-only:
+    name: Isolated PG17 boot verification (no SQL, no TCP, no restore)
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.ref == 'refs/heads/feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      NODE_ENV: test
+      MG_V85_SCOPE: MG_V85_POSTGRES_BOOT_ONLY
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout without retained token
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Node.js 22 (no application installation)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate V85 boot policy OFFLINE before any container
+        run: |
+          node --version
+          bash -n scripts/start-pg17-ephemeral-v85.sh
+          node --require ./server/native-network-guard-v70.cjs --test tests/start-pg17-ephemeral-v85.test.cjs
+          node --require ./server/native-network-guard-v70.cjs --test tests/github-runner-preflight-v84.test.cjs tests/inspect-gh-runner-v84.test.cjs
+      - name: Verify GitHub-hosted runner capacity, no connections
+        run: node --require ./server/native-network-guard-v70.cjs scripts/inspect-gh-runner-v84.cjs --json
+      - name: Start ephemeral PostgreSQL 17, verify boot via UNIX socket, destroy
+        run: bash scripts/start-pg17-ephemeral-v85.sh
+      - name: Verify temporary database is gone
+        if: always()
+        run: |
+          if docker container inspect mg-webstudio-v85-pg17-bootonly >/dev/null 2>&1; then
+            echo 'V85 FINAL: unexpected container remains' >&2
+            exit 1
+          fi
+          echo 'V85 FINAL: no temporary PostgreSQL container remains'
+          echo 'V67: 32 PENDING; SQL validation, HTTP, restores and production NOT authorized'
