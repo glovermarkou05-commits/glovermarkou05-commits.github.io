@@ -1,0 +1,53 @@
+name: MG Web Studio V87 Real Loopback HTTP Parser Tests
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v87-real-http-loopback.yml
+      - apps/mg-web-studio-cloud/scripts/run-v87-real-http-loopback.cjs
+      - apps/mg-web-studio-cloud/tests/v87-http-loopback-contract.test.cjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v87-ephemeral-loopback-http
+  cancel-in-progress: false
+
+jobs:
+  loopback-http-v87:
+    name: V87 actual Node parser V63-66 V69, localhost only, no DB or load
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.ref == 'refs/heads/feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    env:
+      NODE_ENV: test
+      MG_V87_SCOPE: MG_V87_LOOPBACK_ONLY
+      V70_TEST_ISOLATION: "1"
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout branch without retained token
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Offline gate checks - NO listener
+        run: |
+          node --check scripts/run-v87-real-http-loopback.cjs
+          node --require ./server/native-network-guard-v70.cjs --test tests/v87-http-loopback-contract.test.cjs
+      - name: Real HTTP loopback wire protocol only; no database, proxy or load
+        run: node scripts/run-v87-real-http-loopback.cjs
+      - name: Record scope limitations
+        if: always()
+        run: |
+          echo 'V87: ephemeral local listener only; never connected to production, Supabase or BAZAR'
+          echo 'V87 formal operational controls V67: 32 PENDING, 0 independently verified'
+          echo 'V87 no TLS/reverse proxy, no load tests, no real auth, no restore, no deployment'
