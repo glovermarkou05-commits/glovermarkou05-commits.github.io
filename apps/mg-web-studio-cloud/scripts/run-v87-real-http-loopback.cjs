@@ -124,6 +124,7 @@ async function main(){
  let open=false,address;
  const results=[];
  const check=async (id,payload,accepted,{unhandled=false,timeoutMs=3500,expectJson=null}={})=>{
+  process.stdout.write('V87 PROBE: '+id+'\n');
   const before=fixture.counters();
   const r=await sendPacket(address.port,payload,{timeoutMs});
   limitedOutcome(r,accepted,id);
@@ -203,8 +204,9 @@ if(require.main===module){
   process.exit(1);
  },EXIT_TIMEOUT);
  main().catch(e=>{
-  process.stderr.write(/^V87_(?:ASSERTION_FAILED|SOCKET)_[A-Z0-9_]+$/.test(e.message)
-   ?e.message+'\n':'V87_RUNNER_ERROR_'+(['TypeError','RangeError','SyntaxError','Error'].includes(e.name)?e.name.toUpperCase():'UNKNOWN')+'\n');
+  const internalCode=typeof e.code==='string'&&/^ERR_[A-Z0-9_]+$/.test(e.code)?e.code:'UNCLASSIFIED';
+  const permitted=/^V87_(?:ASSERTION_FAILED|SOCKET)_[A-Z0-9_]+$/.test(e.message);
+  process.stderr.write(permitted?e.message+'\n':'V87_RUNNER_ERROR_'+internalCode+'\n');
   process.exitCode=1;
  }).finally(()=>clearTimeout(deadline));
 }
