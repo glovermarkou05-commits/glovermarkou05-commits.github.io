@@ -32,9 +32,12 @@ test('V85 cannot create a public TCP listener or Docker network',()=>{
 });
 test('V85 cannot mount project or existing BAZAR disk',()=>{
  for(const forbidden of ['supabase_db_bazar_online_4r_local_only',
-  '/var/run/docker.sock','--mount type=bind','--volume',' -v ','--volumes-from']){
+  '/var/run/docker.sock','--mount type=bind','--volume','--volumes-from']){
   assert.ok(!source.includes(forbidden),forbidden);
  }
+ // docker rm -v is permitted only for removing the disposable lab volume.
+ assert.match(source,/docker rm -f -v "\$NAME"/);
+ assert.doesNotMatch(source,/^\s*-v\s+[^\n]+/m);
 });
 test('V85 uses PostgreSQL 17 official boot image without SQL statements',()=>{
  assert.match(source,/IMAGE='postgres:17-bookworm'/);
