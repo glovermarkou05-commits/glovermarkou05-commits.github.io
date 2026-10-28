@@ -166,7 +166,7 @@ test('independent second signed user accesses only own organization B',async()=>
 test('user A signature cannot access organization B / site B',async()=>{
  const f=fixture(),r=await f.hit({org:ORG_B,site:SITE_B});
  assert.equal(r.status,404);
- assert.equal(f.counts.query,1); // org lookup, site mismatch remains hidden
+ assert.equal(f.counts.query,3); // existing foreign org/site but no membership
 });
 test('user B signature cannot access organization A / site A',async()=>{
  const f=fixture(),r=await f.hit({token:f.issue({subject:USER_B})});
