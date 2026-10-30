@@ -1,0 +1,74 @@
+name: MG Web Studio V93 Offline Independent Review Readiness
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v93-independent-review-gates.yml
+      - apps/mg-web-studio-cloud/docs/V93-PAQUETE-REVISION-INDEPENDIENTE.json
+      - apps/mg-web-studio-cloud/docs/V93-RUTA-CRITICA-REVISION-Y-BLOQUEOS.md
+      - apps/mg-web-studio-cloud/docs/V93-ACTA-REVISION-INDEPENDIENTE-SIN-FIRMA.md
+      - apps/mg-web-studio-cloud/server/v93-independent-review-audit.cjs
+      - apps/mg-web-studio-cloud/scripts/audit-v93-review-gates.cjs
+      - apps/mg-web-studio-cloud/tests/v93-independent-review-gates.test.cjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v93-offline-unsigned-review
+  cancel-in-progress: true
+
+jobs:
+  review-preparation:
+    name: V93 verify 32 case handoff and deny fake signatures or operational GO
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.ref == 'refs/heads/feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    env:
+      NODE_ENV: test
+      V70_TEST_ISOLATION: "1"
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Read-only checkout without persisted token
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify V93 and V91/V92 offline integrity and all canonical V67 gaps
+        run: |
+          node --check server/v93-independent-review-audit.cjs
+          node --check scripts/audit-v93-review-gates.cjs
+          node --check tests/v93-independent-review-gates.test.cjs
+          node --require ./server/native-network-guard-v70.cjs --test \
+            tests/v93-independent-review-gates.test.cjs \
+            tests/v92-offline-observability-review.test.cjs \
+            tests/v91-evidence-gap-audit.test.cjs \
+            tests/security-acceptance-v67.test.cjs \
+            tests/v67-evidence-template.test.cjs
+      - name: Output safe review blocks and pending approval flags only
+        run: |
+          node --require ./server/native-network-guard-v70.cjs scripts/audit-v93-review-gates.cjs --json
+      - name: Block any PASS, deployment or fabricated independent signoff
+        run: |
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const x=JSON.parse(fs.readFileSync('docs/V93-PAQUETE-REVISION-INDEPENDIENTE.json','utf8'));
+          const v=JSON.parse(fs.readFileSync('docs/V67-EVIDENCIAS-PENDIENTES.json','utf8'));
+          if(x.readiness.formalPending!==32||x.readiness.independentApprovals!==0||
+            x.readiness.decision!=='NO_GO'||x.reviewCompleted!==false||
+            x.authorizationProduction!==false||x.reviewerAssigned!==false||
+            x.controls.length!==32||x.controls.some(c=>c.formalStatus!=='PENDING'||
+             c.independentReview.status!=='NOT_REVIEWED'||c.independentReview.approvalReference!==null)||
+            v.cases.length!==32||v.cases.some(c=>c.status!=='PENDING'||c.evidenceRef!==null)||
+            v.decision!=='NO_GO')
+            throw Error('V93 independent review safety gate failed');
+          console.log('V93 VERIFIED: 32 unsigned cases, 0 signoffs, no production GO');
+          NODE
