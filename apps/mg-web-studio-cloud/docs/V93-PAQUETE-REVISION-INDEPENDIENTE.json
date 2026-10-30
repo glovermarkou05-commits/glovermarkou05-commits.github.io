@@ -1,0 +1,685 @@
+{
+  "version": "V93",
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "scope": "READ_ONLY_DOCUMENT_PREPARATION_ONLY",
+  "sourceManifest": "docs/V91-MATRIZ-COBERTURA-V67.json",
+  "sourceObservability": "docs/V92-PAQUETE-REVISION-OBSERVABILIDAD.json",
+  "sourceCanonical": "docs/V67-EVIDENCIAS-PENDIENTES.json",
+  "builtOn": "2026-10-29",
+  "reviewerRequired": "INDEPENDENT_FROM_AUTHOR",
+  "reviewerAssigned": false,
+  "reviewCompleted": false,
+  "authorizationProduction": false,
+  "controls": [
+    {
+      "id": "HTTP-01",
+      "coverageFromV91": "LAB_OBSERVED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87"
+      ],
+      "workstream": "EVIDENCE_REVIEW",
+      "remainingAction": "Revisión independiente de ejecución y respuesta",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "HTTP-02",
+      "coverageFromV91": "LAB_OBSERVED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87"
+      ],
+      "workstream": "EVIDENCE_REVIEW",
+      "remainingAction": "Revisión independiente de logs V87",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "HTTP-03",
+      "coverageFromV91": "LAB_OBSERVED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87"
+      ],
+      "workstream": "EVIDENCE_REVIEW",
+      "remainingAction": "Revisión independiente de logs V87",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "HTTP-04",
+      "coverageFromV91": "LAB_OBSERVED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87"
+      ],
+      "workstream": "EVIDENCE_REVIEW",
+      "remainingAction": "Revisión independiente de logs V87",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "HTTP-05",
+      "coverageFromV91": "LAB_OBSERVED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87"
+      ],
+      "workstream": "EVIDENCE_REVIEW",
+      "remainingAction": "Revisión independiente de logs V87",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "HTTP-06",
+      "coverageFromV91": "PARTIAL",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87"
+      ],
+      "workstream": "INGRESS_TLS",
+      "remainingAction": "Probar en el proxy/TLS de ingreso autorizado los mismos límites",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "HTTP-07",
+      "coverageFromV91": "LAB_OBSERVED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87"
+      ],
+      "workstream": "EVIDENCE_REVIEW",
+      "remainingAction": "Revisión independiente de logs y entorno V87",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "HTTP-08",
+      "coverageFromV91": "LAB_OBSERVED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87"
+      ],
+      "workstream": "EVIDENCE_REVIEW",
+      "remainingAction": "Revisión independiente de trazas sanitizadas",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "HTTP-09",
+      "coverageFromV91": "LAB_OBSERVED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87"
+      ],
+      "workstream": "EVIDENCE_REVIEW",
+      "remainingAction": "Revisión independiente de logs V87",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "HTTP-10",
+      "coverageFromV91": "PARTIAL",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87"
+      ],
+      "workstream": "INGRESS_TLS",
+      "remainingAction": "Probar slow headers y ausencia de fugas bajo carga pequeña aprobada",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "HTTP-11",
+      "coverageFromV91": "LAB_OBSERVED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87"
+      ],
+      "workstream": "EVIDENCE_REVIEW",
+      "remainingAction": "Revisión independiente de logs V87",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "HTTP-12",
+      "coverageFromV91": "LAB_OBSERVED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87"
+      ],
+      "workstream": "EVIDENCE_REVIEW",
+      "remainingAction": "Revisión independiente de logs V87",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "HTTP-13",
+      "coverageFromV91": "LAB_OBSERVED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87"
+      ],
+      "workstream": "EVIDENCE_REVIEW",
+      "remainingAction": "Revisión independiente de logs V87",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "HTTP-14",
+      "coverageFromV91": "PARTIAL",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87",
+        "V89"
+      ],
+      "workstream": "INGRESS_TLS",
+      "remainingAction": "Enrutamiento desde proxy/TLS real autorizado con identidad de origen verificada",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "LOAD-01",
+      "coverageFromV91": "LAB_OBSERVED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V89"
+      ],
+      "workstream": "EVIDENCE_REVIEW",
+      "remainingAction": "Revisión independiente; validar topes finales en ingress real",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "LOAD-02",
+      "coverageFromV91": "LAB_OBSERVED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V89"
+      ],
+      "workstream": "EVIDENCE_REVIEW",
+      "remainingAction": "Revisión independiente; comprobar bajo topología proxy real",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "LOAD-03",
+      "coverageFromV91": "PARTIAL",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V89"
+      ],
+      "workstream": "INGRESS_TLS",
+      "remainingAction": "Medir memoria, backlog, sockets y cancelación SQL en ensayo acotado más representativo",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "OBS-01",
+      "coverageFromV91": "PARTIAL",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87",
+        "V89"
+      ],
+      "workstream": "OBS_PRIVACY",
+      "remainingAction": "Auditar muestra real de emisión/almacenamiento sin datos sensibles",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "OBS-02",
+      "coverageFromV91": "PARTIAL",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V87",
+        "V89"
+      ],
+      "workstream": "OBS_PRIVACY",
+      "remainingAction": "Correlacionar rechazos 401/403/404/429/503 entre capas sin exponer identidad",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "OBS-03",
+      "coverageFromV91": "NOT_EXERCISED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [],
+      "workstream": "OBS_PRIVACY",
+      "remainingAction": "Definir y aprobar responsable, política, cifrado, retención y borrado de logs",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "OBS-04",
+      "coverageFromV91": "NOT_EXERCISED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [],
+      "workstream": "OBS_PRIVACY",
+      "remainingAction": "Aprobar runbook de incidentes, alertas, niveles y responsable",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "AUTH-01",
+      "coverageFromV91": "PARTIAL",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V88"
+      ],
+      "workstream": "IDENTITY_MFA",
+      "remainingAction": "Probar sesión/JWT de proveedor de ensayo autorizado y revocación persistida",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "AUTH-02",
+      "coverageFromV91": "PARTIAL",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V88",
+        "V86",
+        "V53"
+      ],
+      "workstream": "IDENTITY_MFA",
+      "remainingAction": "Prueba end-to-end con identidad de ensayo, DB de producto y scopes",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "AUTH-03",
+      "coverageFromV91": "PARTIAL",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V88"
+      ],
+      "workstream": "IDENTITY_MFA",
+      "remainingAction": "Demostrar MFA servidor-verified en operaciones elevadas con identidad de prueba",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "DATA-01",
+      "coverageFromV91": "PARTIAL",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V86",
+        "V53"
+      ],
+      "workstream": "SQL_CANCELLATION",
+      "remainingAction": "Catalogar roles reales, ACL/defaults, bypass/service_role y políticas de esquema final",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "DATA-02",
+      "coverageFromV91": "PARTIAL",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V86",
+        "V89"
+      ],
+      "workstream": "SQL_CANCELLATION",
+      "remainingAction": "Probar cancelación y deadline de transacción real sin escrituras persistentes",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "REC-01",
+      "coverageFromV91": "LAB_OBSERVED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V90"
+      ],
+      "workstream": "EVIDENCE_REVIEW",
+      "remainingAction": "Revisión independiente y repetir con esquema autorizado completo",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "REC-02",
+      "coverageFromV91": "PARTIAL",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V90"
+      ],
+      "workstream": "RESTORE_FULL_SCHEMA",
+      "remainingAction": "Comparar tablas/esquemas completos, migraciones, extensiones no predeterminadas",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "REC-03",
+      "coverageFromV91": "NOT_EXERCISED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V90",
+        "V53"
+      ],
+      "workstream": "RESTORE_FULL_SCHEMA",
+      "remainingAction": "Ejecutar pgTAP V53 contra copia restaurada con esquema MG y dependencias compatibles",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "REC-04",
+      "coverageFromV91": "PARTIAL",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V90"
+      ],
+      "workstream": "RECOVERY_POLICY",
+      "remainingAction": "Aprobar backup cifrado, retención, restauración completa y RPO/RTO medidos",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "OPS-01",
+      "coverageFromV91": "PARTIAL",
+      "formalStatus": "PENDING",
+      "evidenceStages": [
+        "V85",
+        "V87",
+        "V89"
+      ],
+      "workstream": "INGRESS_TLS",
+      "remainingAction": "Aprobación separada de interfaz/puerto/TLS/firewall, duración y operador",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    },
+    {
+      "id": "OPS-02",
+      "coverageFromV91": "NOT_EXERCISED",
+      "formalStatus": "PENDING",
+      "evidenceStages": [],
+      "workstream": "PRODUCTION_RELEASE",
+      "remainingAction": "Obtener dictamen independiente y aprobación productiva separada con rollback",
+      "independentReview": {
+        "status": "NOT_REVIEWED",
+        "reviewer": "UNASSIGNED",
+        "approvalReference": null,
+        "decision": null
+      }
+    }
+  ],
+  "workstreams": [
+    {
+      "key": "EVIDENCE_REVIEW",
+      "rank": 1,
+      "title": "Revisión independiente de pruebas ya ejecutadas",
+      "ids": [
+        "HTTP-01",
+        "HTTP-02",
+        "HTTP-03",
+        "HTTP-04",
+        "HTTP-05",
+        "HTTP-07",
+        "HTTP-08",
+        "HTTP-09",
+        "HTTP-11",
+        "HTTP-12",
+        "HTTP-13",
+        "LOAD-01",
+        "LOAD-02",
+        "REC-01"
+      ],
+      "operation": "DOCUMENTARY_ONLY",
+      "approval": "NONE_FOR_DOCUMENT_PREPARATION",
+      "readiness": "READY_TO_ASSIGN_REVIEWER",
+      "owner": "UNASSIGNED",
+      "reviewer": "UNASSIGNED",
+      "next": "Verificar ejecuciones y SHA; revisor distinto del autor confirma alcance y conserva acta fuera del repositorio público"
+    },
+    {
+      "key": "OBS_PRIVACY",
+      "rank": 2,
+      "title": "Política OBS, cifrado, alertas y responsables",
+      "ids": [
+        "OBS-01",
+        "OBS-02",
+        "OBS-03",
+        "OBS-04"
+      ],
+      "operation": "DOCUMENTARY_ONLY_NOW;LATER_SERVICE_CONFIGURATION_REQUIRES_CONSENT",
+      "approval": "NEW_FOR_REAL_SINK_OR_ALERTS",
+      "readiness": "DRAFT_PENDING_PRIVACY_REVIEW",
+      "owner": "UNASSIGNED",
+      "reviewer": "UNASSIGNED",
+      "next": "Revisar borrador V92, aprobar o corregir retención, designar responsable de datos e incidentes; luego autorizar conexión de prueba si procede"
+    },
+    {
+      "key": "RESTORE_FULL_SCHEMA",
+      "rank": 3,
+      "title": "REC-03: restauración del esquema completo y suite V53",
+      "ids": [
+        "REC-02",
+        "REC-03"
+      ],
+      "operation": "NOT_AUTHORIZED_FOR_EXECUTION",
+      "approval": "NEW_EXPLICIT_RESTORE_AND_SQL_AUTHORIZATION",
+      "readiness": "BLOCKED_ON_FULL_SCHEMA_AND_TEST_FIXTURES",
+      "owner": "UNASSIGNED",
+      "reviewer": "UNASSIGNED",
+      "next": "Preparar inventario de migraciones V45-V54 y compatibilidad auth.users, authenticated, extensions.pgTAP; nunca ejecutar V53 contra V90 de cuatro filas"
+    },
+    {
+      "key": "IDENTITY_MFA",
+      "rank": 4,
+      "title": "Autenticación y MFA con identidades de ensayo",
+      "ids": [
+        "AUTH-01",
+        "AUTH-02",
+        "AUTH-03"
+      ],
+      "operation": "NOT_AUTHORIZED_FOR_EXECUTION",
+      "approval": "NEW_EXPLICIT_IDENTITY_PROVIDER_TEST_AUTHORIZATION",
+      "readiness": "BLOCKED_ON_SANDBOX_AND_AUTH_PROVIDER",
+      "owner": "UNASSIGNED",
+      "reviewer": "UNASSIGNED",
+      "next": "Diseñar sesión JWT emitida en sandbox, revocación persistida, MFA real y permiso por sitio; sin cuentas de usuarios ni claves reales"
+    },
+    {
+      "key": "SQL_CANCELLATION",
+      "rank": 5,
+      "title": "Roles efectivos, SQL y cancelación transaccional",
+      "ids": [
+        "DATA-01",
+        "DATA-02"
+      ],
+      "operation": "NOT_AUTHORIZED_FOR_EXECUTION",
+      "approval": "NEW_EXPLICIT_SYNTHETIC_DATABASE_SQL_AUTHORIZATION",
+      "readiness": "BLOCKED_ON_AUTHORIZED_PG17_WITH_FULL_SCHEMA",
+      "owner": "UNASSIGNED",
+      "reviewer": "UNASSIGNED",
+      "next": "Comprobar ACL/default grants, service_role y SECURITY DEFINER; cancelar transacción de prueba y confirmar rollback y ausencia de jobs pendientes"
+    },
+    {
+      "key": "INGRESS_TLS",
+      "rank": 6,
+      "title": "Proxy/TLS y límites con red controlada",
+      "ids": [
+        "HTTP-06",
+        "HTTP-10",
+        "HTTP-14",
+        "LOAD-03",
+        "OPS-01"
+      ],
+      "operation": "NOT_AUTHORIZED_FOR_EXECUTION",
+      "approval": "NEW_EXPLICIT_PROXY_NETWORK_SCOPE",
+      "readiness": "BLOCKED_ON_APPROVED_PROXY_AND_INTERFACE",
+      "owner": "UNASSIGNED",
+      "reviewer": "UNASSIGNED",
+      "next": "Planear proxy confiable, prueba slow-header mínima, límites de cola/memoria y procedencia de Forwarded; no publicar puertos"
+    },
+    {
+      "key": "RECOVERY_POLICY",
+      "rank": 7,
+      "title": "Cifrado, retención y objetivos de recuperación",
+      "ids": [
+        "REC-04"
+      ],
+      "operation": "DOCUMENTARY_ONLY_NOW;RESTORE_REQUIRES_NEW_CONSENT",
+      "approval": "NEW_FOR_REAL_RESTORE_OR_STORAGE",
+      "readiness": "BLOCKED_ON_POLICY_OWNER_AND_RPO_RTO",
+      "owner": "UNASSIGNED",
+      "reviewer": "UNASSIGNED",
+      "next": "Definir RPO/RTO objetivo, cifrado, retención, operador y simulación autorizada; no derivar SLA de 99/68 ms en V90"
+    },
+    {
+      "key": "PRODUCTION_RELEASE",
+      "rank": 8,
+      "title": "Plan de reversión, ventana y decisión de producción",
+      "ids": [
+        "OPS-02"
+      ],
+      "operation": "DOCUMENTARY_ONLY_NOW;DEPLOY_BLOCKED",
+      "approval": "NEW_EXPLICIT_PRODUCTION_APPROVAL",
+      "readiness": "DEPENDENT_ON_ALL_32_INDEPENDENT_REVIEWS",
+      "owner": "UNASSIGNED",
+      "reviewer": "UNASSIGNED",
+      "next": "Pedir aprobación de publicación solo después de completar V67, firmar plan de rollback y designar ventana"
+    }
+  ],
+  "readiness": {
+    "total": 32,
+    "observedLab": 14,
+    "partial": 14,
+    "unexercised": 4,
+    "formalPending": 32,
+    "independentApprovals": 0,
+    "unsignedReviewItems": 32,
+    "documentaryPreparationDone": true,
+    "anyOperationalExecutionAuthorizedByV93": false,
+    "realPG17Executed": false,
+    "realHttpExecuted": false,
+    "productionPublished": false,
+    "decision": "NO_GO"
+  }
+}
