@@ -1,0 +1,379 @@
+{
+  "version": "V91",
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "authoredOn": "2026-10-29",
+  "intent": "DOCUMENTARY_AND_OFFLINE_GAP_AUDIT",
+  "sources": {
+    "V85": {
+      "report": "docs/V85-POSTGRES17-EFIMERO-ARRANQUE-AUTORIZADO.md",
+      "runId": 40631071278
+    },
+    "V86": {
+      "report": "docs/V86-PRUEBAS-SQL-REALES-RLS-DOS-EMPRESAS.md",
+      "runId": 40631943233
+    },
+    "V87": {
+      "report": "docs/V87-EVIDENCIAS-HTTP-LOOPBACK-REALES.md",
+      "runId": 40633105863
+    },
+    "V88": {
+      "report": "docs/V88-EVIDENCIA-JWT-FIRMADOS-REVOCACION-MULTIEMPRESA.md",
+      "runId": 40633873753
+    },
+    "V89": {
+      "report": "docs/V89-EVIDENCIAS-REALES-LIMITES-CONCURRENCIA-HTTP.md",
+      "runId": 40635697392
+    },
+    "V90": {
+      "report": "docs/V90-EVIDENCIAS-PG17-BACKUP-RESTORE-SINTETICO.md",
+      "runId": 40640914974
+    },
+    "V53": {
+      "report": "docs/V53-PRUEBAS-RLS-PGTAP.md",
+      "runId": null
+    }
+  },
+  "sourceCatalog": "docs/V67-EVIDENCIAS-PENDIENTES.json",
+  "coverageLabels": {
+    "LAB_OBSERVED": "Evidence observed in authorized isolated lab; NOT independent V67 approval",
+    "PARTIAL": "Some supporting evidence, acceptance criterion incomplete",
+    "NOT_EXERCISED": "No direct execution meeting the control"
+  },
+  "controls": [
+    {
+      "id": "HTTP-01",
+      "coverage": "LAB_OBSERVED",
+      "sourceStages": [
+        "V87"
+      ],
+      "observation": "GET 200/JSON público con el parser real Node; identidad sintética",
+      "missing": "Revisión independiente de ejecución y respuesta",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "HTTP-02",
+      "coverage": "LAB_OBSERVED",
+      "sourceStages": [
+        "V87"
+      ],
+      "observation": "Authorization duplicada rechazada antes de autenticar",
+      "missing": "Revisión independiente de logs V87",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "HTTP-03",
+      "coverage": "LAB_OBSERVED",
+      "sourceStages": [
+        "V87"
+      ],
+      "observation": "Content-Length duplicado rechazado por parser real",
+      "missing": "Revisión independiente de logs V87",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "HTTP-04",
+      "coverage": "LAB_OBSERVED",
+      "sourceStages": [
+        "V87"
+      ],
+      "observation": "Transfer-Encoding y Content-Length ambiguos rechazados",
+      "missing": "Revisión independiente de logs V87",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "HTTP-05",
+      "coverage": "LAB_OBSERVED",
+      "sourceStages": [
+        "V87"
+      ],
+      "observation": "Nombre de cabecera inválido y byte de control rechazados",
+      "missing": "Revisión independiente de logs V87",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "HTTP-06",
+      "coverage": "PARTIAL",
+      "sourceStages": [
+        "V87"
+      ],
+      "observation": "Header grande rechazado 431 por Node; ningún proxy real ensayado",
+      "missing": "Probar en el proxy/TLS de ingreso autorizado los mismos límites",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "HTTP-07",
+      "coverage": "LAB_OBSERVED",
+      "sourceStages": [
+        "V87"
+      ],
+      "observation": "Host ausente y duplicado rechazados por Node",
+      "missing": "Revisión independiente de logs y entorno V87",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "HTTP-08",
+      "coverage": "LAB_OBSERVED",
+      "sourceStages": [
+        "V87"
+      ],
+      "observation": "Ruta codificada, query, fragmento y target absoluto rechazados",
+      "missing": "Revisión independiente de trazas sanitizadas",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "HTTP-09",
+      "coverage": "LAB_OBSERVED",
+      "sourceStages": [
+        "V87"
+      ],
+      "observation": "GET con body rechazado por Node/V64",
+      "missing": "Revisión independiente de logs V87",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "HTTP-10",
+      "coverage": "PARTIAL",
+      "sourceStages": [
+        "V87"
+      ],
+      "observation": "Una conexión con cabecera incompleta se cerró tras timeout",
+      "missing": "Probar slow headers y ausencia de fugas bajo carga pequeña aprobada",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "HTTP-11",
+      "coverage": "LAB_OBSERVED",
+      "sourceStages": [
+        "V87"
+      ],
+      "observation": "Expect 100-continue devolvió 417 sin trabajo de auth",
+      "missing": "Revisión independiente de logs V87",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "HTTP-12",
+      "coverage": "LAB_OBSERVED",
+      "sourceStages": [
+        "V87"
+      ],
+      "observation": "Upgrade y CONNECT no establecieron túnel",
+      "missing": "Revisión independiente de logs V87",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "HTTP-13",
+      "coverage": "LAB_OBSERVED",
+      "sourceStages": [
+        "V87"
+      ],
+      "observation": "Request line inválido rechazado 400 sin reflejar contenido",
+      "missing": "Revisión independiente de logs V87",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "HTTP-14",
+      "coverage": "PARTIAL",
+      "sourceStages": [
+        "V87",
+        "V89"
+      ],
+      "observation": "Spoofing de cabeceras sin efecto en este backend de loopback; no hubo proxy confiable",
+      "missing": "Enrutamiento desde proxy/TLS real autorizado con identidad de origen verificada",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "LOAD-01",
+      "coverage": "LAB_OBSERVED",
+      "sourceStages": [
+        "V89"
+      ],
+      "observation": "503 al alcanzar 2 solicitudes activas y recuperación 200",
+      "missing": "Revisión independiente; validar topes finales en ingress real",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "LOAD-02",
+      "coverage": "LAB_OBSERVED",
+      "sourceStages": [
+        "V89"
+      ],
+      "observation": "429 al cuarto intento del mismo socket, Retry-After 1, ventana recuperada",
+      "missing": "Revisión independiente; comprobar bajo topología proxy real",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "LOAD-03",
+      "coverage": "PARTIAL",
+      "sourceStages": [
+        "V89"
+      ],
+      "observation": "Muestra corta de 3 sockets, delta RSS redondeado 0; sin SQL jobs",
+      "missing": "Medir memoria, backlog, sockets y cancelación SQL en ensayo acotado más representativo",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "OBS-01",
+      "coverage": "PARTIAL",
+      "sourceStages": [
+        "V87",
+        "V89"
+      ],
+      "observation": "Salidas de ensayo minimizadas, sin demostrar redacción de logs persistentes",
+      "missing": "Auditar muestra real de emisión/almacenamiento sin datos sensibles",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "OBS-02",
+      "coverage": "PARTIAL",
+      "sourceStages": [
+        "V87",
+        "V89"
+      ],
+      "observation": "Identificador seguro en respuestas; rechazos V66 usan unavailable",
+      "missing": "Correlacionar rechazos 401/403/404/429/503 entre capas sin exponer identidad",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "OBS-03",
+      "coverage": "NOT_EXERCISED",
+      "sourceStages": [],
+      "observation": "No se evidenció política firmada de retención/cifrado/acceso/borrado",
+      "missing": "Definir y aprobar responsable, política, cifrado, retención y borrado de logs",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "OBS-04",
+      "coverage": "NOT_EXERCISED",
+      "sourceStages": [],
+      "observation": "Sin evidencia de umbrales, propietario de incidentes o escalación",
+      "missing": "Aprobar runbook de incidentes, alertas, niveles y responsable",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "AUTH-01",
+      "coverage": "PARTIAL",
+      "sourceStages": [
+        "V88"
+      ],
+      "observation": "Firma ES256 real, expiración y revocación simulada en memoria",
+      "missing": "Probar sesión/JWT de proveedor de ensayo autorizado y revocación persistida",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "AUTH-02",
+      "coverage": "PARTIAL",
+      "sourceStages": [
+        "V88",
+        "V86",
+        "V53"
+      ],
+      "observation": "JWT firmados y aislamiento multiempresa en memoria, RLS de fixture separado; V53 previo en STAGING",
+      "missing": "Prueba end-to-end con identidad de ensayo, DB de producto y scopes",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "AUTH-03",
+      "coverage": "PARTIAL",
+      "sourceStages": [
+        "V88"
+      ],
+      "observation": "Rol y aal2 falsificados no elevaron privilegios; no se probó MFA verdadero",
+      "missing": "Demostrar MFA servidor-verified en operaciones elevadas con identidad de prueba",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "DATA-01",
+      "coverage": "PARTIAL",
+      "sourceStages": [
+        "V86",
+        "V53"
+      ],
+      "observation": "RLS en PostgreSQL17 de muestra y pgTAP V53 anterior en STAGING",
+      "missing": "Catalogar roles reales, ACL/defaults, bypass/service_role y políticas de esquema final",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "DATA-02",
+      "coverage": "PARTIAL",
+      "sourceStages": [
+        "V86",
+        "V89"
+      ],
+      "observation": "Rollback de transacciones sintéticas y límite HTTP; no cancelación SQL real",
+      "missing": "Probar cancelación y deadline de transacción real sin escrituras persistentes",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "REC-01",
+      "coverage": "LAB_OBSERVED",
+      "sourceStages": [
+        "V90"
+      ],
+      "observation": "pg_dump/pg_restore PG17 a segundo destino aislado, ambos ficticios",
+      "missing": "Revisión independiente y repetir con esquema autorizado completo",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "REC-02",
+      "coverage": "PARTIAL",
+      "sourceStages": [
+        "V90"
+      ],
+      "observation": "Comparación de 4 filas, índice, permisos, políticas y extensión por defecto",
+      "missing": "Comparar tablas/esquemas completos, migraciones, extensiones no predeterminadas",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "REC-03",
+      "coverage": "NOT_EXERCISED",
+      "sourceStages": [
+        "V90",
+        "V53"
+      ],
+      "observation": "V86 se ejecutó en destino; NO se ejecutó suite V53 allí",
+      "missing": "Ejecutar pgTAP V53 contra copia restaurada con esquema MG y dependencias compatibles",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "REC-04",
+      "coverage": "PARTIAL",
+      "sourceStages": [
+        "V90"
+      ],
+      "observation": "Dump 99 ms y restore 68 ms de cuatro filas; sin cifrado/retención ni RPO-RTO",
+      "missing": "Aprobar backup cifrado, retención, restauración completa y RPO/RTO medidos",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "OPS-01",
+      "coverage": "PARTIAL",
+      "sourceStages": [
+        "V85",
+        "V87",
+        "V89"
+      ],
+      "observation": "Autorizaciones explícitas para localhost/PG17 aislados; sin proxy/TLS/firewall final",
+      "missing": "Aprobación separada de interfaz/puerto/TLS/firewall, duración y operador",
+      "formalStatus": "PENDING"
+    },
+    {
+      "id": "OPS-02",
+      "coverage": "NOT_EXERCISED",
+      "sourceStages": [],
+      "observation": "Sin ventana de producción ni plan de rollback aprobados",
+      "missing": "Obtener dictamen independiente y aprobación productiva separada con rollback",
+      "formalStatus": "PENDING"
+    }
+  ],
+  "reporting": {
+    "LAB_OBSERVED": 14,
+    "PARTIAL": 14,
+    "NOT_EXERCISED": 4,
+    "total": 32,
+    "formalPending": 32,
+    "formalIndependentPass": 0,
+    "productionAuthorized": false,
+    "decision": "NO_GO"
+  }
+}
