@@ -15,10 +15,10 @@ const isPlain=x=>x!==null&&typeof x==='object'&&!Array.isArray(x)&&
 const ownKeys=x=>Object.keys(x).sort();
 function sanitizeV66Event(input){
   // Reject even an accidental extra key; never serialize, copy or retain it.
-  if(!isPlain(input)||JSON.stringify(ownKeys(input))!==
-    JSON.stringify([...FIELDS].sort()))return null;
   let event,status,bucket;
   try{
+    if(!isPlain(input)||JSON.stringify(ownKeys(input))!==
+      JSON.stringify([...FIELDS].sort()))return null;
     ({event,status,durationBucketMs:bucket}=input);
   }catch{return null;}
   if(typeof event!=='string'||!EVENTS.includes(event)||
