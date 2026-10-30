@@ -1,0 +1,66 @@
+name: MG Web Studio V92 Offline Observability and Independent Review Preparation
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v92-observability-review-offline.yml
+      - apps/mg-web-studio-cloud/server/v92-offline-observability-review.cjs
+      - apps/mg-web-studio-cloud/tests/v92-offline-observability-review.test.cjs
+      - apps/mg-web-studio-cloud/docs/V92-PAQUETE-REVISION-OBSERVABILIDAD.json
+      - apps/mg-web-studio-cloud/docs/V92-POLITICA-SEGURIDAD-OBSERVABILIDAD-BORRADOR.md
+      - apps/mg-web-studio-cloud/docs/V92-ACTA-REVISION-INDEPENDIENTE-PENDIENTE.md
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v92-offline-privacy-and-policy
+  cancel-in-progress: true
+
+jobs:
+  offline-review:
+    name: V92 sanitize V66 events and verify all OBS controls remain PENDING
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.ref == 'refs/heads/feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    env:
+      NODE_ENV: test
+      V70_TEST_ISOLATION: "1"
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Read-only checkout with no stored token
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Offline V92 privacy, V66 telemetry and V91 gap regression
+        run: |
+          node --check server/v92-offline-observability-review.cjs
+          node --check tests/v92-offline-observability-review.test.cjs
+          node --require ./server/native-network-guard-v70.cjs --test \
+            tests/v92-offline-observability-review.test.cjs \
+            tests/request-budget-v66.test.cjs \
+            tests/request-budget-v66-integration.test.cjs \
+            tests/v91-evidence-gap-audit.test.cjs
+      - name: Guard canonical V67 controls and absence of premature reviewer signatures
+        run: |
+          node - <<'NODE'
+          const fs=require('node:fs');
+          const v67=JSON.parse(fs.readFileSync('docs/V67-EVIDENCIAS-PENDIENTES.json','utf8'));
+          const v91=JSON.parse(fs.readFileSync('docs/V91-MATRIZ-COBERTURA-V67.json','utf8'));
+          const v92=JSON.parse(fs.readFileSync('docs/V92-PAQUETE-REVISION-OBSERVABILIDAD.json','utf8'));
+          if(v67.cases.length!==32||v67.cases.some(x=>x.status!=='PENDING'||x.evidenceRef!==null)||v67.decision!=='NO_GO')throw Error('V67 altered');
+          if(v91.reporting.formalPending!==32||v91.reporting.decision!=='NO_GO')throw Error('V91 altered');
+          if(v92.policyStatus!=='NOT_APPROVED'||v92.reviewProcedure.signOff!=='MISSING'||v92.gate.formalV67Pending!==32||v92.gate.independentlyApproved!==0||v92.gate.decision!=='NO_GO')throw Error('V92 invalid approval');
+          if(v92.proposedAlerts.some(x=>x.active!==false||x.owner!=='UNASSIGNED'))throw Error('V92 fake alerts');
+          if(v92.controls.length!==4||v92.controls.some(x=>x.signed||x.reviewer!=='UNASSIGNED'))throw Error('V92 fake reviewer');
+          console.log('V92 VERIFIED: all OBS policies unsigned, no alerts active, 32 V67 PENDING, NO_GO');
+          NODE
