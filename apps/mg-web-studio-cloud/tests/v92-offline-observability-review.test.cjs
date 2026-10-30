@@ -67,6 +67,13 @@ test('reject arrays, class instances and inherited properties',()=>{
  Object.assign(inherited,{status:200,durationBucketMs:0});
  assert.equal(sanitizeV66Event(inherited),null);
 });
+test('hostile throwing getters and proxies are rejected without throwing',()=>{
+ const bad=good();
+ Object.defineProperty(bad,'event',{enumerable:true,get(){throw Error('DO_NOT_LOG_SECRET');}});
+ assert.equal(sanitizeV66Event(bad),null);
+ const proxied=new Proxy(good(),{ownKeys(){throw Error('PRIVATE_TOKEN');}});
+ assert.equal(sanitizeV66Event(proxied),null);
+});
 test('normalizer returns no input reference or hidden hostile payload',()=>{
  const input=good();
  const result=sanitizeV66Event(input);
