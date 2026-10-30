@@ -1,0 +1,140 @@
+{
+  "version": "V92",
+  "project": "MG WEB STUDIO CLOUD",
+  "branch": "feature/mg-digital-v5-web-services",
+  "scope": "DOCUMENTATION_AND_OFFLINE_TESTS_ONLY",
+  "classification": "DRAFT_FOR_INDEPENDENT_REVIEW",
+  "policyStatus": "NOT_APPROVED",
+  "retentionPolicy": {
+    "status": "PROPOSED_NOT_CONFIGURED",
+    "aggregateRetentionDaysProposed": 30,
+    "legalBasis": "PENDING_COUNSEL_OR_DPO_REVIEW",
+    "encryptionAtRest": "REQUIRED_NOT_VERIFIED",
+    "encryptionInTransit": "REQUIRED_NOT_VERIFIED",
+    "accessControl": "REQUIRED_NOT_VERIFIED",
+    "deletionAutomation": "NOT_CONFIGURED",
+    "storageLocation": "UNSELECTED",
+    "operator": "UNASSIGNED"
+  },
+  "observability": {
+    "source": "server/request-budget-v66.cjs",
+    "allowedEvents": [
+      "admitted",
+      "rate_limited",
+      "overloaded",
+      "peer_capacity",
+      "completed",
+      "transport_error"
+    ],
+    "allowedFields": [
+      "event",
+      "status",
+      "durationBucketMs"
+    ],
+    "durationsBucketsMs": [
+      0,
+      10,
+      100,
+      1000,
+      10000
+    ],
+    "persistence": "NONE",
+    "alertEngine": "NONE",
+    "correlation": "UNAVAILABLE_FOR_V66_REJECTIONS",
+    "sensitiveData": "NEVER_COLLECT_BY_DESIGN"
+  },
+  "proposedAlerts": [
+    {
+      "id": "A1",
+      "signal": "HTTP_5XX_RATE",
+      "proposedThreshold": ">=5% for 5 minutes with >=20 requests",
+      "severity": "HIGH",
+      "active": false,
+      "owner": "UNASSIGNED",
+      "escalation": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "A2",
+      "signal": "HTTP_429_RATE",
+      "proposedThreshold": ">=10% for 5 minutes with >=20 requests",
+      "severity": "MEDIUM",
+      "active": false,
+      "owner": "UNASSIGNED",
+      "escalation": "REVIEW_REQUIRED"
+    },
+    {
+      "id": "A3",
+      "signal": "MISSING_TELEMETRY",
+      "proposedThreshold": "no samples for 10 minutes while confirmed business traffic occurs",
+      "severity": "HIGH",
+      "active": false,
+      "owner": "UNASSIGNED",
+      "escalation": "REVIEW_REQUIRED"
+    }
+  ],
+  "controls": [
+    {
+      "id": "OBS-01",
+      "v91Coverage": "PARTIAL",
+      "proposedStatus": "DRAFT_UNREVIEWED",
+      "sources": [
+        "docs/V66-PRESUPUESTOS-Y-OBSERVABILIDAD.md",
+        "docs/V87-EVIDENCIAS-HTTP-LOOPBACK-REALES.md",
+        "docs/V89-EVIDENCIAS-REALES-LIMITES-CONCURRENCIA-HTTP.md"
+      ],
+      "evidenceStillNeeded": "independent inspection of sampled records in approved sink, including sources beyond V66",
+      "reviewer": "UNASSIGNED",
+      "signed": false
+    },
+    {
+      "id": "OBS-02",
+      "v91Coverage": "PARTIAL",
+      "proposedStatus": "DRAFT_UNREVIEWED",
+      "sources": [
+        "docs/V66-PRESUPUESTOS-Y-OBSERVABILIDAD.md",
+        "docs/V91-AUDITORIA-INTEGRAL-32-CONTROLES-V67.md"
+      ],
+      "evidenceStillNeeded": "real cross-layer correlation for denials (V66 uses requestId unavailable)",
+      "reviewer": "UNASSIGNED",
+      "signed": false
+    },
+    {
+      "id": "OBS-03",
+      "v91Coverage": "NOT_EXERCISED",
+      "proposedStatus": "DRAFT_UNREVIEWED",
+      "sources": [
+        "docs/V91-AUDITORIA-INTEGRAL-32-CONTROLES-V67.md"
+      ],
+      "evidenceStillNeeded": "approve legal basis, actual encryption, access audit, retention/deletion owner and real configuration",
+      "reviewer": "UNASSIGNED",
+      "signed": false
+    },
+    {
+      "id": "OBS-04",
+      "v91Coverage": "NOT_EXERCISED",
+      "proposedStatus": "DRAFT_UNREVIEWED",
+      "sources": [
+        "docs/V91-AUDITORIA-INTEGRAL-32-CONTROLES-V67.md"
+      ],
+      "evidenceStillNeeded": "assign alert owner, approve thresholds/escalation, test trigger/delivery/acknowledgement in authorized environment",
+      "reviewer": "UNASSIGNED",
+      "signed": false
+    }
+  ],
+  "reviewProcedure": {
+    "reviewer": "UNASSIGNED",
+    "independentOfAuthor": "REQUIRED_NOT_VERIFIED",
+    "evidenceSourceIntegrity": "VERIFY_RUN_AND_SHA",
+    "samplePrivacy": "REVIEW_REQUIRED",
+    "policyApproval": "NOT_REQUESTED",
+    "signOff": "MISSING",
+    "productionChange": "NOT_AUTHORIZED"
+  },
+  "gate": {
+    "formalV67Pending": 32,
+    "independentlyApproved": 0,
+    "observabilityFormalPending": 4,
+    "productionAuthorized": false,
+    "decision": "NO_GO"
+  }
+}
