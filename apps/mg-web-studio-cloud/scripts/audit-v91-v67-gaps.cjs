@@ -4,7 +4,7 @@
 // service, publish, connect to a DB or validate real operational ownership.
 const fs=require('node:fs');
 const path=require('node:path');
-const {auditV91Coverage}=require('../server/v91-evidence-audit.cjs');
+const {auditV91Coverage,STAGES}=require('../server/v91-evidence-audit.cjs');
 const ROOT=path.resolve(__dirname,'..');
 const SOURCE='docs/V91-MATRIZ-COBERTURA-V67.json';
 const CANONICAL='docs/V67-EVIDENCIAS-PENDIENTES.json';
@@ -17,9 +17,7 @@ function main(args=process.argv.slice(2),write=x=>process.stdout.write(x),read=f
   const canonical=JSON.parse(read.readFileSync(path.join(ROOT,CANONICAL),'utf8'));
   const result=auditV91Coverage({
    manifest,canonical,sourceExists:rel=>{
-    if(!Object.hasOwn(require('../server/v91-evidence-audit.cjs').STAGES,
-      Object.keys(require('../server/v91-evidence-audit.cjs').STAGES)
-        .find(k=>require('../server/v91-evidence-audit.cjs').STAGES[k]===rel)??''))return false;
+    if(!Object.values(STAGES).includes(rel))return false;
     const info=read.lstatSync(path.join(ROOT,rel));
     return info.isFile()&&!info.isSymbolicLink();
    }
