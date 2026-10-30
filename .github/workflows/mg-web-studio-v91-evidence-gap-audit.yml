@@ -1,0 +1,59 @@
+name: MG Web Studio V91 Read-only Audit of 32 V67 Controls
+
+on:
+  push:
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v91-evidence-gap-audit.yml
+      - apps/mg-web-studio-cloud/docs/V91-MATRIZ-COBERTURA-V67.json
+      - apps/mg-web-studio-cloud/docs/V91-AUDITORIA-INTEGRAL-32-CONTROLES-V67.md
+      - apps/mg-web-studio-cloud/server/v91-evidence-audit.cjs
+      - apps/mg-web-studio-cloud/scripts/audit-v91-v67-gaps.cjs
+      - apps/mg-web-studio-cloud/tests/v91-evidence-gap-audit.test.cjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v91-read-only-gap-audit
+  cancel-in-progress: true
+
+jobs:
+  documentary-audit-only:
+    name: Verify V91 matrix vs canonical V67, forbid any formal PASS
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.ref == 'refs/heads/feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    env:
+      NODE_ENV: test
+      V70_TEST_ISOLATION: "1"
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Read-only branch checkout, no persistent credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate only syntax and canonical-source integrity
+        run: |
+          node --check server/v91-evidence-audit.cjs
+          node --check scripts/audit-v91-v67-gaps.cjs
+          node --check tests/v91-evidence-gap-audit.test.cjs
+          node --require ./server/native-network-guard-v70.cjs --test \
+            tests/v91-evidence-gap-audit.test.cjs \
+            tests/security-acceptance-v67.test.cjs \
+            tests/v67-evidence-template.test.cjs \
+            tests/v67-operational-pack-v82.test.cjs \
+            tests/review-v67-readiness-v82.test.cjs
+      - name: Produce read-only classification and remaining-action JSON
+        run: node --require ./server/native-network-guard-v70.cjs scripts/audit-v91-v67-gaps.cjs --json
+      - name: Enforce canonical 32-PENDING NO_GO and no staged deployment
+        run: |
+          node -e 'const fs=require("fs"); const m=JSON.parse(fs.readFileSync("docs/V91-MATRIZ-COBERTURA-V67.json","utf8")); const v=JSON.parse(fs.readFileSync("docs/V67-EVIDENCIAS-PENDIENTES.json","utf8")); if(m.reporting.formalPending!==32||m.reporting.formalIndependentPass!==0||v.cases.length!==32||v.cases.some(x=>x.status!=="PENDING"||x.evidenceRef!==null)||v.decision!=="NO_GO")process.exit(1);console.log("V91 VERIFIED: all 32 formal V67 checks PENDING; NO_GO; no files modified")'
