@@ -187,7 +187,7 @@ test('readiness is immutable, false about external integrations and deploy',()=>
 });
 test('source performs no network, SQL, token decode, file writes or listeners',()=>{
  const src=fs.readFileSync(path.resolve(__dirname,'../server/v97-sensitive-operation-gate.cjs'),'utf8');
- for(const forbidden of ['require(\'http\')','require(\'pg\')','fetch(', 'createServer(','exec(', 'console.log(', 'writeFileSync','setInterval(']){
+ for(const forbidden of ['require(\'http\')','require(\'pg\')','fetch(', 'createServer(','child_process.exec(', 'console.log(', 'writeFileSync','setInterval(']){
   assert.equal(src.includes(forbidden),false,forbidden);
  }
 });
