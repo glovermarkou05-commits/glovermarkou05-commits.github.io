@@ -1,0 +1,57 @@
+name: MG Web Studio V107 TOTP QA Runner Offline
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v107-totp-runner-offline.yml
+      - apps/mg-web-studio-cloud/qa/v107-mfa-one-shot.cjs
+      - apps/mg-web-studio-cloud/qa/v107-mfa-cli.cjs
+      - apps/mg-web-studio-cloud/qa/v107-mfa-one-shot.test.cjs
+      - apps/mg-web-studio-cloud/qa/package.json
+      - apps/mg-web-studio-cloud/qa/package-lock.json
+      - apps/mg-web-studio-cloud/qa/.npmrc
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-webstudio-v107-qa-offline
+  cancel-in-progress: false
+
+jobs:
+  v107-tests-only-no-supabase-credentials:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud/qa
+        shell: bash
+    steps:
+      - name: Read-only checkout no credential persistence
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Pinned Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Generate verifiable dependency lockfile when absent
+        run: |
+          if [ ! -f package-lock.json ]; then
+            npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+            echo V107_LOCKFILE_BEGIN
+            cat package-lock.json
+            echo V107_LOCKFILE_END
+          fi
+      - name: Install pinned dependencies with lifecycle scripts disabled
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Run 20 adversarial tests with network blocked
+        run: node --require ../server/native-network-guard-v70.cjs --test v107-mfa-one-shot.test.cjs
+      - name: Confirm dry run does not touch Supabase Auth
+        run: node --require ../server/native-network-guard-v70.cjs v107-mfa-cli.cjs --dry-run
+      - name: Explicitly prohibit any real Auth test in CI
+        run: echo "V107 QA test suite only. No secrets, no users, no MFA network. V67 32 PENDING, production NO_GO."
