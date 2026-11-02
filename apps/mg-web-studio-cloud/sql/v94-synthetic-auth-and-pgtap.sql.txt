@@ -1,0 +1,28 @@
+-- V94B: standalone synthetic Auth-compatible minimum, NOT real Supabase Auth.
+\set ON_ERROR_STOP on
+BEGIN;
+CREATE SCHEMA auth;
+CREATE TABLE auth.users (
+ id uuid PRIMARY KEY,
+ aud text,
+ role text,
+ email text,
+ email_confirmed_at timestamptz,
+ created_at timestamptz,
+ updated_at timestamptz,
+ raw_app_meta_data jsonb,
+ raw_user_meta_data jsonb,
+ is_anonymous boolean DEFAULT false
+);
+CREATE FUNCTION auth.uid() RETURNS uuid
+ LANGUAGE sql STABLE
+ AS $$ SELECT NULLIF(current_setting('request.jwt.claim.sub',true),'')::uuid $$;
+REVOKE ALL ON SCHEMA auth FROM PUBLIC;
+GRANT USAGE ON SCHEMA auth TO authenticated;
+GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated;
+CREATE SCHEMA extensions;
+REVOKE ALL ON SCHEMA extensions FROM PUBLIC;
+CREATE EXTENSION pgtap WITH SCHEMA extensions;
+GRANT USAGE ON SCHEMA extensions TO authenticated;
+GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA extensions TO authenticated;
+COMMIT;
