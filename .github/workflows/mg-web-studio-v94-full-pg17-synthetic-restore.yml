@@ -1,9 +1,10 @@
 name: MG Web Studio V94B PG17 Full Schema Synthetic Restore
 
 on:
-  push:
+  pull_request:
+    types: [synchronize]
     branches:
-      - docs/mg-web-studio-v94-preflight-20261101
+      - feature/mg-digital-v5-web-services
     paths:
       - .github/workflows/mg-web-studio-v94-full-pg17-synthetic-restore.yml
       - apps/mg-web-studio-cloud/scripts/run-v94-pg17-full-schema-lab.sh
@@ -22,7 +23,7 @@ concurrency:
 
 jobs:
   v94-disposable-pg17-only:
-    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.ref == 'refs/heads/docs/mg-web-studio-v94-preflight-20261101' && github.event_name == 'push'
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     env:
