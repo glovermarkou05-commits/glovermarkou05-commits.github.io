@@ -34,6 +34,10 @@ if [[ "$(id -u)" == 0 || ! -d "${RUNNER_TEMP:-/missing}" ]]; then
   echo "V94 BLOCKED: root host or missing GitHub ephemeral directory" >&2
   exit 2
 fi
+# Repeat the V94-specific resource test before any Docker operation.
+# V84 remains unchanged and cannot mistake a pull/7/merge ref for the development branch.
+node --require "$ROOT/server/native-network-guard-v70.cjs" "$ROOT/scripts/inspect-gh-runner-v94.cjs" --json
+
 for f in "$DOCKERFILE" "$ROLES" "$SHIM" "$V45" "$SEED" "$SNAP" "$V53"; do
   [[ -f "$f" && ! -L "$f" ]] || { echo "V94 BLOCKED: prerequisite missing or symlink" >&2; exit 2; }
 done
