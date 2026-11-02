@@ -24,7 +24,7 @@ Este ejecutor fue diseñado para la autorización de una **única cuenta sintét
 ## Antes de ejecutar
 
 1. Asegúrate de estar en la rama `docs/mg-web-studio-v94-preflight-20261101` del repositorio `glovermarkou05-commits/glovermarkou05-commits.github.io`. **No uses main ni otra carpeta de proyecto**.
-2. Abre el proyecto [MG WEB STUDIO AUTH QA en Supabase](https://supabase.com/dashboard/project/tbfhiqkivsoeuudlpkgi). La referencia del proyecto **solo se lee en el dashboard**; no guardarla en Git ni pegarla en la conversación.
+2. Abre el proyecto [MG WEB STUDIO AUTH QA en Supabase](https://supabase.com/dashboard/projects). La referencia del proyecto **solo se lee en el dashboard**; no guardarla en Git ni pegarla en la conversación.
 3. Obtén desde la configuración de API del proyecto QA la clave **secret / service_role** para el administrador y una **publishable / anon** para el cliente sintético. No utilizar claves de ninguna otra aplicación. **No las envíes por ChatGPT ni las agregues a un archivo `.env` del repositorio.**
 4. Utiliza Windows PowerShell con Node.js **22 o 24** y acceso a npm. El equipo debe tener el reloj sincronizado para TOTP.
 5. En la raíz del repositorio de MG Web Studio:
