@@ -55,7 +55,8 @@ test('success requires all three trusted providers and returns exactly V97 proof
  assert.ok(Object.isFrozen(calls.tokenInput));
  assert.deepEqual(Object.keys(calls.tokenInput).sort(),['accessToken','signal']);
  assert.deepEqual(Object.keys(calls.sessionInput).sort(),['sessionId','signal','subject']);
- assert.deepEqual(Object.keys(calls.factorInput).sort(),['sessionId','signal','subject']);
+ assert.deepEqual(Object.keys(calls.factorInput).sort(),['accessToken','sessionId','signal','subject']);
+ assert.equal(calls.factorInput.accessToken,TOKEN);
  assert.equal(calls.tokenInput.accessToken,TOKEN);
 });
 test('no default trusted adapter or invalid parameters permitted',()=>{
