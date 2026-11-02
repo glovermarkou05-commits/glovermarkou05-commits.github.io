@@ -3,7 +3,7 @@
 // All three providers must be *trusted server-side adapters*. No Supabase clients,
 // network, SQL, secret handling, JWT decoding, production connectivity or caching.
 // A token with JWT 'aal2' alone is NEVER sufficient evidence of recent MFA.
-const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const TOKEN_KEYS=['aal','audienceVerified','exp','iat','issuerVerified','sessionId','subject','verified'];
 const SESSION_KEYS=['active','checkedAtSec','expiresAtSec','primaryRead','revocationChecked','sessionId','subject'];
 const FACTOR_KEYS=['aal','checkedAtSec','factorConfirmedAtSec','factorType','factorVerified','sessionId','source','subject'];
