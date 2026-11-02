@@ -63,7 +63,7 @@ test('contract requires three audited backends, a shared HMAC key and bounded cl
 test('synthetic success consumes event but never enables production',async()=>{
  const {gate,calls}=make();
  const result=await gate.redeem(input());
- assert.ok(result.ok,'V109 stage counts '+JSON.stringify({session:calls.session.length,resource:calls.resource.length,ledger:calls.ledger.length,clock:NOW}));
+ assert.ok(result.ok,'V109 stage counts '+JSON.stringify({session:calls.session.length,resource:calls.resource.length,ledger:calls.ledger.length,clock:NOW,firstInput:(()=>{const i=input(),p=i.proof;const u=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;return {inputKeys:Object.keys(i),proofKeys:Object.keys(p),subjectValid:u.test(p.subject),sessionValid:u.test(p.sessionId),orgValid:u.test(i.organizationId),siteValid:u.test(i.siteId),times:[p.checkedAtSec,p.verifiedAtSec],signal:i.signal===undefined};})()}));
  assert.deepEqual(result,{
    ok:true,mode:'INJECTED_ATOMIC_LEDGER_CONTRACT',
    eventRedeemed:true,productionAuthorized:false,formalV67Pass:0
