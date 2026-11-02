@@ -1,0 +1,113 @@
+{
+  "version": "V94A",
+  "createdOn": "2026-11-01",
+  "scope": "MG_WEB_STUDIO_CLOUD_ONLY",
+  "classification": "PREPARATION_ONLY",
+  "readOnly": true,
+  "sqlAuthorized": false,
+  "restoreAuthorized": false,
+  "productionAuthorized": false,
+  "v67": {
+    "formalPending": 32,
+    "formalPass": 0,
+    "decision": "NO_GO"
+  },
+  "evidence": {
+    "v93OfflineTests": 85,
+    "v53HistoricalPgTapAssertions": 56,
+    "v90SyntheticRows": 4
+  },
+  "sourceBase": "feature/mg-digital-v5-web-services",
+  "canonicalSchema": {
+    "status": "NOT_RECONCILED",
+    "priorV45Source": "db/v45-drafts/INSTALL_OBJECT_SCOPED.review.sql.txt",
+    "v45DdlHistoricalStatus": "APPLIED_IN_STAGING_WITH_TRACE_V57",
+    "doNotBlindlyReplay": true,
+    "publicTables": [
+      "mg_profiles",
+      "mg_organizations",
+      "mg_memberships",
+      "mg_sites",
+      "mg_pages",
+      "mg_membership_site_scopes",
+      "mg_site_draft_versions",
+      "mg_site_proposals",
+      "mg_proposal_revisions",
+      "mg_proposal_reviews",
+      "mg_proposal_notifications",
+      "mg_notification_reads"
+    ],
+    "privateTables": [
+      "mg_staff_roles",
+      "mg_audit_events",
+      "mg_proposal_outbox",
+      "mg_operation_idempotency"
+    ],
+    "dependencies": [
+      "auth.users",
+      "authenticated",
+      "anon",
+      "service_role",
+      "extensions.pgtap",
+      "pgcrypto",
+      "mg_private schema"
+    ],
+    "constraints": [
+      "Reconcile V45 canonical order",
+      "V54 defaults do not close function ACL",
+      "No customer identifiers, secrets or staging dumps",
+      "V53 assertions only after restored complete schema"
+    ]
+  },
+  "gates": [
+    {
+      "id": "G1",
+      "state": "PENDING",
+      "reason": "Canonical DDL and migration order not reconciled"
+    },
+    {
+      "id": "G2",
+      "state": "PENDING",
+      "reason": "Full MG schema, auth fixture and pgTAP compatibility not demonstrated on ephemeral source"
+    },
+    {
+      "id": "G3",
+      "state": "PENDING",
+      "reason": "Fixture and rollback evidence to be designed"
+    },
+    {
+      "id": "G4",
+      "state": "NOT_AUTHORIZED",
+      "reason": "Fresh explicit permission required for SQL/PG17/backup/restore/pgTAP"
+    },
+    {
+      "id": "G5",
+      "state": "PENDING",
+      "reason": "Runner and network isolation requires review"
+    },
+    {
+      "id": "G6",
+      "state": "UNASSIGNED",
+      "reason": "Independent reviewer and evidence custodian missing"
+    },
+    {
+      "id": "G7",
+      "state": "NO_GO",
+      "reason": "32 V67 formal cases remain PENDING"
+    }
+  ],
+  "actionsPerformed": [
+    "Documentary inspection",
+    "Preparation of read-only manifest",
+    "Creation of draft review artifacts"
+  ],
+  "actionsNotPerformed": [
+    "Any SQL",
+    "Database startup",
+    "Backup or restore",
+    "Running pgtap",
+    "Production deploy",
+    "Merge",
+    "Approval of V67"
+  ]
+}
