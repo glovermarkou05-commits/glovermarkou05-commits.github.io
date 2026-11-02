@@ -1,0 +1,7 @@
+-- V94B: disposable cluster-global roles, never run on real Supabase.
+\set ON_ERROR_STOP on
+BEGIN;
+CREATE ROLE anon NOLOGIN NOINHERIT NOBYPASSRLS;
+CREATE ROLE authenticated NOLOGIN NOINHERIT NOBYPASSRLS;
+CREATE ROLE service_role NOLOGIN NOINHERIT NOBYPASSRLS;
+COMMIT;
