@@ -41,7 +41,7 @@ function createV96PrivateObserver({now=()=>performance.now()}={}) {
   function pointInTime() {
     try {
       const timestamp=now();
-      if (!Number.isSafeInteger(timestamp) || timestamp < 0) return null;
+      if (!Number.isFinite(timestamp) || timestamp < 0 || timestamp > Number.MAX_SAFE_INTEGER) return null;
       return Math.floor(timestamp/PERIOD_MS);
     } catch { return null; }
   }
