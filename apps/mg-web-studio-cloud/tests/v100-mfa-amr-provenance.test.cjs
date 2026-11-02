@@ -49,8 +49,11 @@ test('dual verified sources agree on exact method/timestamp/session and produce 
  assert.equal(calls.proofArg.verifiedAtSec,now-30);
 });
 test('requires both source callbacks and bounded strict settings',()=>{
+ assert.throws(()=>createVerifiedMfaAmrProvenanceV100(),TypeError);
+ assert.throws(()=>createVerifiedMfaAmrProvenanceV100({
+   verifySignedJwtAmr:async()=>signed()
+ }),TypeError);
  for(const config of [
-  {},{verifySignedJwtAmr:async()=>signed()},
   {verifySignedJwtAmr:null,readAuthoritativeMfaEvent:async()=>event()},
   {maxRecentFactorSec:0},{maxRecentFactorSec:301},
   {maxEvidenceAgeSec:0},{maxEvidenceAgeSec:4},{nowSec:null}
