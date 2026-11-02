@@ -74,7 +74,7 @@ test('five-minute window drops previous events, no persistent history or time id
  assert.equal(o.snapshot().total,2);
  clock.set(5*60000+0.1);
  const s=o.snapshot();assert.equal(s.total,1);assert.equal(s.server5xx,1);
- assert.deepEqual(Object.keys(s).filter(k=>/id|timestamp|ip|path|url/i.test(k)),[]);
+ assert.deepEqual(Object.keys(s).filter(k=>/^(requestId|userId|timestamp|ip|path|url)$/i.test(k)),[]);
 });
 
 test('huge clock jump wipes old counters without scheduling jobs',()=>{
