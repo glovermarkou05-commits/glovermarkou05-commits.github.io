@@ -152,18 +152,18 @@ test('publish, members, billing are only supported sensitive actions',async()=>{
 test('aborted before start prevents calls and unknown signals are invalid',async()=>{
  const {gate,calls}=setup();
  const ctrl=new AbortController();ctrl.abort();
- assert.equal((await gate.check(request({signal:ctrl.signal})).status,400);
- assert.equal((await gate.check(request({signal:'forged'})).status,400);
+ assert.equal((await gate.check(request({signal:ctrl.signal}))).status,400);
+ assert.equal((await gate.check(request({signal:'forged'}))).status,400);
  assert.equal(calls.verify,0);
 });
 test('aborted during assurance or tenant authorization rejects late results',async()=>{
  const ctrl=new AbortController();
  const {gate,calls}=setup({readTrustedAssurance:async()=>{ctrl.abort();return proof();}});
- assert.equal((await gate.check(request({signal:ctrl.signal})).status,503);
+ assert.equal((await gate.check(request({signal:ctrl.signal}))).status,503);
  assert.equal(calls.resource,0);
  const ctrl2=new AbortController();
  const {gate:gate2}=setup({authorizeResource:async()=>{ctrl2.abort();return true;}});
- assert.equal((await gate2.check(request({signal:ctrl2.signal})).status,503);
+ assert.equal((await gate2.check(request({signal:ctrl2.signal}))).status,503);
 });
 test('deny missing callbacks, dangerous policy configuration and invalid clocks',async()=>{
  for(const patch of [{verifyAccessToken:null},{readTrustedAssurance:undefined},
