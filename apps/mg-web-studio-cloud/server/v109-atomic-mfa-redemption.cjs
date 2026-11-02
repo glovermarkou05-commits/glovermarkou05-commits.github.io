@@ -6,7 +6,7 @@
 // A real deployment needs a reviewed, transactionally atomic *shared*
 // insert-if-absent ledger and an authoritative current auth.sessions check.
 const {createHmac}=require('node:crypto');
-const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ACTIONS=new Set(['publish','members','billing']);
 const METHODS=new Set(['totp','mfa/phone']);
 const P=Object.prototype;
@@ -38,10 +38,9 @@ function createAtomicMfaRedemptionV109({
    maxFactorAgeSec>300)
    throw new TypeError('Trusted primary session, tenant and shared ledger adapters required');
  const clock=()=>{try{const v=nowSec();return second(v)?v:null;}catch{return null;}};
- let destroyed=false;
  async function redeem(input={}){
   // Prevent a client from supplying a role, claims, arbitrary token or store key.
-  if(destroyed||!exact(input,['action','organizationId','proof','signal','siteId'])||
+  if(!exact(input,['action','organizationId','proof','signal','siteId'])||
     !ACTIONS.has(input.action)||!UUID.test(input.organizationId||'')||
     !UUID.test(input.siteId||'')||!signalOk(input.signal))return safe();
   const proof=input.proof;
