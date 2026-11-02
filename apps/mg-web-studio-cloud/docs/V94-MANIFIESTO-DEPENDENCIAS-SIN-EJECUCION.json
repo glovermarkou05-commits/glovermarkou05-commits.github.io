@@ -19,7 +19,7 @@
   },
   "sourceBase": "feature/mg-digital-v5-web-services",
   "canonicalSchema": {
-    "status": "NOT_RECONCILED",
+    "status": "PROPOSED_BASELINE_NOT_APPROVED",
     "priorV45Source": "db/v45-drafts/INSTALL_OBJECT_SCOPED.review.sql.txt",
     "v45DdlHistoricalStatus": "APPLIED_IN_STAGING_WITH_TRACE_V57",
     "doNotBlindlyReplay": true,
@@ -57,13 +57,49 @@
       "V54 defaults do not close function ACL",
       "No customer identifiers, secrets or staging dumps",
       "V53 assertions only after restored complete schema"
+    ],
+    "proposedRecoveryBaseline": "V45_HISTORICAL_APPLIED_IN_STAGING_NOT_EXECUTABLE",
+    "proposedDecisionFile": "docs/V94A-DECISION-FUENTE-CANONICA-RECUPERACION.md",
+    "ownershipScope": "MG_OWNED_16_TABLES_ONLY",
+    "staticInventory": {
+      "createTableDeclarations": 16,
+      "publicTableDeclarations": 12,
+      "privateTableDeclarations": 4,
+      "createIndexDeclarations": 11,
+      "createPolicyDeclarations": 12,
+      "enableRlsDeclarations": 16,
+      "createFunctionDeclarations": 0,
+      "schemaCoreDraftTables": 8,
+      "overlapsWithCoreDraft": 7,
+      "coreDraftOnly": [
+        "public.mg_domains"
+      ],
+      "sharedContentDraftOnly": [
+        "public.mg_site_identity",
+        "public.mg_site_products",
+        "public.mg_site_promotions",
+        "public.mg_site_content_releases"
+      ],
+      "authorizationConflict": "Core draft grants INSERT/UPDATE to authenticated for public.mg_sites and public.mg_pages, while V45 grants SELECT-only after REVOKE",
+      "migrationV54Scope": "ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public; TABLES+SEQUENCES only"
+    },
+    "excludedSources": [
+      "db/schema_core.review.sql",
+      "db/modelo-contenido-compartido.review.sql"
+    ],
+    "preconditionsForExecution": [
+      "Explicit new SQL/PG17 authorization",
+      "Separate ephemeral database source and destination",
+      "Synthetic-only auth users/roles/pgTAP extensions",
+      "Full canonicity and SQL parser/DDL runtime validation",
+      "Independent security review"
     ]
   },
   "gates": [
     {
       "id": "G1",
       "state": "PENDING",
-      "reason": "Static 12/12 V53 insert-table compatibility found; canonical portable DDL, overlapping drafts, privileges and DB parser remain unresolved"
+      "reason": "V45 historical baseline proposed and crosschecked (16 tables, 11 indexes, 12 policies, 16 RLS); portable executable canonical artifact, SQL parser and security review not completed"
     },
     {
       "id": "G2",
@@ -99,7 +135,8 @@
   "actionsPerformed": [
     "Documentary inspection",
     "Preparation of read-only manifest",
-    "Creation of draft review artifacts"
+    "Creation of draft review artifacts",
+    "Proposal of canonical source selection and explicit exclusion of conflicting drafts"
   ],
   "actionsNotPerformed": [
     "Any SQL",
@@ -108,7 +145,9 @@
     "Running pgtap",
     "Production deploy",
     "Merge",
-    "Approval of V67"
+    "Approval of V67",
+    "Creation of executable migration or SQL runner",
+    "Signing or approving G1"
   ],
   "staticReconciliation": {
     "reviewedOn": "2026-11-01",
