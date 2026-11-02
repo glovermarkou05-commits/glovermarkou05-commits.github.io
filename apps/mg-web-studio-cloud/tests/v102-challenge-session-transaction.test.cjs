@@ -69,7 +69,7 @@ test('produces an empty, unforgeable and once-only in-process receipt',async()=>
  assert.equal(calls.updatedToken,NEWTOKEN);
  const result=flow.consume(receipt,validQuery());
  assert.equal(result?.sessionBoundByAuthorizedFlow,true);
- assert.equal(result?.verifiedAtSec,NOW-2);
+ assert.equal(result?.verifiedAtSec,NOW-1);
  assert.equal(result?.method,'totp');
  assert.ok(Object.isFrozen(result));
  assert.equal(flow.consume(receipt,validQuery()),null);
@@ -214,14 +214,14 @@ test('V102 one-use proof directly satisfies V101 verified challenge shape',async
   verifySignedJwtAmr:async()=>({
    subject:USER,sessionId:SESSION,verified:true,issuerVerified:true,
    audienceVerified:true,aal:'aal2',exp:NOW+60,
-   amr:[{method:'totp',timestamp:NOW-2}]
+   amr:[{method:'totp',timestamp:NOW-1}]
   }),
   readAuthoritativeMfaEvent:v101.readAuthoritativeMfaEvent
  });
  const proof=await v100.readAuthoritativeFactor({
   subject:USER,sessionId:SESSION,accessToken:NEWTOKEN
  });
- assert.equal(proof?.factorConfirmedAtSec,NOW-2);
+ assert.equal(proof?.factorConfirmedAtSec,NOW-1);
  assert.equal(proof?.factorType,'totp');
  assert.equal(await v100.readAuthoritativeFactor({
   subject:USER,sessionId:SESSION,accessToken:NEWTOKEN
