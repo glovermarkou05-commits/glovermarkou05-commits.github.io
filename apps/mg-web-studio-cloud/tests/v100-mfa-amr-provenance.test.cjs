@@ -218,3 +218,64 @@ test('proof output cannot be used as a bearer, authorization or user attribute',
  assert.equal(Object.hasOwn(result,'user_metadata'),false);
  assert.equal(Object.hasOwn(result,'claims'),false);
 });
+
+test('V100 feeds V98 which feeds V97 with trusted token context and tenant check',async()=>{
+ const {createTrustedAssuranceAdapterV98}=require('../server/v98-trusted-assurance-adapter.cjs');
+ const {createSensitiveOperationGateV97}=require('../server/v97-sensitive-operation-gate.cjs');
+ const {checker}=setup();
+ const auth=createTrustedAssuranceAdapterV98({
+  nowSec:()=>now,
+  verifyBoundJwt:async()=>({
+   verified:true,issuerVerified:true,audienceVerified:true,
+   subject:actor,sessionId:session,aal:'aal2',iat:now-60,exp:now+600
+  }),
+  readPrimarySession:async()=>({
+   subject:actor,sessionId:session,active:true,primaryRead:true,
+   revocationChecked:true,checkedAtSec:now-1,expiresAtSec:now+10
+  }),
+  readAuthoritativeFactor:checker.readAuthoritativeFactor
+ });
+ const gate=createSensitiveOperationGateV97({
+  nowSec:()=>now,
+  verifyAccessToken:async()=>({verified:true,subject:actor}),
+  readTrustedAssurance:auth.readTrustedAssurance,
+  authorizeResource:async()=>true
+ });
+ const outcome=await gate.check({
+  authorization:'Bearer '+token,
+  organizationId:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+  siteId:'ffffffff-ffff-4fff-8fff-ffffffffffff',action:'publish'
+ });
+ assert.deepEqual(outcome,{ok:true,stepUp:'verified'});
+});
+test('full V97/V98/V100 chain refuses unreviewed MFA record semantics',async()=>{
+ const {createTrustedAssuranceAdapterV98}=require('../server/v98-trusted-assurance-adapter.cjs');
+ const {createSensitiveOperationGateV97}=require('../server/v97-sensitive-operation-gate.cjs');
+ const {checker}=setup({
+  readAuthoritativeMfaEvent:async()=>event({freshnessSemanticsVerified:false})
+ });
+ const auth=createTrustedAssuranceAdapterV98({
+  nowSec:()=>now,
+  verifyBoundJwt:async()=>({
+   verified:true,issuerVerified:true,audienceVerified:true,
+   subject:actor,sessionId:session,aal:'aal2',iat:now-60,exp:now+600
+  }),
+  readPrimarySession:async()=>({
+   subject:actor,sessionId:session,active:true,primaryRead:true,
+   revocationChecked:true,checkedAtSec:now-1,expiresAtSec:now+10
+  }),
+  readAuthoritativeFactor:checker.readAuthoritativeFactor
+ });
+ const gate=createSensitiveOperationGateV97({
+  nowSec:()=>now,
+  verifyAccessToken:async()=>({verified:true,subject:actor}),
+  readTrustedAssurance:auth.readTrustedAssurance,
+  authorizeResource:async()=>true
+ });
+ const outcome=await gate.check({
+  authorization:'Bearer '+token,
+  organizationId:'eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee',
+  siteId:'ffffffff-ffff-4fff-8fff-ffffffffffff',action:'publish'
+ });
+ assert.deepEqual(outcome,{ok:false,status:403,code:'STEP_UP_REQUIRED'});
+});
