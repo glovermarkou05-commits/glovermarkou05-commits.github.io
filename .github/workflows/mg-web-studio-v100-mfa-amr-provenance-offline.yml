@@ -11,6 +11,8 @@ on:
       - apps/mg-web-studio-cloud/tests/v100-mfa-amr-provenance.test.cjs
       - apps/mg-web-studio-cloud/server/v101-mfa-row-corroboration.cjs
       - apps/mg-web-studio-cloud/tests/v101-mfa-row-corroboration.test.cjs
+      - apps/mg-web-studio-cloud/server/v102-challenge-session-transaction.cjs
+      - apps/mg-web-studio-cloud/tests/v102-challenge-session-transaction.test.cjs
       - apps/mg-web-studio-cloud/server/v98-trusted-assurance-adapter.cjs
       - apps/mg-web-studio-cloud/tests/v98-trusted-assurance-adapter.test.cjs
 
@@ -41,6 +43,6 @@ jobs:
           node-version: '22'
       - name: Prove signed AMR must match independent reviewed source
         run: |
-          node --require ./server/native-network-guard-v70.cjs --test tests/v101-mfa-row-corroboration.test.cjs tests/v100-mfa-amr-provenance.test.cjs tests/v98-trusted-assurance-adapter.test.cjs tests/v97-sensitive-operation-gate.test.cjs
+          node --require ./server/native-network-guard-v70.cjs --test tests/v102-challenge-session-transaction.test.cjs tests/v101-mfa-row-corroboration.test.cjs tests/v100-mfa-amr-provenance.test.cjs tests/v98-trusted-assurance-adapter.test.cjs tests/v97-sensitive-operation-gate.test.cjs
       - name: Formal NO_GO remains enforced
         run: echo "V100 uses mock backend providers; no Supabase SQL, MFA credentials or production. V67 32 PENDING/0 PASS."
