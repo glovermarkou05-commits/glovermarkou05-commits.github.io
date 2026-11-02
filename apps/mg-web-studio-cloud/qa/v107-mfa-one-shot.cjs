@@ -11,7 +11,9 @@ const stageNames=new Set(['PREFLIGHT','EMPTY_LAB','CREATE','SIGN_IN','AAL1',
   'ENROLL','CHALLENGE','VERIFY','AAL2','LOGOUT','DELETE','COMPLETE']);
 const result=(stage,cleanup,passed)=>Object.freeze({passed,stage,
   cleanup,productionAuthorized:false,formalV67Pass:0});
-function validateScope({projectRef,projectUrl,projectName}={}){
+function validateScope(input={}){
+ if(input===null||typeof input!=='object'||Array.isArray(input))return false;
+ const {projectRef,projectUrl,projectName}=input;
  if(typeof projectRef!=='string'||!/^[a-z]{20}$/.test(projectRef)||
     typeof projectUrl!=='string'||projectUrl!=='https://'+projectRef+'.supabase.co'||
     projectName!==PROJECT_NAME)return false;
