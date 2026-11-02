@@ -4,7 +4,7 @@
 // No network, no database driver, no JWT decoder, no outbound log or default
 // authorization. Three trusted callbacks are required and supplied by backend.
 // This is NOT a real Supabase MFA integration or approval to publish.
-const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ACTIONS=new Set(['publish','members','billing']);
 const PROOF_KEYS=['aal','active','checkedAtSec','expiresAtSec','factorConfirmedAtSec',
   'factorVerified','revocationChecked','sessionId','subject','tokenSessionIdVerified'];
