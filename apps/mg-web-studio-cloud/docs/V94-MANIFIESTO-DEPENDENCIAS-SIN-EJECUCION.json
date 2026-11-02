@@ -1,11 +1,11 @@
 {
-  "version": "V94A",
+  "version": "V94B",
   "createdOn": "2026-11-01",
   "scope": "MG_WEB_STUDIO_CLOUD_ONLY",
-  "classification": "PREPARATION_ONLY",
-  "readOnly": true,
-  "sqlAuthorized": false,
-  "restoreAuthorized": false,
+  "classification": "TECHNICAL_LAB_PASS_PENDING_INDEPENDENT_REVIEW_PRODUCTION_NO_GO",
+  "readOnly": false,
+  "sqlAuthorized": true,
+  "restoreAuthorized": true,
   "productionAuthorized": false,
   "v67": {
     "formalPending": 32,
@@ -15,7 +15,12 @@
   "evidence": {
     "v93OfflineTests": 85,
     "v53HistoricalPgTapAssertions": 56,
-    "v90SyntheticRows": 4
+    "v90SyntheticRows": 4,
+    "v94BActualLab": "SUCCESS",
+    "v94BStaticTestsPassed": 17,
+    "v94BRestoredPgTapPassed": 56,
+    "v94BRestoredMgTables": 16,
+    "v94BFormalV67Accepted": 0
   },
   "sourceBase": "feature/mg-digital-v5-web-services",
   "canonicalSchema": {
@@ -99,27 +104,31 @@
     {
       "id": "G1",
       "state": "PENDING",
-      "reason": "V45 source and 16 table/12 policy/11 index static matrices documented; no executable canonical migration, catalog permissions or independent approval"
+      "reason": "V45 DDL restored and catalog matched in isolated PG17, but portable canonical production migration not reviewed or approved independently",
+      "technicalStatus": "FULL_SCHEMA_LAB_RESTORED"
     },
     {
       "id": "G2",
       "state": "PENDING",
-      "reason": "V90 provides only three mg_v86 NOLOGIN roles; V53 requires auth.users/auth.uid, anon/authenticated/service_role and pgTAP absent from verified image capability"
+      "reason": "Lab auth.uid/auth.users roles and extensions.pgtap functioned in 56/56 V53 tests; real Supabase Auth/MFA not certified",
+      "technicalStatus": "SYNTHETIC_AUTH_AND_PGTAP_LAB_PASS"
     },
     {
       "id": "G3",
       "state": "PENDING",
-      "reason": "16 MG objects, V53 56 assertions on restored target, rollback, zero residue, and ownership/ACL equivalence not yet proven"
+      "reason": "16 MG tables, 12 policies, 11 indexes, canonical snapshots equal, V53 rollback clean; formal REC acceptance requires independent reviewer",
+      "technicalStatus": "PG17_FULL_RESTORE_AND_56_PGTAP_PASS"
     },
     {
       "id": "G4",
-      "state": "NOT_AUTHORIZED",
-      "reason": "Fresh explicit permission required for SQL/PG17/backup/restore/pgTAP"
+      "state": "AUTHORIZED_AND_EXERCISED_LAB_ONLY",
+      "reason": "User explicitly authorized two ephemeral GitHub-hosted PG17, synthetic SQL, pg_dump/pg_restore and pgTAP; completed run 41387289030; no staging or production authorization"
     },
     {
       "id": "G5",
       "state": "PENDING",
-      "reason": "V90 safe controls reusable but PG17 image digest, pgTAP availability, resource bounds, owner fidelity, cleanup for full MG schema need review"
+      "reason": "No ports/network on DB, resource checks, 2/2 cleanup PASS; digest/supply-chain pin and independent review still pending",
+      "technicalStatus": "GITHUB_RUNNER_ISOLATION_AND_CLEANUP_PASS"
     },
     {
       "id": "G6",
@@ -136,18 +145,23 @@
     "Documentary inspection",
     "Preparation of read-only manifest",
     "Creation of draft review artifacts",
-    "Proposal of canonical source selection and explicit exclusion of conflicting drafts"
+    "Proposal of canonical source selection and explicit exclusion of conflicting drafts",
+    "Created scoped V94B synthetic Auth shim, pgTAP Docker image, catalog snapshot and guarded workflow",
+    "Executed two disposable PG17 clusters on GitHub Actions with user authorization",
+    "Executed isolated V45 DDL and one synthetic MG row",
+    "Completed pg_dump -Fc and pg_restore -Fc with matching canonical catalogs",
+    "Executed V53 pgTAP 56/56 PASS on restored destination and rollback verified",
+    "Verified cleanup of both containers and backup archive"
   ],
   "actionsNotPerformed": [
-    "Any SQL",
-    "Database startup",
-    "Backup or restore",
-    "Running pgtap",
     "Production deploy",
     "Merge",
     "Approval of V67",
-    "Creation of executable migration or SQL runner",
-    "Signing or approving G1"
+    "Creation of production migration",
+    "Signing or approving G1",
+    "Connecting STAGING or Supabase remote",
+    "Touching user BAZAR-ONLINE/FINZY/Ventry/MG CLUB+ data",
+    "Independent reviewer signoff"
   ],
   "staticReconciliation": {
     "reviewedOn": "2026-11-01",
@@ -245,6 +259,45 @@
     "permissionForLab": "NOT_AUTHORIZED",
     "newWorkflowCreated": false,
     "v67RemainingFormal": 32,
-    "deployment": "NO_GO"
+    "deployment": "NO_GO",
+    "supersededByRealRun": "docs/V94B-RESULTADO-ENSAYO-PG17-MG-COMPLETO-20261101.md"
+  },
+  "authorizationScope": "USER_EXPLICIT_V94B_20261101_GITHUB_HOSTED_TWO_PG17_SYNTHETIC_ONLY",
+  "actualV94BRun": {
+    "localDate": "2026-11-01",
+    "utcRun": "2026-11-02T04:14Z",
+    "workflowRunId": 41387289030,
+    "jobId": 125090834612,
+    "workflowRunUrl": "https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41387289030",
+    "testedCommitSha": "199fba2044f1ac1a03f2894847d6d6740510795e",
+    "conclusion": "completed/success",
+    "postgresVersion": "17.11",
+    "imageId": "sha256:9e86de80168c59cb57107393ccafb3720dda3bf97c06c248adcd5205fd5a2a40",
+    "labOnly": true,
+    "networkIsolated": true,
+    "testResults": {
+      "staticPassed": 17,
+      "staticFailed": 0,
+      "pgTapPassed": 56,
+      "pgTapFailed": 0,
+      "restoredMgTables": 16,
+      "policies": 12,
+      "explicitIndexes": 11,
+      "syntheticRows": 1,
+      "sourceDestinationSnapshotsEqual": true,
+      "rollbackClean": true,
+      "containersRemoved": 2
+    },
+    "backup": {
+      "format": "PGDMP",
+      "bytes": 335153,
+      "sha256": "e9b68532b7262a0717d315a61c405cb9333c04c7c484eea21f2602beb00ca69f",
+      "persisted": false
+    },
+    "catalogSnapshotSha256": "7be760a4a97aa8e38a2547112e00e6a6747f97b77636fec01c5f4fed60b9300f",
+    "report": "docs/V94B-RESULTADO-ENSAYO-PG17-MG-COMPLETO-20261101.md",
+    "independenceVerified": false,
+    "productionGo": false,
+    "supplyChainDigestPinned": false
   }
 }
