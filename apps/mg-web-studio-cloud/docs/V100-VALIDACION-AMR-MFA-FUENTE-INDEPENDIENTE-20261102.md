@@ -48,3 +48,9 @@ Se creó `server/v100-mfa-amr-provenance.cjs`, exportando `createVerifiedMfaAmrP
 **AUTH-01..03 y DATA-01..02: sin cierre formal.**  
 **V67: 32 PENDING/0 PASS.**  
 **PR #7 borrador sin merge. Producción NO_GO.**
+
+## Fe de erratas V101 (2 de noviembre de 2026)
+
+El análisis posterior del código de `supabase/auth` verificó que el identificador canónico telefónico de AMR es **`mfa/phone`** (no `phone`), y que la fecha incluida como `amr.timestamp` se produce a partir de **`mfa_amr_claims.updated_at`**, que se actualiza al volver a registrar el método en la misma sesión; no se debe tomar `created_at` como fecha del último uso. La tabla histórica `mfa_challenges` tampoco tiene `session_id` directo, por lo que el desafío y la sesión requieren una evidencia de vinculación adicional.
+
+La corrección se implementó y validó con **80/80 pruebas offline** en [V101 run #41468006628](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41468006628). Véase `docs/V101-FUENTE-CANONICA-AMR-ULTIMA-VERIFICACION-MFA-20261102.md` para SHA de fuentes y límites. No hay integración Supabase real ni aprobación V67.
