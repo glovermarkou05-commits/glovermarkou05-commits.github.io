@@ -1,20 +1,11 @@
 name: MG Web Studio V94B PG17 Full Schema Synthetic Restore
 
+# V94B: Historical PASS at run 41387289030. Automatic execution disabled after
+# discovering PR path filters re-evaluate the full PR file set on synchronize.
+# Re-enabling this workflow requires fresh scope review. The job guard below
+# rejects workflow_dispatch: no DB operations will run from this paused file.
 on:
-  pull_request:
-    types: [synchronize]
-    branches:
-      - feature/mg-digital-v5-web-services
-    paths:
-      - .github/workflows/mg-web-studio-v94-full-pg17-synthetic-restore.yml
-      - apps/mg-web-studio-cloud/scripts/run-v94-pg17-full-schema-lab.sh
-      - apps/mg-web-studio-cloud/tests/v94-pg17-full-restore-contract.test.cjs
-      - apps/mg-web-studio-cloud/scripts/inspect-gh-runner-v94.cjs
-      - apps/mg-web-studio-cloud/tests/inspect-gh-runner-v94.test.cjs
-      - apps/mg-web-studio-cloud/docker/v94-postgres-pgtap.Dockerfile
-      - apps/mg-web-studio-cloud/sql/v94-*
-      - apps/mg-web-studio-cloud/tests/v53-rls-runtime.test.sql
-      - apps/mg-web-studio-cloud/db/v45-drafts/INSTALL_OBJECT_SCOPED.review.sql.txt
+  workflow_dispatch:
 
 permissions:
   contents: read
