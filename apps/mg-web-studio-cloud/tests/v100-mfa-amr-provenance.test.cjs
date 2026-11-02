@@ -109,9 +109,9 @@ test('reject duplicate supported MFA methods and ambiguous AMR entries',async()=
 });
 test('a valid phone method works if independent verification matches',async()=>{
  const {checker}=setup({
-  verifySignedJwtAmr:async()=>signed({amr:[{method:'phone',timestamp:now-3}]}),
+  verifySignedJwtAmr:async()=>signed({amr:[{method:'mfa/phone',timestamp:now-3}]}),
   readAuthoritativeMfaEvent:async()=>event({
-   method:'phone',verifiedAtSec:now-3
+   method:'mfa/phone',verifiedAtSec:now-3
   })
  });
  const r=await checker.readAuthoritativeFactor(input());
