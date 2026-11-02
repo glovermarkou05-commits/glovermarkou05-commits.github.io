@@ -20,7 +20,7 @@ WITH snap AS (
  WHERE schemaname IN ('public','mg_private') AND tablename LIKE 'mg_%'
  UNION ALL
  SELECT 'POLICY|'||n.nspname||'.'||c.relname||'|'||p.polname||'|'||
-        p.polcmd||'|'||COALESCE(pg_get_expr(p.polqual,p.polrelid),'')||'|'||
+        p.polcmd::text||'|'||COALESCE(pg_get_expr(p.polqual,p.polrelid),'')||'|'||
         COALESCE(pg_get_expr(p.polwithcheck,p.polrelid),'')
  FROM pg_policy p JOIN pg_class c ON c.oid=p.polrelid
  JOIN pg_namespace n ON n.oid=c.relnamespace
