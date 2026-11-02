@@ -9,6 +9,8 @@ on:
       - .github/workflows/mg-web-studio-v94-full-pg17-synthetic-restore.yml
       - apps/mg-web-studio-cloud/scripts/run-v94-pg17-full-schema-lab.sh
       - apps/mg-web-studio-cloud/tests/v94-pg17-full-restore-contract.test.cjs
+      - apps/mg-web-studio-cloud/scripts/inspect-gh-runner-v94.cjs
+      - apps/mg-web-studio-cloud/tests/inspect-gh-runner-v94.test.cjs
       - apps/mg-web-studio-cloud/docker/v94-postgres-pgtap.Dockerfile
       - apps/mg-web-studio-cloud/sql/v94-*
       - apps/mg-web-studio-cloud/tests/v53-rls-runtime.test.sql
@@ -46,9 +48,9 @@ jobs:
       - name: Validate shell and refusal tests (no Docker started)
         run: |
           bash -n scripts/run-v94-pg17-full-schema-lab.sh
-          node --require ./server/native-network-guard-v70.cjs --test tests/v94-pg17-full-restore-contract.test.cjs
+          node --require ./server/native-network-guard-v70.cjs --test tests/v94-pg17-full-restore-contract.test.cjs tests/inspect-gh-runner-v94.test.cjs
       - name: Verify GitHub-hosted runner resources
-        run: node --require ./server/native-network-guard-v70.cjs scripts/inspect-gh-runner-v84.cjs --json
+        run: node --require ./server/native-network-guard-v70.cjs scripts/inspect-gh-runner-v94.cjs --json
       - name: Restore full MG synthetic PG17 schema and run V53 56 TAP cases
         run: bash scripts/run-v94-pg17-full-schema-lab.sh
       - name: Always verify no temporary V94 databases remain
