@@ -31,16 +31,16 @@ const OWNED=patch=>({
 });
 const CH=patch=>({
  challengeId:CHALLENGE,factorId:FACTOR,providerIssued:true,
- createdAtSec:NOW-5,...patch
+ createdAtSec:NOW-2,...patch
 });
 const VERIFY=patch=>({
  challengeId:CHALLENGE,factorId:FACTOR,providerVerified:true,
- refreshedAccessToken:NEWTOKEN,verifiedAtSec:NOW-2,...patch
+ refreshedAccessToken:NEWTOKEN,verifiedAtSec:NOW-1,...patch
 });
 const POST=patch=>({
  subject:USER,sessionId:SESSION,active:true,aal:'aal2',
  verified:true,jwtVerified:true,primaryRead:true,revocationChecked:true,
- amrMethod:'totp',amrTimestampSec:NOW-2,checkedAtSec:NOW,exp:NOW+60,
+ amrMethod:'totp',amrTimestampSec:NOW-1,checkedAtSec:NOW,exp:NOW+60,
  ...patch
 });
 function setup(overrides={}){
@@ -57,7 +57,7 @@ function setup(overrides={}){
  return {flow:createMfaChallengeSessionTransactionV102(props),calls};
 }
 const validQuery=()=>({
- subject:USER,sessionId:SESSION,method:'totp',verifiedAtSec:NOW-2
+ subject:USER,sessionId:SESSION,method:'totp',verifiedAtSec:NOW-1
 });
 test('produces an empty, unforgeable and once-only in-process receipt',async()=>{
  const {flow,calls}=setup();
@@ -148,7 +148,7 @@ test('upgraded JWT must remain the same subject/session and be aal2',async()=>{
  for(const bad of [{subject:OTHER},{sessionId:OTHER_SESSION},{aal:'aal1'},
   {verified:false},{jwtVerified:false},{primaryRead:false},
   {revocationChecked:false},{active:false},{amrMethod:'password'},
-  {amrTimestampSec:NOW-20},{amrTimestampSec:NOW+1},
+  {amrTimestampSec:NOW-10},{amrTimestampSec:NOW+1},
   {checkedAtSec:NOW-3},{exp:NOW},{role:'SUPERADMIN'}]){
   const {flow}=setup({readUpdatedSession:async()=>POST(bad)});
   assert.equal(await flow.run(IN()),null,JSON.stringify(bad));
@@ -203,10 +203,10 @@ test('V102 one-use proof directly satisfies V101 verified challenge shape',async
   readPrimaryAmrRow:async()=>({
    subject:USER,sessionId:SESSION,method:'totp',primaryRead:true,
    sessionOwnershipVerified:true,createdAtSec:NOW-1000,
-   updatedAtSec:NOW-2,checkedAtSec:NOW-1
+   updatedAtSec:NOW-1,checkedAtSec:NOW-1
   }),
   readVerifiedChallenge:async q=>flow.consume(receipt,{
-   subject:q.subject,sessionId:q.sessionId,method:q.method,verifiedAtSec:NOW-2
+   subject:q.subject,sessionId:q.sessionId,method:q.method,verifiedAtSec:NOW-1
   })
  });
  const v100=createVerifiedMfaAmrProvenanceV100({
