@@ -1,0 +1,615 @@
+{
+  "schema": "mg-web-studio-v95-independent-review-handoff-v1",
+  "date": "2026-11-02",
+  "project": "MG_WEB_STUDIO_CLOUD",
+  "sourceBranch": "docs/mg-web-studio-v94-preflight-20261101",
+  "canonicalV67Status": "32_PENDING_0_PASS",
+  "independentReviewerAssigned": false,
+  "reviewerCannotSelfCertify": true,
+  "labEvidenceDoesNotImplyFormalPass": true,
+  "productionAuthorization": false,
+  "noDatabaseOperation": true,
+  "noProductionChanges": true,
+  "canonicalFilesUnaffected": [
+    "docs/V67-EVIDENCIAS-PENDIENTES.json",
+    "docs/V93-PAQUETE-REVISION-INDEPENDIENTE.json"
+  ],
+  "sources": {
+    "v67": {
+      "path": "docs/V67-EVIDENCIAS-PENDIENTES.json",
+      "blobSha": "4e16db6b1d09940133a49f287d328cc0f5c41435"
+    },
+    "v91": {
+      "path": "docs/V91-MATRIZ-COBERTURA-V67.json",
+      "blobSha": "1527e381425a17add4134c542b6302c215c67099"
+    },
+    "v93": {
+      "path": "docs/V93-PAQUETE-REVISION-INDEPENDIENTE.json",
+      "blobSha": "0630b45637aa257bd7705f943f0957af36315d47"
+    },
+    "v94": {
+      "path": "docs/V94-MANIFIESTO-DEPENDENCIAS-SIN-EJECUCION.json",
+      "blobSha": "b09cccb99ffe1c0d285375b761f7a743f2b14890"
+    }
+  },
+  "verifiedLab": {
+    "runId": 41387289030,
+    "jobId": 125090834612,
+    "pgVersion": "17.11",
+    "staticTestsPassed": 17,
+    "pgTapPassed": 56,
+    "restoredTables": 16,
+    "restoredPolicies": 12,
+    "explicitIndexes": 11,
+    "cleanupPassed": true,
+    "repo": "glovermarkou05-commits/glovermarkou05-commits.github.io",
+    "runUrl": "https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41387289030",
+    "report": "docs/V94B-RESULTADO-ENSAYO-PG17-MG-COMPLETO-20261101.md"
+  },
+  "coverageSummary": {
+    "LAB_OBSERVED": 15,
+    "PARTIAL": 14,
+    "NOT_EXERCISED": 3,
+    "total": 32,
+    "formalApproved": 0
+  },
+  "securityFollowups": [
+    {
+      "id": "SUPPLY-01",
+      "finding": "GitHub Actions actions/checkout@v4 and setup-node@v4 are not pinned to immutable commit SHA",
+      "severity": "MEDIUM",
+      "status": "OPEN",
+      "executionAuthorized": false
+    },
+    {
+      "id": "SUPPLY-02",
+      "finding": "Docker FROM postgres:17.11-bookworm tag and apt-get postgresql-17-pgtap not pinned by registry digest/snapshot",
+      "severity": "MEDIUM",
+      "status": "OPEN",
+      "executionAuthorized": false
+    },
+    {
+      "id": "SUPPLY-03",
+      "finding": "V94 clean lab proof not real Supabase Auth/MFA or encryption/retention RPO/RTO",
+      "severity": "HIGH",
+      "status": "OPEN",
+      "executionAuthorized": false
+    }
+  ],
+  "controls": [
+    {
+      "id": "HTTP-01",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "LAB_OBSERVED",
+      "technicalStages": [
+        "V87"
+      ],
+      "primaryGap": "Revisión independiente de ejecución y respuesta",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "HTTP-02",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "LAB_OBSERVED",
+      "technicalStages": [
+        "V87"
+      ],
+      "primaryGap": "Revisión independiente de logs V87",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "HTTP-03",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "LAB_OBSERVED",
+      "technicalStages": [
+        "V87"
+      ],
+      "primaryGap": "Revisión independiente de logs V87",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "HTTP-04",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "LAB_OBSERVED",
+      "technicalStages": [
+        "V87"
+      ],
+      "primaryGap": "Revisión independiente de logs V87",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "HTTP-05",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "LAB_OBSERVED",
+      "technicalStages": [
+        "V87"
+      ],
+      "primaryGap": "Revisión independiente de logs V87",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "HTTP-06",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "PARTIAL",
+      "technicalStages": [
+        "V87"
+      ],
+      "primaryGap": "Probar en el proxy/TLS de ingreso autorizado los mismos límites",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "HTTP-07",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "LAB_OBSERVED",
+      "technicalStages": [
+        "V87"
+      ],
+      "primaryGap": "Revisión independiente de logs y entorno V87",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "HTTP-08",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "LAB_OBSERVED",
+      "technicalStages": [
+        "V87"
+      ],
+      "primaryGap": "Revisión independiente de trazas sanitizadas",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "HTTP-09",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "LAB_OBSERVED",
+      "technicalStages": [
+        "V87"
+      ],
+      "primaryGap": "Revisión independiente de logs V87",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "HTTP-10",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "PARTIAL",
+      "technicalStages": [
+        "V87"
+      ],
+      "primaryGap": "Probar slow headers y ausencia de fugas bajo carga pequeña aprobada",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "HTTP-11",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "LAB_OBSERVED",
+      "technicalStages": [
+        "V87"
+      ],
+      "primaryGap": "Revisión independiente de logs V87",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "HTTP-12",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "LAB_OBSERVED",
+      "technicalStages": [
+        "V87"
+      ],
+      "primaryGap": "Revisión independiente de logs V87",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "HTTP-13",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "LAB_OBSERVED",
+      "technicalStages": [
+        "V87"
+      ],
+      "primaryGap": "Revisión independiente de logs V87",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "HTTP-14",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "PARTIAL",
+      "technicalStages": [
+        "V87",
+        "V89"
+      ],
+      "primaryGap": "Enrutamiento desde proxy/TLS real autorizado con identidad de origen verificada",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "LOAD-01",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "LAB_OBSERVED",
+      "technicalStages": [
+        "V89"
+      ],
+      "primaryGap": "Revisión independiente; validar topes finales en ingress real",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "LOAD-02",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "LAB_OBSERVED",
+      "technicalStages": [
+        "V89"
+      ],
+      "primaryGap": "Revisión independiente; comprobar bajo topología proxy real",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "LOAD-03",
+      "evidenceType": "real_http",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "PARTIAL",
+      "technicalStages": [
+        "V89"
+      ],
+      "primaryGap": "Medir memoria, backlog, sockets y cancelación SQL en ensayo acotado más representativo",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "OBS-01",
+      "evidenceType": "review",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "PARTIAL",
+      "technicalStages": [
+        "V87",
+        "V89"
+      ],
+      "primaryGap": "Auditar muestra real de emisión/almacenamiento sin datos sensibles",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "OBS-02",
+      "evidenceType": "review",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "PARTIAL",
+      "technicalStages": [
+        "V87",
+        "V89"
+      ],
+      "primaryGap": "Correlacionar rechazos 401/403/404/429/503 entre capas sin exponer identidad",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "OBS-03",
+      "evidenceType": "review",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "NOT_EXERCISED",
+      "technicalStages": [],
+      "primaryGap": "Definir y aprobar responsable, política, cifrado, retención y borrado de logs",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "OBS-04",
+      "evidenceType": "review",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "NOT_EXERCISED",
+      "technicalStages": [],
+      "primaryGap": "Aprobar runbook de incidentes, alertas, niveles y responsable",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "AUTH-01",
+      "evidenceType": "real_auth",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "PARTIAL",
+      "technicalStages": [
+        "V88"
+      ],
+      "primaryGap": "Probar sesión/JWT de proveedor de ensayo autorizado y revocación persistida",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "AUTH-02",
+      "evidenceType": "real_auth",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "PARTIAL",
+      "technicalStages": [
+        "V88",
+        "V86",
+        "V53"
+      ],
+      "primaryGap": "Prueba end-to-end con identidad de ensayo, DB de producto y scopes",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "AUTH-03",
+      "evidenceType": "real_auth",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "PARTIAL",
+      "technicalStages": [
+        "V88"
+      ],
+      "primaryGap": "Demostrar MFA servidor-verified en operaciones elevadas con identidad de prueba",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "DATA-01",
+      "evidenceType": "real_database",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "PARTIAL",
+      "technicalStages": [
+        "V86",
+        "V53"
+      ],
+      "primaryGap": "Catalogar roles reales, ACL/defaults, bypass/service_role y políticas de esquema final",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "DATA-02",
+      "evidenceType": "real_database",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "PARTIAL",
+      "technicalStages": [
+        "V86",
+        "V89"
+      ],
+      "primaryGap": "Probar cancelación y deadline de transacción real sin escrituras persistentes",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "REC-01",
+      "evidenceType": "restore",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "LAB_OBSERVED",
+      "technicalStages": [
+        "V90"
+      ],
+      "primaryGap": "Revisión independiente y repetir con esquema autorizado completo",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "REC-02",
+      "evidenceType": "restore",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "PARTIAL",
+      "technicalStages": [
+        "V90",
+        "V94B"
+      ],
+      "primaryGap": "V94B restaura V45/16 tablas, pero no acredita historia completa de migraciones, Auth real ni integración Supabase; revisión independiente pendiente",
+      "technicalLabEvidence": {
+        "runId": 41387289030,
+        "jobId": 125090834612,
+        "sha": "199fba2044f1ac1a03f2894847d6d6740510795e",
+        "link": "https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41387289030",
+        "pgTap56Passed": true,
+        "scope": "PG17 2 ephemeral, fake Auth, V45 16 tables only",
+        "formalSignoff": false
+      },
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "REC-03",
+      "evidenceType": "restore",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "LAB_OBSERVED",
+      "technicalStages": [
+        "V90",
+        "V53",
+        "V94B"
+      ],
+      "primaryGap": "V94B ejecutó 56/56 pgTAP V53 sobre un PG17 restaurado con Auth ficticio; requiere dictamen independiente y no valida Auth real",
+      "technicalLabEvidence": {
+        "runId": 41387289030,
+        "jobId": 125090834612,
+        "sha": "199fba2044f1ac1a03f2894847d6d6740510795e",
+        "link": "https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41387289030",
+        "pgTap56Passed": true,
+        "scope": "PG17 2 ephemeral, fake Auth, V45 16 tables only",
+        "formalSignoff": false
+      },
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "REC-04",
+      "evidenceType": "restore",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "PARTIAL",
+      "technicalStages": [
+        "V90"
+      ],
+      "primaryGap": "Aprobar backup cifrado, retención, restauración completa y RPO/RTO medidos",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "OPS-01",
+      "evidenceType": "approval",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "PARTIAL",
+      "technicalStages": [
+        "V85",
+        "V87",
+        "V89"
+      ],
+      "primaryGap": "Aprobación separada de interfaz/puerto/TLS/firewall, duración y operador",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    },
+    {
+      "id": "OPS-02",
+      "evidenceType": "approval",
+      "formalStatus": "PENDING",
+      "formalEvidenceRef": null,
+      "technicalCoverage": "NOT_EXERCISED",
+      "technicalStages": [],
+      "primaryGap": "Obtener dictamen independiente y aprobación productiva separada con rollback",
+      "technicalLabEvidence": null,
+      "reviewer": "UNASSIGNED",
+      "independentDecision": "NOT_REVIEWED",
+      "signature": null,
+      "productionImpact": "NONE"
+    }
+  ]
+}
