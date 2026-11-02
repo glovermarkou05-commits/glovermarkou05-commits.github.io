@@ -68,7 +68,8 @@ function createTrustedAssuranceAdapterV98({
     // Must be independently checked against a server-authoritative MFA event
     // for THIS session and user. JWT aal2 and enrolled factors are not enough.
     factor=await readAuthoritativeFactor(Object.freeze({
-      subject:token.subject,sessionId:token.sessionId,signal:input.signal
+      subject:token.subject,sessionId:token.sessionId,
+      accessToken:input.accessToken,signal:input.signal
     }));
   }catch{return null;}
   if(input.signal?.aborted)return null;
