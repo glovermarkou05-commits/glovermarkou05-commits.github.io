@@ -104,12 +104,12 @@
     {
       "id": "G2",
       "state": "PENDING",
-      "reason": "Full MG schema, auth fixture and pgTAP compatibility not demonstrated on ephemeral source"
+      "reason": "V90 provides only three mg_v86 NOLOGIN roles; V53 requires auth.users/auth.uid, anon/authenticated/service_role and pgTAP absent from verified image capability"
     },
     {
       "id": "G3",
       "state": "PENDING",
-      "reason": "Fixture and rollback evidence to be designed"
+      "reason": "16 MG objects, V53 56 assertions on restored target, rollback, zero residue, and ownership/ACL equivalence not yet proven"
     },
     {
       "id": "G4",
@@ -119,7 +119,7 @@
     {
       "id": "G5",
       "state": "PENDING",
-      "reason": "Runner and network isolation requires review"
+      "reason": "V90 safe controls reusable but PG17 image digest, pgTAP availability, resource bounds, owner fidelity, cleanup for full MG schema need review"
     },
     {
       "id": "G6",
@@ -224,5 +224,27 @@
       "DDL canonical compatibility",
       "Independent review and V94B scoped authorization"
     ]
+  },
+  "finalPreflight": {
+    "date": "2026-11-01",
+    "status": "DOCUMENTED_NOT_READY_NOT_AUTHORIZED",
+    "report": "docs/V94B-PREFLIGHT-FINAL-Y-CRITERIOS-DE-EJECUCION.md",
+    "baseline": "V45_PROPOSED_NOT_EXECUTABLE",
+    "referenceLab": "V90_SAFE_PATTERNS_ONLY",
+    "roleMismatch": [
+      "V90 only mg_v86_tenant_a/tenant_b/guest",
+      "V53 requires anon/authenticated/service_role, auth.users and auth.uid()"
+    ],
+    "pgTapAvailabilityInPostgresImage": "UNVERIFIED",
+    "v90Image": "postgres:17-bookworm",
+    "pgDumpRestoresGlobalRoles": false,
+    "ownershipPreservationWithNoOwner": "UNVERIFIED",
+    "testsOnRestoredFullMgSchema": 0,
+    "requiredHistoricalAssertions": 56,
+    "runtimeSqlAuthorized": false,
+    "permissionForLab": "NOT_AUTHORIZED",
+    "newWorkflowCreated": false,
+    "v67RemainingFormal": 32,
+    "deployment": "NO_GO"
   }
 }
