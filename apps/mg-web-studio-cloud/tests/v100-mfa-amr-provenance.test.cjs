@@ -98,7 +98,7 @@ test('reject old AMR and future AMR, regardless of aal2',async()=>{
 test('reject duplicate supported MFA methods and ambiguous AMR entries',async()=>{
  for(const amr of [
   [{method:'totp',timestamp:now-20},{method:'totp',timestamp:now-25}],
-  [{method:'totp',timestamp:now-20},{method:'phone',timestamp:now-20}],
+  [{method:'totp',timestamp:now-20},{method:'mfa/phone',timestamp:now-20}],
   [{method:'totp',timestamp:now-20},{method:'totp',timestamp:now-20}],
   Array.from({length:9},()=>({method:'password',timestamp:now-30}))
  ]){
