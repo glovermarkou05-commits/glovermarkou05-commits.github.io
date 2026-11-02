@@ -190,9 +190,14 @@ if ! cmp -s "$workdir/source.snapshot" "$workdir/dest.snapshot"; then
 fi
 echo "V94 RESTORE: canonical schema/ACL/owners snapshots match"
 echo "V94 PG-TAP: execute 56 historical V53 assertions ONLY on restored destination"
-docker exec -i "$DEST" psql -X -q -A -t -v ON_ERROR_STOP=1 \
+# pgTAP's internal _set and helper functions use unqualified names in extensions.
+# Set search_path for this ONE session; preserve the historical V53 SQL unmodified.
+{
+  printf 'SET search_path TO public, extensions;\n'
+  cat "$V53"
+} | docker exec -i "$DEST" psql -X -q -A -t -v ON_ERROR_STOP=1 \
   -h /var/run/postgresql -U postgres -d mg_v94_dest \
-  < "$V53" > "$workdir/tap.log"
+  > "$workdir/tap.log"
 if grep -Eq '^not ok[[:space:]]+[0-9]+' "$workdir/tap.log" ||
    grep -q 'Looks like you failed' "$workdir/tap.log"; then
   echo "V94 FAIL: pgTAP reported a failed assertion" >&2
