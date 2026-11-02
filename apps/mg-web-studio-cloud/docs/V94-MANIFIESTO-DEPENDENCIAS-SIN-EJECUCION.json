@@ -99,7 +99,7 @@
     {
       "id": "G1",
       "state": "PENDING",
-      "reason": "V45 historical baseline proposed and crosschecked (16 tables, 11 indexes, 12 policies, 16 RLS); portable executable canonical artifact, SQL parser and security review not completed"
+      "reason": "V45 source and 16 table/12 policy/11 index static matrices documented; no executable canonical migration, catalog permissions or independent approval"
     },
     {
       "id": "G2",
@@ -201,5 +201,28 @@
     ],
     "noFormalSignoff": true,
     "report": "docs/V94A-RESULTADO-CONCILIACION-ESTATICA-V45-V53-V54.md"
+  },
+  "permissionsAndDependenciesReview": {
+    "cutoff": "2026-11-01",
+    "method": "STATIC_CODE_INSPECTION_ONLY",
+    "report": "docs/V94A-MATRIZ-PERMISOS-DEPENDENCIAS-POR-OBJETO.md",
+    "data": "docs/V94A-MATRIZ-PERMISOS-DEPENDENCIAS-POR-OBJETO.json",
+    "mgTables": 16,
+    "publicTables": 12,
+    "privateTables": 4,
+    "declaredRls": 16,
+    "declaredSelectPolicies": 12,
+    "explicitIndexes": 11,
+    "uniqueIndexes": 2,
+    "effectivePrivilegesVerified": false,
+    "actualPostgresCatalogInspected": false,
+    "independentSignoff": false,
+    "sqlExecuted": false,
+    "materialGaps": [
+      "Postgres real ACL/default privileges including supabase_admin and PUBLIC EXECUTE",
+      "Auth fixture and external extensions",
+      "DDL canonical compatibility",
+      "Independent review and V94B scoped authorization"
+    ]
   }
 }
