@@ -63,6 +63,7 @@ test('contract requires three audited backends, a shared HMAC key and bounded cl
 test('synthetic success consumes event but never enables production',async()=>{
  const {gate,calls}=make();
  const result=await gate.redeem(input());
+ assert.ok(result.ok,'V109 stage counts '+JSON.stringify({session:calls.session.length,resource:calls.resource.length,ledger:calls.ledger.length,clock:NOW}));
  assert.deepEqual(result,{
    ok:true,mode:'INJECTED_ATOMIC_LEDGER_CONTRACT',
    eventRedeemed:true,productionAuthorized:false,formalV67Pass:0
