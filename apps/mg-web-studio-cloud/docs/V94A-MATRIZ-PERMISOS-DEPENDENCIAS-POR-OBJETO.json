@@ -1,0 +1,389 @@
+{
+  "schema": "mg-web-studio-v94a-table-security-matrix-v1",
+  "cutOff": "2026-11-01",
+  "sourceRef": "docs/mg-web-studio-v94-preflight-20261101",
+  "classification": "STATIC_REVIEW_NOT_EXECUTABLE",
+  "scope": "MG_WEB_STUDIO_CLOUD_ONLY",
+  "baseline": "V45_HISTORICAL_PROPOSED_NOT_APPROVED",
+  "v67": {
+    "pending": 32,
+    "pass": 0,
+    "production": "NO_GO"
+  },
+  "operations": {
+    "sql": false,
+    "restore": false,
+    "pg17Started": false,
+    "independentReview": false,
+    "prodDeploy": false
+  },
+  "sources": {
+    "v45": {
+      "path": "db/v45-drafts/INSTALL_OBJECT_SCOPED.review.sql.txt",
+      "blobSha": "135ff2c25d935d87e5c8e9e0f9189705cd40b411"
+    },
+    "v53": {
+      "path": "tests/v53-rls-runtime.test.sql",
+      "blobSha": "18a10e935ef1487524da93f3e49ee849ba3784bf"
+    },
+    "v54": {
+      "path": "supabase/migrations/20261020191612_mg_web_studio_v54_postgres_public_table_sequence_defaults.sql",
+      "blobSha": "a4b7221a4c38696a1c2abeef79a56ee68e151a5a"
+    },
+    "core": {
+      "path": "db/schema_core.review.sql",
+      "blobSha": "02912849894f6968560211d596002d409f6a1d3a"
+    }
+  },
+  "counts": {
+    "tables": 16,
+    "publicTables": 12,
+    "privateTables": 4,
+    "rlsEnableDeclared": 16,
+    "readPoliciesDeclared": 12,
+    "explicitIndexes": 11,
+    "uniqueIndexes": 2,
+    "v53PublicInsertTargets": 12,
+    "v53PublicInsertTargetsMissing": 0
+  },
+  "roles": [
+    {
+      "role": "anon",
+      "public": "V45 explicitly REVOKE ALL; no GRANT to anon",
+      "private": "V45 REVOKE ALL",
+      "status": "STATIC_ONLY"
+    },
+    {
+      "role": "authenticated",
+      "public": "V45 explicit SELECT grants to 12 public tables, policy-based read only",
+      "private": "V45 REVOKE ALL on schema and private tables",
+      "status": "STATIC_ONLY"
+    },
+    {
+      "role": "service_role",
+      "public": "V45 grants SELECT/INSERT/UPDATE/DELETE on public MG tables",
+      "private": "V45 grants schema USAGE and SELECT/INSERT/UPDATE/DELETE on 4 tables",
+      "status": "STATIC_ONLY"
+    },
+    {
+      "role": "postgres",
+      "public": "Object creator/default privileges require review, V54 only revokes TABLE/SEQUENCE defaults in public",
+      "private": "Owner/actual grants not proven",
+      "status": "UNVERIFIED_RUNTIME"
+    },
+    {
+      "role": "supabase_admin",
+      "public": "V45 flags broad historical default grants; V54 does not alter this role",
+      "private": "Actual role/ACL not proven",
+      "status": "UNVERIFIED_RUNTIME"
+    },
+    {
+      "role": "PUBLIC",
+      "public": "Function default EXECUTE and future objects require separate review",
+      "private": "Private functions REVOKE ALL from PUBLIC in V45, but runtime/catalog not checked",
+      "status": "UNVERIFIED_RUNTIME"
+    }
+  ],
+  "tables": [
+    {
+      "table": "public.mg_profiles",
+      "sourceLine": 31,
+      "dependencies": [
+        "auth.users"
+      ],
+      "rlsDeclared": true,
+      "policyNames": [
+        "mg_v40_profiles_self"
+      ],
+      "indexNames": [],
+      "exposureExpected": "authenticated SELECT with RLS; anon REVOKE",
+      "restrictionsExpected": "no authenticated direct DML in V45",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    },
+    {
+      "table": "public.mg_organizations",
+      "sourceLine": 37,
+      "dependencies": [],
+      "rlsDeclared": true,
+      "policyNames": [
+        "mg_v40_org_active_member"
+      ],
+      "indexNames": [],
+      "exposureExpected": "authenticated SELECT with RLS; anon REVOKE",
+      "restrictionsExpected": "no authenticated direct DML in V45",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    },
+    {
+      "table": "public.mg_memberships",
+      "sourceLine": 45,
+      "dependencies": [
+        "public.mg_organizations",
+        "auth.users"
+      ],
+      "rlsDeclared": true,
+      "policyNames": [
+        "mg_v40_memberships_self"
+      ],
+      "indexNames": [
+        "mg_v40_memberships_user_idx"
+      ],
+      "exposureExpected": "authenticated SELECT with RLS; anon REVOKE",
+      "restrictionsExpected": "no authenticated direct DML in V45",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    },
+    {
+      "table": "public.mg_sites",
+      "sourceLine": 56,
+      "dependencies": [
+        "public.mg_organizations"
+      ],
+      "rlsDeclared": true,
+      "policyNames": [
+        "mg_v40_sites_scoped"
+      ],
+      "indexNames": [
+        "mg_v40_sites_org_idx"
+      ],
+      "exposureExpected": "authenticated SELECT with RLS; anon REVOKE",
+      "restrictionsExpected": "no authenticated direct DML in V45",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    },
+    {
+      "table": "public.mg_pages",
+      "sourceLine": 68,
+      "dependencies": [
+        "public.mg_sites"
+      ],
+      "rlsDeclared": true,
+      "policyNames": [
+        "mg_v40_pages_site_read"
+      ],
+      "indexNames": [
+        "mg_v40_pages_org_site_idx"
+      ],
+      "exposureExpected": "authenticated SELECT with RLS; anon REVOKE",
+      "restrictionsExpected": "no authenticated direct DML in V45",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    },
+    {
+      "table": "public.mg_membership_site_scopes",
+      "sourceLine": 84,
+      "dependencies": [
+        "public.mg_memberships",
+        "public.mg_sites"
+      ],
+      "rlsDeclared": true,
+      "policyNames": [
+        "mg_v40_scope_self"
+      ],
+      "indexNames": [
+        "mg_v40_scopes_user_site_idx"
+      ],
+      "exposureExpected": "authenticated SELECT with RLS; anon REVOKE",
+      "restrictionsExpected": "no authenticated direct DML in V45",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    },
+    {
+      "table": "mg_private.mg_staff_roles",
+      "sourceLine": 99,
+      "dependencies": [
+        "auth.users"
+      ],
+      "rlsDeclared": true,
+      "policyNames": [],
+      "indexNames": [],
+      "exposureExpected": "mg_private schema, service_role only",
+      "restrictionsExpected": "anon/authenticated denied schema and tables",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    },
+    {
+      "table": "mg_private.mg_audit_events",
+      "sourceLine": 107,
+      "dependencies": [
+        "public.mg_organizations"
+      ],
+      "rlsDeclared": true,
+      "policyNames": [],
+      "indexNames": [],
+      "exposureExpected": "mg_private schema, service_role only",
+      "restrictionsExpected": "anon/authenticated denied schema and tables",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    },
+    {
+      "table": "public.mg_site_draft_versions",
+      "sourceLine": 137,
+      "dependencies": [
+        "auth.users",
+        "public.mg_sites"
+      ],
+      "rlsDeclared": true,
+      "policyNames": [
+        "mg_v40_drafts_site_read"
+      ],
+      "indexNames": [],
+      "exposureExpected": "authenticated SELECT with RLS; anon REVOKE",
+      "restrictionsExpected": "no authenticated direct DML in V45",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    },
+    {
+      "table": "public.mg_site_proposals",
+      "sourceLine": 149,
+      "dependencies": [
+        "auth.users",
+        "public.mg_sites"
+      ],
+      "rlsDeclared": true,
+      "policyNames": [
+        "mg_v40_proposals_site_read"
+      ],
+      "indexNames": [
+        "mg_v40_proposals_inbox_idx"
+      ],
+      "exposureExpected": "authenticated SELECT with RLS; anon REVOKE",
+      "restrictionsExpected": "no authenticated direct DML in V45",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    },
+    {
+      "table": "public.mg_proposal_revisions",
+      "sourceLine": 169,
+      "dependencies": [
+        "auth.users",
+        "public.mg_site_proposals"
+      ],
+      "rlsDeclared": true,
+      "policyNames": [
+        "mg_v40_revisions_site_read"
+      ],
+      "indexNames": [
+        "mg_v40_revisions_site_idx"
+      ],
+      "exposureExpected": "authenticated SELECT with RLS; anon REVOKE",
+      "restrictionsExpected": "no authenticated direct DML in V45",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    },
+    {
+      "table": "public.mg_proposal_reviews",
+      "sourceLine": 186,
+      "dependencies": [
+        "auth.users",
+        "public.mg_proposal_revisions"
+      ],
+      "rlsDeclared": true,
+      "policyNames": [
+        "mg_v40_reviews_site_read"
+      ],
+      "indexNames": [
+        "mg_v40_reviews_site_idx"
+      ],
+      "exposureExpected": "authenticated SELECT with RLS; anon REVOKE",
+      "restrictionsExpected": "no authenticated direct DML in V45",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    },
+    {
+      "table": "public.mg_proposal_notifications",
+      "sourceLine": 205,
+      "dependencies": [
+        "auth.users",
+        "public.mg_proposal_revisions"
+      ],
+      "rlsDeclared": true,
+      "policyNames": [
+        "mg_v40_notifications_recipient"
+      ],
+      "indexNames": [
+        "mg_v40_notifications_recipient_idx",
+        "mg_v42_notification_event_recipient_key"
+      ],
+      "exposureExpected": "authenticated SELECT with RLS; anon REVOKE",
+      "restrictionsExpected": "no authenticated direct DML in V45",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    },
+    {
+      "table": "public.mg_notification_reads",
+      "sourceLine": 226,
+      "dependencies": [
+        "public.mg_proposal_notifications"
+      ],
+      "rlsDeclared": true,
+      "policyNames": [
+        "mg_v40_notification_reads_recipient"
+      ],
+      "indexNames": [],
+      "exposureExpected": "authenticated SELECT with RLS; anon REVOKE",
+      "restrictionsExpected": "no authenticated direct DML in V45",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    },
+    {
+      "table": "mg_private.mg_proposal_outbox",
+      "sourceLine": 236,
+      "dependencies": [
+        "public.mg_proposal_revisions"
+      ],
+      "rlsDeclared": true,
+      "policyNames": [],
+      "indexNames": [
+        "mg_v40_outbox_pending_idx",
+        "mg_v42_outbox_business_key"
+      ],
+      "exposureExpected": "mg_private schema, service_role only",
+      "restrictionsExpected": "anon/authenticated denied schema and tables",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    },
+    {
+      "table": "mg_private.mg_operation_idempotency",
+      "sourceLine": 257,
+      "dependencies": [
+        "public.mg_organizations",
+        "auth.users"
+      ],
+      "rlsDeclared": true,
+      "policyNames": [],
+      "indexNames": [],
+      "exposureExpected": "mg_private schema, service_role only",
+      "restrictionsExpected": "anon/authenticated denied schema and tables",
+      "effectiveGrantsProven": false,
+      "rlsRuntimeProvenOnRestoredDb": false,
+      "reviewStatus": "PENDING_INDEPENDENT_REVIEW"
+    }
+  ],
+  "pendingChecks": [
+    "Canonical migration source and SQL parse/DDL validation",
+    "Exact RLS policy runtime behavior in restored isolated PG17",
+    "Actual information_schema/pg_catalog ACL, BYPASSRLS and default ACL review",
+    "Function execution privileges including PUBLIC defaults and supabase_admin",
+    "Foreign key, index, constraints and role resolution in synthetic PG17",
+    "auth.uid and auth.users fixture compatibility, pgTAP installation at extensions",
+    "Independent reviewer and evidence custody",
+    "New explicit authorization for V94B SQL and pg_dump/pg_restore"
+  ]
+}
