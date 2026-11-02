@@ -21,7 +21,11 @@ if [[ "${GITHUB_ACTIONS:-}" != true ||
       "${RUNNER_ENVIRONMENT:-}" != github-hosted ||
       "${RUNNER_OS:-}" != Linux ||
       "${GITHUB_REPOSITORY:-}" != "$REPO" ||
-      "${GITHUB_REF:-}" != "$REF" ||
+      ( "${GITHUB_REF:-}" != "$REF" &&
+        ( "${GITHUB_EVENT_NAME:-}" != pull_request ||
+          "${GITHUB_REF:-}" != 'refs/pull/7/merge' ||
+          "${GITHUB_HEAD_REF:-}" != 'docs/mg-web-studio-v94-preflight-20261101' ||
+          "${GITHUB_BASE_REF:-}" != 'feature/mg-digital-v5-web-services' ) ) ||
       "${MG_V94_SCOPE:-}" != "$SCOPE" ]]; then
   echo "V94 BLOCKED: wrong GitHub-hosted runner, branch, or scoped authorization" >&2
   exit 2
