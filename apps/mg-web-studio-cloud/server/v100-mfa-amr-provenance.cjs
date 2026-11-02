@@ -8,7 +8,7 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SIGNED_KEYS=['aal','amr','audienceVerified','exp','issuerVerified','sessionId','subject','verified'];
 const AMR_KEYS=['method','timestamp'];
 const PROOF_KEYS=['checkedAtSec','freshnessSemanticsVerified','method','origin','sessionId','subject','verifiedAtSec'];
-const FACTORS=new Set(['totp','phone']);
+const FACTORS=new Set(['totp','mfa/phone']);
 const plain=x=>x!==null&&typeof x==='object'&&!Array.isArray(x)&&
  (Object.getPrototypeOf(x)===Object.prototype||Object.getPrototypeOf(x)===null);
 const exact=(x,keys)=>plain(x)&&Object.keys(x).length===keys.length&&
@@ -78,7 +78,7 @@ function createVerifiedMfaAmrProvenanceV100({
   return Object.freeze({
     subject:input.subject,sessionId:input.sessionId,
     source:'AUTH_SERVER_VERIFIED_MFA',aal:'aal2',
-    factorType:amr.method,factorVerified:true,
+    factorType:amr.method==='mfa/phone'?'phone':amr.method,factorVerified:true,
     checkedAtSec:event.checkedAtSec,
     factorConfirmedAtSec:amr.timestamp
   });
