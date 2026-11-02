@@ -63,7 +63,7 @@
     {
       "id": "G1",
       "state": "PENDING",
-      "reason": "Canonical DDL and migration order not reconciled"
+      "reason": "Static 12/12 V53 insert-table compatibility found; canonical portable DDL, overlapping drafts, privileges and DB parser remain unresolved"
     },
     {
       "id": "G2",
@@ -109,5 +109,58 @@
     "Production deploy",
     "Merge",
     "Approval of V67"
-  ]
+  ],
+  "staticReconciliation": {
+    "reviewedOn": "2026-11-01",
+    "method": "TEXT_ONLY_NO_SQL_PARSER_NO_DB",
+    "sources": {
+      "v45": {
+        "path": "db/v45-drafts/INSTALL_OBJECT_SCOPED.review.sql.txt",
+        "blobSha": "135ff2c25d935d87e5c8e9e0f9189705cd40b411"
+      },
+      "v53": {
+        "path": "tests/v53-rls-runtime.test.sql",
+        "blobSha": "18a10e935ef1487524da93f3e49ee849ba3784bf"
+      },
+      "v54": {
+        "path": "supabase/migrations/20261020191612_mg_web_studio_v54_postgres_public_table_sequence_defaults.sql",
+        "blobSha": "a4b7221a4c38696a1c2abeef79a56ee68e151a5a"
+      },
+      "coreDraft": {
+        "path": "db/schema_core.review.sql",
+        "blobSha": "02912849894f6968560211d596002d409f6a1d3a"
+      }
+    },
+    "v45Tables": 16,
+    "v45PublicTables": 12,
+    "v45PrivateTables": 4,
+    "v45PolicyDeclarations": 12,
+    "v53PublicInsertTargets": 12,
+    "v53PublicInsertTargetsMissingInV45": 0,
+    "v53InsertColumnNamesMissingInV45": 0,
+    "v53ExternalAuthUsersInsert": true,
+    "v53HistoricalPgTapCount": 56,
+    "v53RollbackMarker": true,
+    "overlappingCoreDraftTableCount": 7,
+    "overlappingTables": [
+      "public.mg_profiles",
+      "public.mg_organizations",
+      "public.mg_memberships",
+      "public.mg_sites",
+      "public.mg_pages",
+      "mg_private.mg_staff_roles",
+      "mg_private.mg_audit_events"
+    ],
+    "v54DefaultGrantScope": "postgres/public TABLES+SEQUENCES only",
+    "unresolved": [
+      "No canonical portable DDL",
+      "Auth role + auth.users reconstruction not verified",
+      "pgtap extension placement/version",
+      "postgres and supabase_admin function defaults",
+      "PG17 runtime, FK/policy and RLS validation not executed",
+      "Independent reviewer not assigned"
+    ],
+    "noFormalSignoff": true,
+    "report": "docs/V94A-RESULTADO-CONCILIACION-ESTATICA-V45-V53-V54.md"
+  }
 }
