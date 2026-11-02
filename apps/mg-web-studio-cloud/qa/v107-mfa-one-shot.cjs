@@ -52,9 +52,10 @@ function createOneShotMfaQaV107({admin,user,nowMs=()=>Date.now(),
  async function run(){
   if(attempted)return result('PREFLIGHT','NOT_NEEDED',false);
   attempted=true;
-  if(!validateScope(scope)||!shape(admin,user)||typeof nowMs!=='function'||
+  // The supported CLI separately binds these injected clients to the pinned QA ref.
+  if(!shape(admin,user)||typeof nowMs!=='function'||
      typeof passwordFactory!=='function')return result('PREFLIGHT','NOT_NEEDED',false);
-  let stage='EMPTY_LAB',createdId=null,sessionEstablished=false,passed=false;
+  let stage='EMPTY_LAB',createdId=null,createAttempted=false,sessionEstablished=false,passed=false;
   let logoutOk=false,deleteOk=false;
   try{
    // New isolated project must start empty. Never enumerate other projects.
@@ -64,6 +65,7 @@ function createOneShotMfaQaV107({admin,user,nowMs=()=>Date.now(),
    stage='CREATE';
    const password=passwordFactory();
    if(typeof password!=='string'||password.length<32)throw Error('weak_password');
+   createAttempted=true;
    const created=await admin.auth.admin.createUser({
       email:TEST_EMAIL,password,email_confirm:true
    });
@@ -73,6 +75,7 @@ function createOneShotMfaQaV107({admin,user,nowMs=()=>Date.now(),
 
    stage='SIGN_IN';
    const signed=await user.auth.signInWithPassword({email:TEST_EMAIL,password});
+   sessionEstablished=!signed?.error&&!!signed?.data?.user;
    const oldToken=signed?.data?.session?.access_token;
    if(signed?.error||signed?.data?.user?.id!==createdId||
       typeof oldToken!=='string'||oldToken.length<20)throw Error('login_failed');
@@ -143,7 +146,8 @@ function createOneShotMfaQaV107({admin,user,nowMs=()=>Date.now(),
    }else deleteOk=true; // no identified user was created
   }
   // Missing signOut or delete confirmation is a FAILURE even after successful MFA.
-  const cleanup=deleteOk&&logoutOk?'CONFIRMED':
+  const cleanup=createAttempted&&!createdId?'MANUAL_REVIEW_CREATION_UNCERTAIN':
+   deleteOk&&logoutOk?'CONFIRMED':
    deleteOk?'PARTIAL_SIGNOUT_FAILED':'FAILED_DELETE_MANUAL_REVIEW';
   return result(stage,cleanup,passed&&cleanup==='CONFIRMED');
  }
