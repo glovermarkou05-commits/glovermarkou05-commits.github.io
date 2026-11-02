@@ -63,8 +63,9 @@ function createAuthApiObservationV105({
   // JWT AMR is only accepted after getClaims verifies it. Even verified
   // JWT claims are NOT authoritative about session revocation.
   const supported=c.amr.filter(x=>plain(x)&&METHODS.has(x.method));
-  if(c.amr.some(x=>!plain(x)||typeof x.method!=='string'||
-     !seconds(x.timestamp)||x.timestamp>now)||supported.length!==1)return null;
+  if(c.amr.some(x=>!plain(x)||Object.keys(x).sort().join(',')!=='method,timestamp'||
+     typeof x.method!=='string'||!seconds(x.timestamp)||x.timestamp>now)||
+     supported.length!==1)return null;
   const amr=supported[0];
   if(now-amr.timestamp>maxAmrAgeSec)return null;
 
