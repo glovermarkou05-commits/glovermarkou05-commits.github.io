@@ -1,0 +1,51 @@
+name: MG Web Studio V117 Security Handoff Readonly
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v117-security-handoff-offline.yml
+      - apps/mg-web-studio-cloud/qa/v117-security-handoff.cjs
+      - apps/mg-web-studio-cloud/tests/v117-security-handoff.test.cjs
+      - apps/mg-web-studio-cloud/proposals/v114-qa-review-manifest.json
+      - apps/mg-web-studio-cloud/proposals/v110-private-mfa-ledger-review-only.sql
+      - apps/mg-web-studio-cloud/proposals/v111-insert-only-ledger-writer-review.sql
+      - apps/mg-web-studio-cloud/proposals/v112-rollback-guarded-review-only.sql
+      - apps/mg-web-studio-cloud/server/v115-insert-only-pg-adapter.cjs
+      - apps/mg-web-studio-cloud/tests/v116-pg17-adapter-real.test.cjs
+      - .github/workflows/mg-web-studio-v116-real-pg17-adapter.yml
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v117-review-pr7
+  cancel-in-progress: false
+
+jobs:
+  review-only-offline:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    defaults:
+      run:
+        shell: bash
+        working-directory: apps/mg-web-studio-cloud
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Setup pinned Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Verify V117 offline review gate contract
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/v117-security-handoff.test.cjs
+      - name: Publish non-secret, read-only gate summary
+        run: |
+          node --require ./server/native-network-guard-v70.cjs qa/v117-security-handoff.cjs --dry-run
+          echo 'NO LIVE SUPABASE / NO DDL / NO MERGE / NO DEPLOY'
+          echo 'Human DBA/security review and scoped owner authorization still required.'
