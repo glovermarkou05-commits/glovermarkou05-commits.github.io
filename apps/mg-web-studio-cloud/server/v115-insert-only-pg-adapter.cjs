@@ -52,7 +52,7 @@ function createInsertOnlyPgAdapterV115({
     now-verifiedAtSec>MAX_FACTOR_AGE_SEC||
     input.consumeUntilSec<=now)return fail();
 
-  let client,transactionStarted=false,commitAttempted=false;
+  let client,transactionStarted=false,commitAttempted=false,discardConnection=false;
   try{
    client=await pool.connect();
    if(!client||typeof client.query!=='function'||typeof client.release!=='function')
@@ -65,9 +65,9 @@ function createInsertOnlyPgAdapterV115({
       !exact(role.rows[0],['current_user'])||
       role.rows[0].current_user!==WRITER)return fail();
    if(!validSignal(input.signal))return fail();
+   transactionStarted=true; // BEGIN may succeed even if its response is lost.
    const begin=await client.query(BEGIN);
    if(!begin||begin.command!=='BEGIN')return fail();
-   transactionStarted=true;
 
    const attempted=await client.query(INSERT,[
       input.eventKey,verifiedAtSec,input.consumeUntilSec
@@ -78,18 +78,21 @@ function createInsertOnlyPgAdapterV115({
    // Once COMMIT is sent, disconnect / timeout outcome may be unknown;
    // never automatically retry or claim the redemption did not occur.
    commitAttempted=true;
+   discardConnection=true; // Commit outcome unknown until response is validated.
    const committed=await client.query(COMMIT);
    if(!committed||committed.command!=='COMMIT')return fail();
    transactionStarted=false;
+   discardConnection=false;
    return success(input.consumeUntilSec);
   }catch{
    return fail(); // Includes SQLSTATE 23505 and unknown commit outcomes.
   }finally{
    if(client){
     if(transactionStarted&&!commitAttempted){
-     try{await client.query(ROLLBACK);}catch{}
+     try{const rolled=await client.query(ROLLBACK);if(rolled?.command!=='ROLLBACK')discardConnection=true;}
+     catch{discardConnection=true;}
     }
-    try{client.release();}catch{}
+    try{client.release(discardConnection?new Error('V115_DISCARD_UNCERTAIN_SESSION'):undefined);}catch{}
    }
   }
  }
