@@ -1,0 +1,89 @@
+name: MG Web Studio V116 V115 Real PG17 Disposable Integration
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v116-real-pg17-adapter.yml
+      - apps/mg-web-studio-cloud/tests/v116-pg17-adapter-real.test.cjs
+      - apps/mg-web-studio-cloud/server/v115-insert-only-pg-adapter.cjs
+      - apps/mg-web-studio-cloud/server/v109-atomic-mfa-redemption.cjs
+      - apps/mg-web-studio-cloud/proposals/v110-private-mfa-ledger-review-only.sql
+      - apps/mg-web-studio-cloud/proposals/v111-insert-only-ledger-writer-review.sql
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-webstudio-v116-pr7-disposable-pg17
+  cancel-in-progress: false
+
+jobs:
+  disposable-v115-pg17-integration:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: v116-disposable-only-no-live-credentials
+          POSTGRES_DB: qa_ledger
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U postgres -d qa_ledger"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout PR without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Node.js 22 pinned installer action
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Install exact-version test-only PostgreSQL driver in runner temp
+        run: |
+          set -euo pipefail
+          npm install --prefix "$RUNNER_TEMP/mg-v116-pg-driver" --no-save --ignore-scripts --no-audit --no-fund --package-lock=false pg@8.23.1
+          test -f "$RUNNER_TEMP/mg-v116-pg-driver/node_modules/pg/package.json"
+      - name: Apply REVIEW-ONLY V110 and V111 SQL in disposable PG17 container
+        env:
+          V116_PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          test -n "$V116_PG_CONTAINER"
+          docker exec -i "$V116_PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c \
+            'CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE service_role NOLOGIN;'
+          docker exec -i "$V116_PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger \
+            < proposals/v110-private-mfa-ledger-review-only.sql
+          docker exec -i "$V116_PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger \
+            < proposals/v111-insert-only-ledger-writer-review.sql
+      - name: Verify V115 on real PG17 independent sessions and uncertain commits
+        env:
+          CI: 'true'
+          NODE_PATH: ${{ runner.temp }}/mg-v116-pg-driver/node_modules
+          V116_DISPOSABLE_ONLY: '1'
+          V116_PG_HOST: '127.0.0.1'
+          V116_PG_PORT: ${{ job.services.postgres.ports[5432] }}
+          V116_PG_DB: 'qa_ledger'
+          V116_PG_TEST_PASSWORD: 'v116-disposable-only-no-live-credentials'
+        run: |
+          set -euo pipefail
+          node --test --test-concurrency=1 tests/v116-pg17-adapter-real.test.cjs
+      - name: Explicitly retain NO_GO classification
+        if: always()
+        run: |
+          echo "PG17 service is disposable. No Supabase/Auth QA access or SQL deployment."
+          echo "The test superuser impersonates NOLOGIN writer ONLY inside CI; not a production principal."
+          echo "No real session revocation, business operation, or HMAC key deployment."
+          echo "V67 32 PENDING / 0 PASS. PR #7 DRAFT. Production NO_GO."
