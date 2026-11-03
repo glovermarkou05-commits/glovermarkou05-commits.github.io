@@ -1,0 +1,46 @@
+name: MG Web Studio V115 Insert Only SQL Adapter Offline
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v115-insert-only-pg-adapter-offline.yml
+      - apps/mg-web-studio-cloud/server/v115-insert-only-pg-adapter.cjs
+      - apps/mg-web-studio-cloud/tests/v115-insert-only-pg-adapter.test.cjs
+      - apps/mg-web-studio-cloud/server/v109-atomic-mfa-redemption.cjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-webstudio-v115-sql-adapter-offline
+  cancel-in-progress: false
+
+jobs:
+  v115-adapter-offline:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout pinned GitHub action without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Run 22 adapter tests with native network disabled
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/v115-insert-only-pg-adapter.test.cjs
+      - name: No production promotion
+        run: |
+          echo "V115 SQL adapter tested with injected PG-style mock only."
+          echo "No real PostgreSQL connections from V115; no Supabase schema, role or migrations deployed."
+          echo "Session revocation, backend identity and commercial transaction remain PENDING."
+          echo "PR #7 draft; V67 32 PENDING / 0 PASS; production NO_GO."
