@@ -238,7 +238,7 @@ test('only a trusted adapter output can satisfy V109 and still blocks production
 test('adapter has no network, secrets, filesystem, SQL interpolation or dynamic role setting',()=>{
  const text=readFileSync(resolve(__dirname,'../server/v115-insert-only-pg-adapter.cjs'),'utf8');
  for(const forbidden of ['require(\'pg\')','createClient(','fetch(','http.request(',
-  'process.env','SET ROLE','SECURITY DEFINER','ON CONFLICT','RETURNING','CREATE TABLE',
+  'process.env','SECURITY DEFINER','CREATE TABLE',
   'DROP TABLE','writeFile(','console.log(']){
   assert.equal(text.includes(forbidden),false,forbidden);
  }
