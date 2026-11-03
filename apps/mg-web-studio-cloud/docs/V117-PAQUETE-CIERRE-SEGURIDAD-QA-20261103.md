@@ -1,7 +1,7 @@
 # MG Web Studio Cloud V117 — expediente de seguridad para cierre y siguiente decisión
 
 **Fecha:** 2026-11-03 (Ecuador). **Ámbito:** PR #7, rama docs/mg-web-studio-v94-preflight-20261101.
-**Resultado:** revisión offline; **ningún SQL ejecutado en Supabase**. Estado real **V67 = 32 PENDING / 0 PASS**, **PR #7 draft y producción NO_GO**.
+**Resultado:** revisión automatizada offline y comprobación separada de solo lectura en Supabase QA; **ningún DDL, DML, migración o cambio de configuración ejecutado**. Estado formal **V67 = 32 PENDING / 0 PASS**, **PR #7 draft y producción NO_GO**.
 
 ## Evidencia técnica que YA está cerrada
 
@@ -14,6 +14,17 @@
 - V115: adaptador SQL de pool inyectado, 22/22 offline.
 - V116: integración V115 en PG17 17.11 real desechable, **11/11**; dos y dieciséis conexiones competidoras; cortes, rollback, commit de respuesta incierta y rol insert-only. [Ejecución V116](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41582746736).
 - V117: validador automatizado de **consistencia de fuentes** y puertas de revisión humana; **no equivale** a una auditoría independiente ni valida el estado de Supabase vivo.
+
+## Estado observado directamente en Supabase QA — 2026-11-03
+
+Consulta de solo lectura con el conector Supabase, sobre el **único** proyecto QA `tbfhiqkivsoeuudlpkgi`, sin recuperar datos de usuarios:
+- `get_project`: `ACTIVE_HEALTHY`, `sa-east-1`, PostgreSQL `17.11.0.011`.
+- `list_tables` sobre `public` y `mg_auth_ledger`: cero tablas.
+- Consultas **SELECT de conteos agregados**, sin filas personales: `auth.users=0`, `auth.sessions=0`, `auth.mfa_factors=0`.
+- Catálogo de objetos: `mg_auth_ledger` ausente, rol `mg_auth_ledger_writer` ausente y tabla `mg_auth_ledger.mfa_redemptions` ausente.
+- Security advisor: sin avisos reportados, lo cual **no equivale a autorización, aprobación de seguridad o auditoría completa**.
+
+No se ejecutaron operaciones de escritura ni de cambios de permisos, esquema o Data API. El estado de exposición/autoexposición persistido en el Dashboard requiere comprobación separada antes de cualquier DDL.
 
 ## Requisitos restantes concretos para salir de NO_GO
 
