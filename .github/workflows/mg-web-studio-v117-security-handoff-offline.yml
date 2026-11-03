@@ -8,6 +8,8 @@ on:
     paths:
       - .github/workflows/mg-web-studio-v117-security-handoff-offline.yml
       - apps/mg-web-studio-cloud/qa/v117-security-handoff.cjs
+      - apps/mg-web-studio-cloud/qa/v116-pg-driver/package.json
+      - apps/mg-web-studio-cloud/qa/v116-pg-driver/package-lock.json
       - apps/mg-web-studio-cloud/tests/v117-security-handoff.test.cjs
       - apps/mg-web-studio-cloud/proposals/v114-qa-review-manifest.json
       - apps/mg-web-studio-cloud/proposals/v110-private-mfa-ledger-review-only.sql

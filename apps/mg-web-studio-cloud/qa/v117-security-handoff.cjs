@@ -12,7 +12,7 @@ const BLOCKERS=Object.freeze([
  'AUTHORITATIVE_AUTH_SESSION_REVOCATION_CHECK',
  'BUSINESS_ACTION_IDEMPOTENCY_AND_RECOVERY',
  'SUPABASE_QA_DATA_API_RECHECK_AND_OWNER_DDL_APPROVAL',
- 'SUPPLY_CHAIN_LOCKFILE_AND_IMAGE_DIGEST_REVIEW',
+ 'IMAGE_DIGEST_AND_SUPPLY_CHAIN_SECURITY_REVIEW',
  'FORMAL_V67_32_CONTROLS_ACCEPTANCE'
 ]);
 const REQUIRED=Object.freeze({
@@ -46,12 +46,29 @@ function assess({manifest,read}={}){
     !parts.workflow.includes('permissions:\n  contents: read'))
    return deny('EVIDENCE_BASELINE_CHANGED_REVIEW_REQUIRED');
  // This confirms only expected repository artifacts, not runtime deployment safety.
+
+ let lockFile,driver;
+ try{
+  lockFile=JSON.parse(read('qa/v116-pg-driver/package-lock.json'));
+  driver=JSON.parse(read('qa/v116-pg-driver/package.json'));
+ }catch{return deny('DRIVER_LOCK_MISSING_OR_INVALID');}
+ if(driver?.dependencies?.pg!=='8.23.1'||lockFile?.lockfileVersion!==3||
+    lockFile?.packages?.['node_modules/pg']?.version!=='8.23.1'||
+    lockFile?.packages?.['']?.dependencies?.pg!=='8.23.1')
+  return deny('DRIVER_NOT_PINNED');
+ for(const [name,p] of Object.entries(lockFile.packages)){
+  if(name && (!p.integrity?.startsWith('sha512-')||
+      !p.resolved?.startsWith('https://registry.npmjs.org/')))
+   return deny('DRIVER_SOURCE_NOT_INTEGRITY_PINNED');
+ }
+ if(!parts.workflow.includes('npm ci --prefix qa/v116-pg-driver'))
+  return deny('V116_NOT_USING_FROZEN_LOCK');
  const result={
   ok:true,reviewOnly:true,project:PROJECT,projectRef:REF,
   evidence:'REPOSITORY_CONSISTENCY_ONLY',
-  verifiedSourceFiles:3,sqlProposalsPinned:3,
+  verifiedSourceFiles:5,sqlProposalsPinned:3,
   v116Pg17Integration:'11_PASS_CI_HISTORY_NOT_RERUN_BY_V117',
-  postgresDriverLockfile:'MISSING_IN_V116',
+  postgresDriverLockfile:'PINNED_NPM_CI_WITH_INTEGRITY',
   currentUserWriterDesign:'NOLOGIN_REQUIRES_REVIEWED_SERVER_PRINCIPAL',
   riskStatus:'PENDING_HUMAN_REVIEW',
   blockers:[...BLOCKERS],

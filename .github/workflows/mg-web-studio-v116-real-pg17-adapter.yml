@@ -8,6 +8,8 @@ on:
     paths:
       - .github/workflows/mg-web-studio-v116-real-pg17-adapter.yml
       - apps/mg-web-studio-cloud/tests/v116-pg17-adapter-real.test.cjs
+      - apps/mg-web-studio-cloud/qa/v116-pg-driver/package.json
+      - apps/mg-web-studio-cloud/qa/v116-pg-driver/package-lock.json
       - apps/mg-web-studio-cloud/server/v115-insert-only-pg-adapter.cjs
       - apps/mg-web-studio-cloud/server/v109-atomic-mfa-redemption.cjs
       - apps/mg-web-studio-cloud/proposals/v110-private-mfa-ledger-review-only.sql
@@ -51,11 +53,12 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
-      - name: Install exact-version test-only PostgreSQL driver in runner temp
+      - name: Install locked and integrity-verified test-only PostgreSQL driver
         run: |
           set -euo pipefail
-          npm install --prefix "$RUNNER_TEMP/mg-v116-pg-driver" --no-save --ignore-scripts --no-audit --no-fund --package-lock=false pg@8.23.1
-          test -f "$RUNNER_TEMP/mg-v116-pg-driver/node_modules/pg/package.json"
+          npm ci --prefix qa/v116-pg-driver --ignore-scripts --no-audit --no-fund
+          test -f qa/v116-pg-driver/node_modules/pg/package.json
+          node -e 'const p=require("./qa/v116-pg-driver/node_modules/pg/package.json");if(p.version!=="8.23.1")process.exit(2)'
       - name: Apply REVIEW-ONLY V110 and V111 SQL in disposable PG17 container
         env:
           V116_PG_CONTAINER: ${{ job.services.postgres.id }}
@@ -71,7 +74,7 @@ jobs:
       - name: Verify V115 on real PG17 independent sessions and uncertain commits
         env:
           CI: 'true'
-          NODE_PATH: ${{ runner.temp }}/mg-v116-pg-driver/node_modules
+          NODE_PATH: ${{ github.workspace }}/apps/mg-web-studio-cloud/qa/v116-pg-driver/node_modules
           V116_DISPOSABLE_ONLY: '1'
           V116_PG_HOST: '127.0.0.1'
           V116_PG_PORT: ${{ job.services.postgres.ports[5432] }}

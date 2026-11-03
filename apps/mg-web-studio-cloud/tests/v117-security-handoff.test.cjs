@@ -23,7 +23,7 @@ test('V117 must report all seven real release blockers without declaring readine
  assert.deepEqual(result.blockers,BLOCKERS);
  assert.equal(result.blockers.length,7);
  assert.equal(result.riskStatus,'PENDING_HUMAN_REVIEW');
- assert.equal(result.postgresDriverLockfile,'MISSING_IN_V116');
+ assert.equal(result.postgresDriverLockfile,'PINNED_NPM_CI_WITH_INTEGRITY');
 });
 test('V117 admits only the correct QA project and PR review-only scope',()=>{
  const x=input();x.manifest.qaProjectRef='other-project';
@@ -62,6 +62,14 @@ test('V117 refuses absent V115 adapter source, without any live connection',()=>
   return read(p);
  };
  assert.equal(assess(x).reason,'SOURCE_MISSING_ADAPTER');
+});
+test('V117 blocks a tampered npm lockfile even with otherwise matching SQL',()=>{
+ const x=input(); x.read=p=>p.endsWith('v116-pg-driver/package-lock.json') ? '{"lockfileVersion":3,"packages":{}}' : read(p);
+ assert.equal(assess(x).reason,'DRIVER_NOT_PINNED');
+});
+test('V117 blocks a missing dependency integrity lockfile',()=>{
+ const x=input(); x.read=p=>{if(p.endsWith('v116-pg-driver/package-lock.json'))throw Error('missing');return read(p);};
+ assert.equal(assess(x).reason,'DRIVER_LOCK_MISSING_OR_INVALID');
 });
 test('V117 is read only and rejects execution mode',()=>{
  const file=resolve(root,'qa/v117-security-handoff.cjs');

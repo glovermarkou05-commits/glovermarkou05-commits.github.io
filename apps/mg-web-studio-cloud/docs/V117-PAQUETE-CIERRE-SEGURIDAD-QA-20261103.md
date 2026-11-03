@@ -22,12 +22,12 @@
 3. **Revocación real:** establecer una vía oficial de lectura autoritativa de sesiones sin exposición indebida de `auth.sessions`. Un JWT firmado/AAL2 no demuestra por sí solo sesión no revocada.
 4. **Efecto de negocio:** evitar gasto de comprobante MFA si el commit de publicación, miembros o facturación no está coordinado; diseñar transacción atómica o máquina idempotente recuperable, incluyendo commit con respuesta perdida.
 5. **Configuración Supabase QA:** volver a leer visualmente Data API exposed schemas, switch de autoexposición, ACL predeterminadas en `public` y permisos efectivos del esquema privado antes de cambios. No alterar ACL globales por defecto. Fuente: [Supabase Securing your API](https://supabase.com/docs/guides/api/securing-your-api).
-6. **Cadena de suministro:** V116 instala `pg@8.23.1` en CI con versión directa exacta, pero todavía **sin package-lock** de árbol transitivo; revisar pinning de imágenes por digest, SBOM y dependencia de producción antes de cualquier liberación.
+6. **Cadena de suministro:** V116 utiliza un `package-lock.json` con dependencias transitivas e integridad SHA-512 y `npm ci`, generado exclusivamente desde registros npm públicos. Mantener **pendientes** el pinning de imágenes por digest, SBOM y la revisión independiente de dependencias productivas.
 7. **Propietario y revisor:** autorización explícita separada para DDL **solo** en `MG WEB STUDIO AUTH QA`; plan de rollback/respaldo y revisión de los 32 controles V67, con firmas de persona distinta del autor. Issue #8 abierto.
 
 ## Decisión para acelerar
 
-El siguiente trabajo técnico que puede hacerse sin modificar servicios reales es **cerrar el lockfile y ensayar identidad backend con control de sesión en un laboratorio descartable**. No crear una fase de producción ficticia. El avance final queda condicionado al DBA, la revisión independiente y la autorización específica del propietario.
+El lockfile se incorporó en V117; el siguiente trabajo técnico sin modificar servicios reales es **ensayar un principal backend de privilegio mínimo con aislamiento de sesión en un laboratorio descartable**. No crear una fase de producción ficticia. El avance final queda condicionado al DBA, la revisión independiente y la autorización específica del propietario.
 
 **Comando local opcional para validar solamente el expediente:**
 `node apps/mg-web-studio-cloud/qa/v117-security-handoff.cjs --dry-run`
