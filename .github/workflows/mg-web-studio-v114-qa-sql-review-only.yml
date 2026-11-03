@@ -1,0 +1,47 @@
+name: MG Web Studio V114 QA SQL Review Package Offline
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v114-qa-sql-review-only.yml
+      - apps/mg-web-studio-cloud/proposals/v114-qa-review-manifest.json
+      - apps/mg-web-studio-cloud/proposals/v110-private-mfa-ledger-review-only.sql
+      - apps/mg-web-studio-cloud/proposals/v111-insert-only-ledger-writer-review.sql
+      - apps/mg-web-studio-cloud/proposals/v112-rollback-guarded-review-only.sql
+      - apps/mg-web-studio-cloud/qa/v114-review-package.cjs
+      - apps/mg-web-studio-cloud/qa/v114-review-package.test.cjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-webstudio-v114-review-only
+  cancel-in-progress: false
+
+jobs:
+  qa-sql-review-offline:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Setup pinned Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Verify all review blockers in 23 offline tests with native network blocked
+        run: node --require ./server/native-network-guard-v70.cjs --test qa/v114-review-package.test.cjs
+      - name: Show review-only manifest result
+        run: node --require ./server/native-network-guard-v70.cjs qa/v114-review-package.cjs --dry-run
+      - name: Never deploy the proposals in this workflow
+        run: echo "V114 PACKAGE INTEGRITY ONLY; QA SQL unauthorized; 6 review gates pending; V67 32 PENDING / 0 PASS; PRODUCTION NO_GO."
