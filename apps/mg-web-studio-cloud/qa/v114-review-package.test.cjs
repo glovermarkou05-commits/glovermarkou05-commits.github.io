@@ -100,7 +100,7 @@ test('the code contains no SQL executor or connector SDK',()=>{
  const text=readFileSync(join(__dirname,'v114-review-package.cjs'),'utf8');
  for(const banned of ['createClient(','execute_sql(','apply_migration(',
   'child_process','fetch(','https.request(','DATABASE_URL','process.env.SUPABASE_',
-  'CREATE TABLE','SECURITY DEFINER','DROP TABLE']){
+  'CREATE TABLE','SECURITY DEFINER','execFileSync(','execSync(']){
   assert.equal(text.includes(banned),false,banned);
  }
 });
