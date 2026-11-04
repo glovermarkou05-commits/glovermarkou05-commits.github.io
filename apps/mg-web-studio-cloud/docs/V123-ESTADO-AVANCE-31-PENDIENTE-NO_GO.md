@@ -27,9 +27,27 @@ Sin ensayo en V95: **OBS-03** (retención y seguridad de registros), **OBS-04** 
 
 1. **Revisión independiente humana**: ninguna persona designada. Puede realizarse sin una segunda cuenta GitHub, mediante expediente y dictamen externo firmado.
 2. **Autorización específica para QA**: las propuestas V110/V111/V112 siguen en revisión; no hay permiso para aplicar DDL en MG WEB STUDIO AUTH QA.
-3. **Políticas de sesiones Auth reales**: se requiere inspeccionar en Dashboard duración de sesiones, inactividad, sesión única, vencimiento JWT y confirmar si V122 debe impedir el uso de presencia de fila como prueba suficiente. La conexión a Supabase real todavía NO está aprobada.
+3. **Políticas de sesiones Auth — revisión visual recibida, origen no autenticado de forma independiente**: el usuario compartió tres capturas del Dashboard con sesión única desactivada, duración máxima 0 (sin límite), inactividad 0 (sin límite), access-token expiry 3600 segundos, detección de refresh tokens comprometidos activada y reuse interval 10 segundos. Las capturas no muestran la referencia del proyecto ni garantizan que no haya cambios posteriores. **Ya no falta solicitar esas pantallas**, pero siguen pendientes la confirmación independiente del contexto del proyecto, la revisión DBA/Seguridad, una prueba real de revocación y la aprobación de acceso restringido a Auth. La conexión a Supabase real todavía NO está aprobada.
 4. **Integración real de MFA y acciones empresariales**: V121 y V122 utilizan proveedores confiables inyectados y V119 opera sobre un negocio ficticio en PG17. Faltan arquitectura, pruebas y validación en entorno autorizado.
 5. **Los 32 controles formales V67**: registrar evidencia válida por control, dictamen firmado independiente, cierre de observabilidad/operaciones/backup y autorización separada para producción.
+
+## Evidencia nueva de interfaz — Supabase Auth (capturas del usuario)
+
+**Fecha de recepción:** 3 de noviembre de 2026, Ecuador. **Procedencia:** tres capturas compartidas por el usuario después de seguir el enlace al Dashboard Auth Sessions. **Tipo:** evidencia de valores visibles, no una consulta autenticada a configuración Auth vía API. Las imágenes están recortadas y **no muestran la referencia del proyecto**, por lo que no se debe afirmar verificación independiente del ID.
+
+| Configuración observada | Valor |
+| --- | --- |
+| Enforce single session per user | Desactivado |
+| Time-box user sessions | `0` / never |
+| Inactivity timeout | `0` / never |
+| Access token expiry time | `3600` segundos (1 hora) |
+| Detect and revoke potentially compromised refresh tokens | Activado |
+| Refresh token reuse interval | `10` segundos |
+| Acceso a edición de políticas de sesión | Dashboard muestra opción **Upgrade to Pro**, con ajustes de sesiones no disponibles para modificar desde esa pantalla |
+
+**Conclusión:** estos valores visibles son compatibles con el **escenario de laboratorio sin políticas extra de duración/inactividad/sesión única**, previsto en V122. Eso **no** equivale a autorizar usar `auth.sessions` en QA: hay que validar el principal privado, que el token sea realmente verificado y la revocación en entorno autorizado. Tampoco representa garantía de revocación inmediata entre el último SELECT y el COMMIT. **No se modificaron los ajustes.**
+
+**Actualización de la barra:** se mantiene **69% técnico estimado / 31% pendiente** hasta que exista una matriz V95 revisada con nuevas evidencias; aprobación V67 continúa **0/32 (0%)**, producción **NO_GO**.
 
 ## Evidencias técnicas comprobadas anteriormente
 
