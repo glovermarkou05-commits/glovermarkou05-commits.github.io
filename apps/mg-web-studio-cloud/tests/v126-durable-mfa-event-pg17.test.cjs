@@ -132,17 +132,19 @@ test('recording a trusted receipt persists one immutable DB-generated v4 UUID',a
  });
 });
 test('same verified receipt called repeatedly or after store restart retains same eventId',async()=>{
+ const verifiedAtSec=now()-10;
+ const stable=async q=>({...defaultAttestation(q),verifiedAtSec});
  let first;
  await withFixture(async({store})=>{
   assert.deepEqual(await store.recordVerifiedOnce(request()),YES);
   first=(await store.readTrustedVerifiedEvent(request())).eventId;
   assert.deepEqual(await store.recordVerifiedOnce(request()),YES);
- });
+ },{attester:stable});
  await withFixture(async({store})=>{
   assert.equal((await store.readTrustedVerifiedEvent(request())).eventId,first);
   assert.deepEqual(await store.recordVerifiedOnce(request()),YES);
   assert.equal((await store.readTrustedVerifiedEvent(request())).eventId,first);
- });
+ },{attester:stable});
  assert.equal(await countRows(),1);
 });
 test('two distinct verified receipts in exactly the same second get DISTINCT persisted events',async()=>{
@@ -188,13 +190,15 @@ test('same receipt ID with changed method or timestamp is denied, original remai
  },{attester:async x=>({...defaultAttestation(x),method,verifiedAtSec:seconds})});
 });
 test('16 simultaneous issue calls for one receipt converge to exactly one persisted event',async()=>{
+ // A real verified receipt has one immutable verification time across retries.
+ const verifiedAtSec=now()-10;
  await withFixture(async({store})=>{
   const results=await Promise.all(Array.from({length:16},()=>store.recordVerifiedOnce(request())));
   assert.equal(results.filter(x=>x.recorded).length,16);
   const p=await store.readTrustedVerifiedEvent(request());
   assert.equal(await countRows(),1);
   assert.equal((await store.readTrustedVerifiedEvent(request())).eventId,p.eventId);
- });
+ },{attester:async q=>({...defaultAttestation(q),verifiedAtSec})});
 });
 test('reader cannot mint an event; absent proof remains absent until trusted issuance',async()=>{
  await withFixture(async({store,state})=>{
