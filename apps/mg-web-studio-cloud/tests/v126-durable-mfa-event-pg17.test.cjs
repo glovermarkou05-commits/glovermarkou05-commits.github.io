@@ -20,6 +20,7 @@ const {createV126DurableMfaEventStore,ISSUER,READER}=
 const {createV125UniqueVerificationGateway}=
  require('../server/v125-unique-verification-gateway.cjs');
 const {createV126V2OnlySensitiveRoute}=require('../server/v126-v2-only-sensitive-route.cjs');
+const {createV130PrivateVerifiedMfaComposition}=require('../server/v130-private-verified-mfa-composition.cjs');
 const {createV118ScopedLabWriterPool}=
  require('../qa/v118-scoped-writer-pool.cjs');
 const {createV119AtomicBusinessLab}=
@@ -425,5 +426,112 @@ test('V126 route will not accept a mock legacy reader or mint an unissued proof'
    assert.equal(state.checks,0);
    assert.equal(await countRows(),0);
   }finally{await trans.close();}
+ });
+});
+
+const V130_FACTOR='55555555-5555-4555-8555-555555555555';
+const V130_CH='66666666-6666-4666-8666-666666666666';
+function v130Composition({issuer,reader,verifyClaims,
+ expectedIssuerRole,sessionReader}={}){
+ let challenge=null,claimed=false,verifyCalls=0,verifyError=false;
+ const journal={
+  async createPending(p){
+   if(challenge)return {recorded:false};
+   challenge={...p};return {recorded:true};
+  },
+  async claimPending({proofReference,subject,sessionId}){
+   if(!challenge||claimed||challenge.proofReference!==proofReference||
+    challenge.subject!==subject||challenge.sessionId!==sessionId)return null;
+   claimed=true;return {claimed:true,...challenge};
+  }
+ };
+ const auth={mfa:{
+  async listFactors(){return {data:{totp:[{id:V130_FACTOR,status:'verified'}],phone:[]},error:null};},
+  async challenge(){return {data:{id:V130_CH},error:null};},
+  async verify(){verifyCalls++;if(verifyError)throw Error('synthetic-network-unknown');
+   return {data:{access_token:'SIGNED-AAL2-SYNTHETIC'},error:null};
+  }
+ }};
+ const data={
+  auth,actor:{subject:USER,sessionId:SID,tokenExpiresAtSec:now()+120},
+  readActiveSession:sessionReader||async()=>({
+   active:true,primaryRead:true,revocationChecked:true,subject:USER,sessionId:SID,
+   checkedAtSec:now(),expiresAtSec:now()+120
+  }),
+  verifySignedJwt:verifyClaims||async()=>({
+   aal:'aal2',exp:now()+120,sub:USER,session_id:SID
+  }),
+  journal,issuerPool:issuer,readerPool:reader,receiptKey:Buffer.alloc(32,130),
+  newReference:()=>REF,nowSec:now
+ };
+ if(expectedIssuerRole)data.expectedIssuerRole=expectedIssuerRole;
+ const flow=createV130PrivateVerifiedMfaComposition(data);
+ return {flow,getVerifyCalls:()=>verifyCalls,failNetwork:()=>{verifyError=true;}};
+}
+test('V130 PG17: native challenge+verify, private callback and durable receipt persist together',async()=>{
+ await withFixture(async({issuer,reader})=>{
+  const {flow,getVerifyCalls}=v130Composition({issuer,reader});
+  assert.equal((await flow.begin({factorId:V130_FACTOR})).ok,true);
+  assert.equal((await flow.confirm({proofReference:REF,code:'123456'})).ok,true);
+  const r=await rowByRef();
+  assert.ok(r&&r.event_id);
+  assert.equal(r.subject,USER);assert.equal(r.session_id,SID);
+  assert.equal((await flow.readTrustedVerifiedEvent(request())).eventId,r.event_id);
+  assert.equal(await countRows(),1);
+  assert.equal(getVerifyCalls(),1);
+  assert.equal((await flow.confirm({proofReference:REF,code:'123456'})).ok,false);
+  assert.equal(getVerifyCalls(),1);
+  assert.equal(flow.persistVerifiedReceipt,undefined);
+  assert.equal(flow.readiness.liveAuthVerificationConfirmed,false);
+ });
+});
+test('V130 PG17: invalid signed claims deny persistence and consume pending challenge',async()=>{
+ await withFixture(async({issuer,reader})=>{
+  const {flow,getVerifyCalls}=v130Composition({issuer,reader,
+   verifyClaims:async()=>({aal:'aal1',exp:now()+120,sub:USER,session_id:SID})});
+  assert.equal((await flow.begin({factorId:V130_FACTOR})).ok,true);
+  assert.equal((await flow.confirm({proofReference:REF,code:'123456'})).ok,false);
+  assert.equal((await flow.confirm({proofReference:REF,code:'123456'})).ok,false);
+  assert.equal(getVerifyCalls(),1);
+  assert.equal(await countRows(),0);
+ });
+});
+test('V130 PG17: mismatched private issuer connection fails closed after Auth success',async()=>{
+ await withFixture(async({issuer,reader})=>{
+  const {flow}=v130Composition({issuer,reader,
+   expectedIssuerRole:'mg_qa_mfa_receipt_issuer'});
+  assert.equal((await flow.begin({factorId:V130_FACTOR})).ok,true);
+  assert.equal((await flow.confirm({proofReference:REF,code:'123456'})).ok,false);
+  assert.equal(await countRows(),0);
+  assert.equal(await flow.readTrustedVerifiedEvent(request()),null);
+ });
+});
+test('V130 PG17: verified durable receipt goes through existing one-time business ledger',async()=>{
+ await authSession();
+ await withFixture(async({issuer,reader})=>{
+  const {flow}=v130Composition({issuer,reader});
+  assert.equal((await flow.begin({factorId:V130_FACTOR})).ok,true);
+  assert.equal((await flow.confirm({proofReference:REF,code:'123456'})).ok,true);
+  const e=await flow.readTrustedVerifiedEvent(request());
+  const trans=transaction();
+  try{
+   const gate=gateway(flow,trans.tx);
+   assert.deepEqual(await gate.execute(gatewayRequest()),PASS);
+   assert.deepEqual(await gate.execute(gatewayRequest()),DENY);
+   assert.deepEqual(await ledger(hmac(e.eventId)),{ledger:1,business:1});
+  }finally{await trans.close();}
+ });
+});
+test('V130 PG17: session revoked after challenge prevents receipt and business effect',async()=>{
+ let revoked=false;
+ await withFixture(async({issuer,reader})=>{
+  const {flow}=v130Composition({issuer,reader,sessionReader:async()=>revoked?null:{
+   active:true,primaryRead:true,revocationChecked:true,
+   subject:USER,sessionId:SID,checkedAtSec:now(),expiresAtSec:now()+120
+  }});
+  assert.equal((await flow.begin({factorId:V130_FACTOR})).ok,true);
+  revoked=true;
+  assert.equal((await flow.confirm({proofReference:REF,code:'123456'})).ok,false);
+  assert.equal(await countRows(),0);
  });
 });
