@@ -3,6 +3,18 @@
 
 **Objetivo:** completar la integración MFA real de MG Web Studio **sin más series de pruebas ficticias**. Este documento NO es un permiso, script listo para desplegar, firma de seguridad ni garantía de publicación. El [PR #7](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/pull/7) sigue en borrador. El dictamen de un revisor independiente (sin cuenta GitHub si lo prefiere) y la autorización concreta del dueño continúan pendientes.
 
+## Actualización V130 — V127 conectado a V126 en CI, Auth real pendiente
+
+**Fecha:** 4 de noviembre de 2026. [Informe V130 y 30/30 PASS](V130-UNION-PRIVADA-MFA-RECIBO-PERSISTENTE-20261104.md).
+
+Se corrigió a nivel de composición de backend el enlace que faltaba: **V127 → callback privado → V126 escritura de recibo duradero → lectura V125 → negocio ficticio V119**. La suite de PostgreSQL 17 descartable terminó [30/30 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41788585706), incluidos cinco casos nuevos de recibo, JWT inválido, rol equivocado, idempotencia y revocación. El escritor no se expone al navegador.
+
+**Corrección de estado:** el bloqueo `BRIDGE_PERSIST` pasa de **abierto** a **parcialmente resuelto en código/CI**. En esta prueba las respuestas de `mfa.challenge/verify`, claims `aal2` y journal son simuladas; **no** acredita flujo real de Supabase Auth ni ejecución autorizada en QA. Sigue pendiente la revisión independiente, instalación de roles y respaldo/rollback real, ventana de carrera sesión–COMMIT y conservación de evidencias.
+
+**Prioridad ahora:** revisión DBA/Seguridad del paquete completo para solicitar autorización específica de una sola intervención en QA. Evitar nuevas pruebas repetitivas de laboratorio.
+
+---
+
 ## Actualización de revisión V129 — roles configurables y rollback protegido de laboratorio
 
 **Fecha:** 4 de noviembre de 2026, Ecuador. No hay autorización para QA ni producción.
