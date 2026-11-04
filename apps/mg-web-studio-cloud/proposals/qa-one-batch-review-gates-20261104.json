@@ -69,13 +69,19 @@
       "state": "NO_GO"
     },
     "qaOwnerAuthProbe": {
-      "state": "AUTHORIZED_SCOPED_20261104",
+      "state": "COMPLETE_CLEANUP_CONFIRMED_20261104",
       "approvedScope": "ONE temporary QA Auth account; password sign-in; one local signout; check getUser old JWT; remove test user after result; no DDL, no production, no merge",
       "accountCreated": true,
       "realProbeExecuted": true,
-      "cleanupConfirmed": false,
+      "cleanupConfirmed": true,
       "credentialsShared": false,
-      "lastOutcome": "USER_REPORTED_GETUSER_REJECTS_OLD_JWT_AFTER_LOCAL_LOGOUT"
+      "lastOutcome": "USER_REPORTED_GETUSER_REJECTS_OLD_JWT_AFTER_LOCAL_LOGOUT",
+      "finalQaCounts": {
+        "users": 0,
+        "sessions": 0,
+        "mfaFactors": 0,
+        "mfaChallenges": 0
+      }
     }
   },
   "allowedAfterIndependentReviewAndExplicitQaApproval": [
@@ -95,9 +101,9 @@
   "blockers": [
     {
       "id": "AUTH_SESSIONS_RLS_P0",
-      "state": "REAL_QA_GETUSER_REVOCATION_SINGLE_TEST_PASS_CLEANUP_PENDING_NOT_LINEARIZABLE",
+      "state": "SINGLE_REAL_QA_PROBE_PASS_CLEANUP_CONFIRMED_NON_LINEARIZABLE",
       "severity": "P0",
-      "detail": "Owner-reported Windows HTTP Auth test: before local logout GET /user accepted; following local logout GET /user with old bearer was rejected 401/403 (script does not disclose which). Read-only QA counts immediately after: 1 user, 0 sessions, 0 MFA factors, 0 challenges. Positive evidence for one session at one instant, not a guarantee of revocation linearizability or proof of entire MFA integration. Test account deletion/cleanup pending; no SQL/production changes."
+      "detail": "One owner-observed getUser old-token rejection after local logout, exact code 401/403 not distinguished; read-only postflight verifies 0 QA users, 0 sessions, 0 factors, 0 challenges. No claim of revocation linearizability or production readiness."
     },
     {
       "id": "AUTH_PROOF_LIVE",
@@ -254,7 +260,9 @@
     "qaSqlAuthorized": false,
     "qaAuthProbeAuthorized": true,
     "qaAuthProbeExecuted": true,
-    "qaTemporaryUserCreated": true
+    "qaTemporaryUserCreated": true,
+    "qaAuthProbeCompletedAndCleaned": true,
+    "qaTemporaryUserExists": false
   },
   "technicalProgress": {
     "source": "V95",
