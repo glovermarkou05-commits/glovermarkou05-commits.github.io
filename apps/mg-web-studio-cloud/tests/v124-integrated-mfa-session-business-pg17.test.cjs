@@ -93,6 +93,12 @@ async function withFixture(fn,options){
  const x=makeFixture(options);
  try{return await fn(x)}finally{await x.close()}
 }
+// Each scenario is independent. The same synthetic MFA second must not leak
+// from an earlier scenario and produce a false duplicate event in a later one.
+// Fixture superuser ONLY; no code path in the backend gets TRUNCATE privileges.
+test.beforeEach(async()=>{
+ await adminQuery('TRUNCATE TABLE mg_auth_ledger.mfa_redemptions, mg_v119_fictional.completed_operations, auth.sessions');
+});
 test('V124 disposable database is PG17 and both backend principals are nonadmin',async()=>{
  const pg=await adminQuery("SELECT current_database() AS db,current_setting('server_version') AS version");
  assert.equal(pg.rows[0].db,'qa_ledger');
