@@ -3,6 +3,20 @@
 
 **Objetivo:** completar la integración MFA real de MG Web Studio **sin más series de pruebas ficticias**. Este documento NO es un permiso, script listo para desplegar, firma de seguridad ni garantía de publicación. El [PR #7](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/pull/7) sigue en borrador. El dictamen de un revisor independiente (sin cuenta GitHub si lo prefiere) y la autorización concreta del dueño continúan pendientes.
 
+## Actualización de revisión V129 — roles configurables y rollback protegido de laboratorio
+
+**Fecha:** 4 de noviembre de 2026, Ecuador. No hay autorización para QA ni producción.
+
+Los bloqueos del inventario inicial de esta página se han **reducido solo en código y ensayo desechable**:
+
+- **Roles privados:** V122/V126/V128 aceptan, además de los roles CI, **nombres QA expresamente permitidos por código del servidor**, no nombres aportados por usuario. Antes de SELECT/INSERT cada conexión verifica su identidad física. Regresión confirmada: **81/81 pruebas PASS** entre V122, V126 y V128 (incluidas 9 nuevas comprobaciones contra roles privilegiados/alias arbitrarios). [V128 + mapeo 26/26](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41781887321), [V126 25/25](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41781887348) y [V122 18/18 + 12/12](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41781887179). **Los roles QA todavía no existen ni tienen grants autorizados.**
+- **Rollback:** [contrato V129 de reversión de laboratorio](../proposals/v129-full-rollback-disposable-review-only.sql) abarca ledger, recibos MFA, journal y seis roles de **fixture**. [Ejecución CI verificada](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41782552742): (a) aborta si hay eventos persistidos; (b) aborta ante tabla extraña; (c) aborta cuando existe una vista de otro esquema que depende de la tabla; (d) revierte de forma completa los tres esquemas, tres tablas y seis roles **solamente si no hay evidencia ni dependencias**, conservando `auth` y `public`. El SQL **se niega a ejecutarse fuera de `qa_ledger` PG17**. No es un script aplicable a Supabase QA; deberá adaptarse a roles/tablas reales, respaldos y política de retención y recibir firma DBA/propietario.
+- **El problema pendiente de mayor prioridad no es otra prueba sintética:** falta implementar/validar el flujo integrado contra **Auth real de Supabase QA**, conectar `persistVerifiedReceipt`, fijar el modelo de retención y obtener revisión externa/SQL aprobado antes de instalar cualquier objeto.
+
+**Decisión vigente:** los dos bloqueos están **parcialmente resueltos a nivel de preparación**, no cerrados en QA. `V67=0/32 PASS`; `V95=69%` estimado / `31%` pendiente; PR #7 en borrador; producción `NO_GO`.
+
+---
+
 ## Estado real contrastado en modo solo lectura
 
 | Elemento | Resultado |

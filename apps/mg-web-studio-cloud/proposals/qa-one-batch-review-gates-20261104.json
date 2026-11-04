@@ -91,13 +91,13 @@
     },
     {
       "id": "QA_ROLE_NAMES",
-      "state": "OPEN",
-      "detail": "V122/V126/V128 use hardcoded CI role names; DBA must approve distinct real principal mapping"
+      "state": "PARTIAL_CODE_READY_DBA_PENDING",
+      "detail": "V122/V126/V128 now support strict server-owned allowlists of explicit proposed QA roles; 81/81 combined existing and mapping checks PASS. QA principals, schema mapping, real grants, TLS and independent DBA signoff remain PENDING."
     },
     {
       "id": "FULL_ROLLBACK",
-      "state": "OPEN",
-      "detail": "V112 rolls back only V110/V111 ledger; private challenge journal, receipt store and per-user test identity require separately reviewed rollback"
+      "state": "LAB_GUARDS_PASS_REAL_QA_REVIEW_PENDING",
+      "detail": "V129 guarded rollback contract was validated ONLY in disposable PG17: deny on nonempty ledger, deny unfamiliar private object, deny public external dependency, successful empty teardown of 3 private fixture schemas and 6 CI roles while preserving auth/public. Actual QA schema/role names, user cleanup, retention, backup and rollback remain PENDING DBA+owner review."
     },
     {
       "id": "BRIDGE_PERSIST",
@@ -138,6 +138,24 @@
       "kind": "disposablePg17AndMockClaims",
       "passed": 17,
       "run": 41777740170
+    },
+    {
+      "phase": "V129_ROLE_CONFIG",
+      "kind": "privateRoleAllowlistCiAndPg17Regression",
+      "passed": 81,
+      "runs": [
+        41781887321,
+        41781887348,
+        41781887179
+      ],
+      "evidence": "26+25+18+12 tests, all PASS"
+    },
+    {
+      "phase": "V129_ROLLBACK",
+      "kind": "disposablePG17OnlyGuardedRollback",
+      "result": "SUCCESS",
+      "run": 41782552742,
+      "notAnAuthorization": true
     }
   ],
   "releaseGates": {
@@ -156,5 +174,32 @@
     "notExercised": 3,
     "estimatedPercent": 69,
     "estimatedRemainingPercent": 31
+  },
+  "reviewedChanges": {
+    "status": "REVIEW_PACKAGE_UPDATED_NOT_QA_AUTHORIZATION",
+    "roleConfig": {
+      "files": [
+        "server/v122-private-auth-session-row-reader.cjs",
+        "server/v126-durable-mfa-event-store.cjs",
+        "server/v128-private-challenge-journal.cjs"
+      ],
+      "strictRoleAllowlist": true,
+      "qaRolesCreated": false,
+      "independentApproval": "PENDING"
+    },
+    "rollback": {
+      "path": "proposals/v129-full-rollback-disposable-review-only.sql",
+      "ciRun": 41782552742,
+      "disposableOnly": true,
+      "realQaRollbackApproved": false,
+      "realQaRollbackRequiresFullRedesign": true
+    },
+    "hardGatesRemain": {
+      "independentReviewer": "PENDING",
+      "dba": "PENDING",
+      "ownerApproval": "PENDING",
+      "production": "NO_GO",
+      "formalV67Pass": 0
+    }
   }
 }
