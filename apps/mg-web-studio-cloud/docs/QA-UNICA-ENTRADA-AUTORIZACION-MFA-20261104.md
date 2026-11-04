@@ -3,6 +3,16 @@
 
 **Objetivo:** completar la integración MFA real de MG Web Studio **sin más series de pruebas ficticias**. Este documento NO es un permiso, script listo para desplegar, firma de seguridad ni garantía de publicación. El [PR #7](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/pull/7) sigue en borrador. El dictamen de un revisor independiente (sin cuenta GitHub si lo prefiere) y la autorización concreta del dueño continúan pendientes.
 
+## Actualización V131 — esquemas QA separados sin ejecución SQL
+
+Revisé y corregí la diferencia entre **roles QA** y **tablas del laboratorio** que todavía permanecía en V126/V128. Ahora el código usa consultas fijas destinadas a `mg_qa_mfa_receipts` y `mg_qa_mfa_challenges` solo cuando ambos roles de recibos son QA (y el journal tiene su rol QA); cualquier mezcla de roles se rechaza desde el constructor, antes de consultar o escribir. **No hay elección de esquema desde el cliente**.
+
+**Resultado CI:** [30/30 integración PostgreSQL 17](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41841586814) + [27/27 configuración/journal](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41841586997), **57/57 PASS**. [Diseño SQL QA para revisión, sin autorización de ejecución](../proposals/V131-QA-PRIVADO-INSTALACION-REVISION-NO-EJECUTAR.md).
+
+La revisión independiente debe incluir [la adenda de V131](REVISION-EXTERNA-DBA-SEGURIDAD-V130-20261104.md), el diff de código `f2b940c` y la corrección de prueba `06c61d5`. El documento V131 no es una migración, no define GRANT/policies definitivos y **nunca debe pegarse en SQL Editor sin aprobación DBA y del propietario**. Estado: preparación técnica con CI aprobado, permisos reales y rollback de QA **pendientes**.
+
+---
+
 ## Solicitud de revisión independiente — paquete para entregar
 
 **Versión de código congelada:** [`65fae5d236656fd578f13cfe6b9aac4ea7953b7b`](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/commit/65fae5d236656fd578f13cfe6b9aac4ea7953b7b). El resto de cambios documentales no reescribe esa evidencia; si se altera el código, el revisor deberá examinar el diff.

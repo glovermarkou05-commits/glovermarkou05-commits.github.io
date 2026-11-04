@@ -91,8 +91,8 @@
     },
     {
       "id": "QA_ROLE_NAMES",
-      "state": "PARTIAL_CODE_READY_DBA_PENDING",
-      "detail": "V122/V126/V128 now support strict server-owned allowlists of explicit proposed QA roles; 81/81 combined existing and mapping checks PASS. QA principals, schema mapping, real grants, TLS and independent DBA signoff remain PENDING."
+      "state": "CODE_QA_ROLE_AND_SCHEMA_MAPPING_TESTED_REAL_GRANTS_PENDING",
+      "detail": "V131 now pairs allowlisted QA roles with fixed QA receipt/journal schema SQL and rejects mixed CI/QA issuer-reader roles before Auth challenge. 57/57 tests PASS in disposable PG17 and mock principal checks. No roles, schemas, RLS policies or grants installed in real Supabase QA; external DBA/owner approval still required."
     },
     {
       "id": "FULL_ROLLBACK",
@@ -164,6 +164,18 @@
       "run": 41788585706,
       "realSupabaseAuth": false,
       "realQaDdl": false
+    },
+    {
+      "phase": "V131",
+      "kind": "qaSchemaAndRoleMappingWithoutDeployment",
+      "passed": 57,
+      "runs": [
+        41841586814,
+        41841586997
+      ],
+      "codeSha": "f2b940caab5b804a9b625ed32126df8030ed6689",
+      "testFixSha": "06c61d585e53c0393c6077111b761790164a1947",
+      "realQaDdl": false
     }
   ],
   "releaseGates": {
@@ -217,6 +229,16 @@
       "productionConnected": false,
       "realMfaVerifierConnected": false,
       "publicEndpoint": false
+    },
+    "qaSchemaMapping": {
+      "state": "CODE_VERIFIED_ONLY",
+      "schemas": [
+        "mg_qa_mfa_challenges",
+        "mg_qa_mfa_receipts"
+      ],
+      "proposal": "proposals/V131-QA-PRIVADO-INSTALACION-REVISION-NO-EJECUTAR.md",
+      "requiresDbaFinalSql": true,
+      "realInstallation": false
     }
   }
 }

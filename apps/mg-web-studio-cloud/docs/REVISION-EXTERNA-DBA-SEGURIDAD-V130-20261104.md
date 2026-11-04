@@ -6,6 +6,18 @@
 **Código congelado para la revisión:** commit [`65fae5d236656fd578f13cfe6b9aac4ea7953b7b`](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/commit/65fae5d236656fd578f13cfe6b9aac4ea7953b7b)  
 **Dictamen:** **SIN EMITIR — revisión independiente pendiente**. El autor del paquete **no puede autoconcederse** la firma externa.
 
+## Adenda V131 — corregido el destino de tablas QA (4 de noviembre de 2026)
+
+La versión V130 congelada más abajo sigue siendo una **línea base histórica**. Para una revisión de código vigente, el revisor debe inspeccionar también el diff de seguridad **[`f2b940caab5b804a9b625ed32126df8030ed6689`](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/commit/f2b940caab5b804a9b625ed32126df8030ed6689)** y la corrección **exclusiva de prueba** [`06c61d585e53c0393c6077111b761790164a1947`](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/commit/06c61d585e53c0393c6077111b761790164a1947).
+
+**Hallazgo:** V126/V128 aceptaban roles QA, pero sus sentencias seguían apuntando a `mg_v126_fictional` y `mg_v128_fictional`. V131 define rutas fijas para `mg_qa_mfa_receipts` y `mg_qa_mfa_challenges` elegidas solo por una pareja de roles QA permitidos, y deniega cualquier mezcla de roles QA/CI.
+
+**Evidencia:** [V126/V130 PG17 30/30 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41841586814) y [V128+V129 27/27 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41841586997); 57/57 entre esas dos suites. La primera ejecución anterior señaló que una prueba debía esperar el bloqueo al construir el objeto, en lugar de esperar al guardado; **no se debilitó el control**. **Nunca inferir de eso que existe el esquema QA.**
+
+**Propuesta de objetos QA para examen, NO ejecutar:** [V131 — diseño de esquemas, ACL y rollback pendientes](../proposals/V131-QA-PRIVADO-INSTALACION-REVISION-NO-EJECUTAR.md). El documento **no incluye** roles reales, grants/policies completos ni autorización. Antes de firmar, el DBA debe aprobar todas las identidades y los permisos efectivos de ambos esquemas, además del plan de rollback y retención. **QA real, revisión externa y consentimiento del propietario permanecen pendientes.**
+
+---
+
 ## 1. Lo que debe evaluar la persona revisora
 
 Emitir un dictamen independiente y reproducible sobre **la autorización para instalar exclusivamente en QA**, no sobre la publicación del producto.
