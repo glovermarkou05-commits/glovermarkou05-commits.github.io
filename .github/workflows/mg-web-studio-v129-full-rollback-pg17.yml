@@ -102,14 +102,7 @@ jobs:
           if docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger < proposals/v129-full-rollback-disposable-review-only.sql; then
             echo 'FAIL: nonempty ledger rollback was not blocked'; exit 1
           fi
-          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger <<'SQL'
-          DO $
-          BEGIN
-            IF to_regclass('mg_v128_fictional.challenge_journal') IS NULL THEN
-              RAISE EXCEPTION 'V129_GUARD_INCORRECTLY_DROPPED_JOURNAL';
-            END IF;
-          END $;
-          SQL
+          test "$(docker exec -i "$PG_CONTAINER" psql -X -At -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "SELECT to_regclass('mg_v128_fictional.challenge_journal') IS NOT NULL")" = "t"
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "DELETE FROM mg_auth_ledger.mfa_redemptions"
       - name: Refuse unfamiliar private objects and unexpected external dependencies
         env:
@@ -132,16 +125,7 @@ jobs:
         run: |
           set -euo pipefail
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger < proposals/v129-full-rollback-disposable-review-only.sql
-          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger <<'SQL'
-          DO $$
-          BEGIN
-            IF (SELECT count(*) FROM pg_namespace WHERE nspname IN ('mg_auth_ledger','mg_v126_fictional','mg_v128_fictional'))<>0
-              OR (SELECT count(*) FROM pg_roles WHERE rolname IN ('mg_auth_ledger_writer','mg_v118_ci_backend','mg_v122_ci_auth_reader','mg_v126_ci_issuer','mg_v126_ci_reader','mg_v128_ci_journal'))<>0
-              OR to_regclass('auth.sessions') IS NULL
-              OR (SELECT count(*) FROM pg_namespace WHERE nspname='public')<>1
-            THEN RAISE EXCEPTION 'V129_FAIL_POSTCONDITION'; END IF;
-          END $$;
-          SQL
+          test "$(docker exec -i "$PG_CONTAINER" psql -X -At -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "SELECT (SELECT count(*) FROM pg_namespace WHERE nspname IN ('mg_auth_ledger','mg_v126_fictional','mg_v128_fictional'))=0 AND (SELECT count(*) FROM pg_roles WHERE rolname IN ('mg_auth_ledger_writer','mg_v118_ci_backend','mg_v122_ci_auth_reader','mg_v126_ci_issuer','mg_v126_ci_reader','mg_v128_ci_journal'))=0 AND to_regclass('auth.sessions') IS NOT NULL AND (SELECT count(*) FROM pg_namespace WHERE nspname='public')=1")" = "t"
           echo 'V129_SUCCESS: 3 private schemas, 3 tables and 6 fixture roles removed; auth/public preserved.'
       - name: No actual QA migration or authorization
         if: always()
