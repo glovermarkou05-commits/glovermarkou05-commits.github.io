@@ -19,7 +19,7 @@ function fixture({observed=row(),id=identity(),jwt=now+90,clock=()=>now,
    trace.queries.push({sql,args});
    if(sqlError&&sql===sqlError)throw Error('fixture query unavailable');
    if(sql===VERIFY)return {rows:[id],rowCount:1};
-   if(sql===QUERY)return observed===undefined?{rows:[],rowCount:0}:
+   if(sql===QUERY)return observed===null?{rows:[],rowCount:0}:
     {rows:[observed],rowCount:1};
    throw Error('forbidden query');
   },
@@ -87,7 +87,7 @@ test('V122 rejects invalid UUIDs and uppercases normalize only after validation'
  assert.equal(trace.connects,0);
 });
 test('V122 missing session means revoked/absent and is denied',async()=>{
- const {reader,trace}=fixture({observed:undefined});
+ const {reader,trace}=fixture({observed:null});
  assert.equal(await reader.readPrimarySession(input()),null);
  assert.deepEqual(trace.released,[true]);
 });
