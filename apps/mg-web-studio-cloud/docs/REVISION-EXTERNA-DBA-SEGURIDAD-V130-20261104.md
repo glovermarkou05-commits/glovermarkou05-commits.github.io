@@ -6,6 +6,16 @@
 **Código congelado para la revisión:** commit [`65fae5d236656fd578f13cfe6b9aac4ea7953b7b`](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/commit/65fae5d236656fd578f13cfe6b9aac4ea7953b7b)  
 **Dictamen:** **SIN EMITIR — revisión independiente pendiente**. El autor del paquete **no puede autoconcederse** la firma externa.
 
+## Hallazgo P0: RLS real de `auth.sessions` bloquea el lector de QA
+
+**Revisión externa obligatoria:** [informe de evidencia P0](P0-AUTH-SESSIONS-RLS-BLOQUEO-QA-20261104.md).
+
+La tabla real `auth.sessions` tiene RLS habilitado y **0 políticas**, es propiedad de `supabase_auth_admin`, y un rol privado no propietario no podrá leer filas con solo GRANT SELECT. El fixture V122 histórico no tenía RLS; una nueva prueba reproduce esa denegación y solo añade una política *en PostgreSQL CI descartable* para continuar sus pruebas. **No trasladar esa política a Supabase QA sin una decisión explícita de DBA/Seguridad.** El lector V122 se reforzó para comparar `session_user` y `current_user`; [V122 31/31 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41842888590) y [roles/journal 27/27 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41842888611).
+
+**Criterio para una autorización futura:** mecanismo soportado y revisado de comprobación de sesión/revocación, permisos efectivos mínimos probados, compatibilidad con actualizaciones de Supabase Auth, rollback, auditoría y dictamen independiente. Hasta entonces, `AUTH_SESSIONS_RLS_P0=BLOCKING`.
+
+---
+
 ## Adenda V131 — corregido el destino de tablas QA (4 de noviembre de 2026)
 
 La versión V130 congelada más abajo sigue siendo una **línea base histórica**. Para una revisión de código vigente, el revisor debe inspeccionar también el diff de seguridad **[`f2b940caab5b804a9b625ed32126df8030ed6689`](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/commit/f2b940caab5b804a9b625ed32126df8030ed6689)** y la corrección **exclusiva de prueba** [`06c61d585e53c0393c6077111b761790164a1947`](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/commit/06c61d585e53c0393c6077111b761790164a1947).

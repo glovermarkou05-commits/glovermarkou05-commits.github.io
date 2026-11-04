@@ -85,6 +85,12 @@
   ],
   "blockers": [
     {
+      "id": "AUTH_SESSIONS_RLS_P0",
+      "state": "BLOCKING_IN_REAL_QA",
+      "severity": "P0",
+      "detail": "Read-only QA pg_class/pg_policies: auth.sessions RLS enabled, 0 SELECT policies, owned by supabase_auth_admin; nonowner non-BYPASSRLS reader cannot see rows even with column SELECT grants. Requires independent DBA-approved supported alternative; do not add RLS policy or SECURITY DEFINER automatically. Disposable V122 parity 31/31 PASS, plus 27/27 role checks."
+    },
+    {
       "id": "AUTH_PROOF_LIVE",
       "state": "OPEN",
       "detail": "MFA official APIs modeled but scoped live Auth client and signed JWT response not yet tested"
@@ -176,6 +182,20 @@
       "codeSha": "f2b940caab5b804a9b625ed32126df8030ed6689",
       "testFixSha": "06c61d585e53c0393c6077111b761790164a1947",
       "realQaDdl": false
+    },
+    {
+      "phase": "V122_RLS_PARITY",
+      "kind": "disposableQaLikeRlsDenialWithoutPolicies",
+      "passed": 31,
+      "run": 41842888590,
+      "realQaChanged": false
+    },
+    {
+      "phase": "V122_ROLE_HARDENING",
+      "kind": "sessionUserAndCurrentUserRoleIdentity",
+      "passed": 27,
+      "run": 41842888611,
+      "realQaChanged": false
     }
   ],
   "releaseGates": {
@@ -239,6 +259,15 @@
       "proposal": "proposals/V131-QA-PRIVADO-INSTALACION-REVISION-NO-EJECUTAR.md",
       "requiresDbaFinalSql": true,
       "realInstallation": false
+    },
+    "authSessionRls": {
+      "state": "P0_REVIEW_REQUIRED",
+      "realQaRls": true,
+      "realQaPolicyCount": 0,
+      "tableOwner": "supabase_auth_admin",
+      "ciNegativeRlsTestPassed": true,
+      "realQaSqlAuthorized": false,
+      "recommendation": "Independent DBA must choose supported authoritative session verification; do not auto-modify Supabase managed Auth RLS"
     }
   }
 }
