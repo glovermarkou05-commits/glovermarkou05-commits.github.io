@@ -41,6 +41,14 @@ Archivo: `server/v122-private-auth-session-row-reader.cjs`.
 5. **Credenciales y comunicaciones:** TLS certificado, acceso de red privado, gestión/rotación de secretos, permisos revisados, topología pooler, límites de conexión y RPO/RTO.
 6. **Revisión y autorización:** no hay dictamen humano independiente; no hay permiso de instalar SQL en Supabase QA; V67 mantiene 32 casos pendientes y producción `NO_GO`.
 
+## 4A. Actualización de evidencia visual de configuración (capturas del usuario, 2026-11-03)
+
+El usuario proporcionó tres capturas de la pantalla Auth de Supabase correspondiente al flujo de revisión solicitado: sesión única **desactivada**, duración máxima de sesión **0 / never**, timeout de inactividad **0 / never**, token de acceso **3600 segundos**, detección de reutilización potencialmente comprometida de refresh token **activada** e intervalo de reutilización **10 segundos**. El Dashboard muestra que editar los límites avanzados requiere **Supabase Pro**.
+
+**Alcance limitado:** los recortes no muestran la referencia del proyecto ni son una consulta de configuración autenticada a través de API; se registran como observación de interfaz **proporcionada por el usuario**, no como auditoría independiente de la configuración persistida. Es un caso compatible con `NO_EXTRA_SESSION_LIMITS_LAB_ONLY`, pero no prueba la sesión real, la firma del JWT, las ACL, el comportamiento bajo revocación concurrente ni la cadena completa de autorización.
+
+**Acción:** no cambiar ajustes, no contratar una suscripción, no conceder roles de lectura y no ejecutar DDL. Evaluar el contrato de Auth/DBA antes de conectar V122 en QA. La evidencia visual reduce la incertidumbre documental, **no cambia la decisión NO_GO ni V67 0/32**.
+
 ## 5. Decisión
 
 V122 **completada en laboratorio con 30/30 PASS**. No hubo DDL/DML ni cambios Auth en Supabase QA; ninguna migración, publicación, fusión del PR, modificaciones de Lovable o producción. La siguiente acción útil es la **evaluación del contrato de permisos y política Auth real** por el revisor externo (que no necesita cuenta GitHub), junto con el diseño de prueba QA de alcance específico y su plan de reversión, antes de solicitar autorización para cualquier acceso privilegiado.
