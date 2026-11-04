@@ -454,13 +454,13 @@ function v130Composition({issuer,reader,verifyClaims,
  }};
  const data={
   auth,actor:{subject:USER,sessionId:SID,tokenExpiresAtSec:now()+120},
-  readActiveSession:sessionReader||async()=>({
+  readActiveSession:sessionReader||(async()=>({
    active:true,primaryRead:true,revocationChecked:true,subject:USER,sessionId:SID,
    checkedAtSec:now(),expiresAtSec:now()+120
-  }),
-  verifySignedJwt:verifyClaims||async()=>({
+  })),
+  verifySignedJwt:verifyClaims||(async()=>({
    aal:'aal2',exp:now()+120,sub:USER,session_id:SID
-  }),
+  })),
   journal,issuerPool:issuer,readerPool:reader,receiptKey:Buffer.alloc(32,130),
   newReference:()=>REF,nowSec:now
  };
