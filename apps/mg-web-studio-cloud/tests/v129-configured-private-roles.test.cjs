@@ -30,7 +30,7 @@ test('QA reader names are explicitly pinned, not arbitrary environment-derived r
 });
 test('V122 accepts only a reviewed QA session reader and confirms its physical role',async()=>{
  const q=mockPool(SESSION_QA,{
-  [VERIFY]:{rows:[{current_user:SESSION_QA,is_replica:false}],rowCount:1},
+  [VERIFY]:{rows:[{session_user:SESSION_QA,current_user:SESSION_QA,is_replica:false}],rowCount:1},
   [QUERY]:{rows:[{id:SESSION,user_id:USER,not_after:null}],rowCount:1}
  });
  const reader=createV122PrivateAuthSessionRowReader({
@@ -45,7 +45,7 @@ test('V122 accepts only a reviewed QA session reader and confirms its physical r
 });
 test('V122 refuses impostor principal instead of attempting session SELECT',async()=>{
  const q=mockPool('wrong',{
-  [VERIFY]:{rows:[{current_user:'postgres',is_replica:false}],rowCount:1}
+  [VERIFY]:{rows:[{session_user:'postgres',current_user:'postgres',is_replica:false}],rowCount:1}
  });
  const reader=createV122PrivateAuthSessionRowReader({
   pool:q.pool,expectedReaderRole:SESSION_QA,

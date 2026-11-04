@@ -7,7 +7,7 @@ const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const READER='mg_v122_ci_auth_reader';
 const REVIEWED_QA_READER='mg_qa_auth_session_reader';
 // Server-owned, hard allowlisted principal map. No user-supplied DB role names.
-const VERIFY='SELECT current_user AS current_user, pg_is_in_recovery() AS is_replica';
+const VERIFY='SELECT session_user AS session_user, current_user AS current_user, pg_is_in_recovery() AS is_replica';
 const QUERY='SELECT id, user_id, not_after FROM auth.sessions WHERE id=$1::uuid AND user_id=$2::uuid LIMIT 2';
 const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
 const exact=(o,fields)=>o!==null&&typeof o==='object'&&!Array.isArray(o)&&
@@ -37,7 +37,8 @@ function createV122PrivateAuthSessionRowReader({
    // Verify the same physical connection used for the sensitive SELECT.
    const identity=await client.query(VERIFY);
    if(!identity||!Array.isArray(identity.rows)||identity.rows.length!==1||
-      !exact(identity.rows[0],['current_user','is_replica'])||
+      !exact(identity.rows[0],['session_user','current_user','is_replica'])||
+      identity.rows[0].session_user!==expectedReaderRole||
       identity.rows[0].current_user!==expectedReaderRole||identity.rows[0].is_replica!==false)
     return null;
    const raw=await client.query(QUERY,[input.sessionId.toLowerCase(),input.subject.toLowerCase()]);

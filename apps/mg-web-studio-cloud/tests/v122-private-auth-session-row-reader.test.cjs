@@ -10,7 +10,7 @@ const SUB='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const SID='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
 const input=()=>({subject:SUB,sessionId:SID});
 const row=()=>({id:SID,user_id:SUB,not_after:null});
-const identity=()=>({current_user:READER,is_replica:false});
+const identity=()=>({session_user:READER,current_user:READER,is_replica:false});
 function fixture({observed=row(),id=identity(),jwt=now+90,clock=()=>now,
  sqlError=null,connectError=null,brokenClient=false}={}){
  const trace={queries:[],released:[],connects:0};
@@ -97,9 +97,10 @@ test('V122 cannot treat a session belonging to a different user as active',async
 });
 test('V122 rejects wrong physical DB role, replica and malformed identity',async()=>{
  for(const id of [
-  {current_user:'postgres',is_replica:false},
-  {current_user:READER,is_replica:true},
-  {current_user:READER,is_replica:'f'},
+  {session_user:'postgres',current_user:'postgres',is_replica:false},
+  {session_user:'postgres',current_user:READER,is_replica:false},
+  {session_user:READER,current_user:READER,is_replica:true},
+  {session_user:READER,current_user:READER,is_replica:'f'},
   {...identity(),extra:true},
   null
  ]){
