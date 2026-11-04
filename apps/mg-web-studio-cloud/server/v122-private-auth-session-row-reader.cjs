@@ -5,6 +5,8 @@
 // inactivity/single-session/timebox policies may not remove rows immediately.
 const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const READER='mg_v122_ci_auth_reader';
+const REVIEWED_QA_READER='mg_qa_auth_session_reader';
+// Server-owned, hard allowlisted principal map. No user-supplied DB role names.
 const VERIFY='SELECT current_user AS current_user, pg_is_in_recovery() AS is_replica';
 const QUERY='SELECT id, user_id, not_after FROM auth.sessions WHERE id=$1::uuid AND user_id=$2::uuid LIMIT 2';
 const own=(o,k)=>Object.prototype.hasOwnProperty.call(o,k);
@@ -14,11 +16,13 @@ const exact=(o,fields)=>o!==null&&typeof o==='object'&&!Array.isArray(o)&&
 const validSecond=n=>Number.isSafeInteger(n)&&n>0;
 function createV122PrivateAuthSessionRowReader({
  pool,nowSec=()=>Math.floor(Date.now()/1000),
- trustedTokenExpiresAtSec,policyModel='NO_EXTRA_SESSION_LIMITS_LAB_ONLY'
+ trustedTokenExpiresAtSec,policyModel='NO_EXTRA_SESSION_LIMITS_LAB_ONLY',
+ expectedReaderRole=READER
 }={}){
  if(!pool||typeof pool.connect!=='function'||typeof nowSec!=='function'||
     !validSecond(trustedTokenExpiresAtSec)||
-    policyModel!=='NO_EXTRA_SESSION_LIMITS_LAB_ONLY')
+    policyModel!=='NO_EXTRA_SESSION_LIMITS_LAB_ONLY'||
+    ![READER,REVIEWED_QA_READER].includes(expectedReaderRole))
   throw new TypeError('V122 requires a private, verified-primary session pool and trusted JWT expiry');
  function clock(){try{const v=nowSec();return validSecond(v)?v:null;}catch{return null;}}
  async function readPrimarySession(input){
@@ -34,7 +38,7 @@ function createV122PrivateAuthSessionRowReader({
    const identity=await client.query(VERIFY);
    if(!identity||!Array.isArray(identity.rows)||identity.rows.length!==1||
       !exact(identity.rows[0],['current_user','is_replica'])||
-      identity.rows[0].current_user!==READER||identity.rows[0].is_replica!==false)
+      identity.rows[0].current_user!==expectedReaderRole||identity.rows[0].is_replica!==false)
     return null;
    const raw=await client.query(QUERY,[input.sessionId.toLowerCase(),input.subject.toLowerCase()]);
    const checkedAtSec=clock();
@@ -81,4 +85,4 @@ function createV122PrivateAuthSessionRowReader({
   })
  });
 }
-module.exports={createV122PrivateAuthSessionRowReader,VERIFY,QUERY,READER};
+module.exports={createV122PrivateAuthSessionRowReader,VERIFY,QUERY,READER,REVIEWED_QA_READER};

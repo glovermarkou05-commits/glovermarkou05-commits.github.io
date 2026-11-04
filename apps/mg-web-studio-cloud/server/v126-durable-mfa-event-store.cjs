@@ -7,6 +7,9 @@ const UUID4=/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12
 const METHODS=new Set(['totp','mfa/phone']);
 const ISSUER='mg_v126_ci_issuer';
 const READER='mg_v126_ci_reader';
+const REVIEWED_QA_ISSUER='mg_qa_mfa_receipt_issuer';
+const REVIEWED_QA_READER='mg_qa_mfa_receipt_reader';
+// Explicit server-owned role allowlist; never accept role input from a client.
 const IDENTITY='SELECT session_user AS session_user, current_user AS current_user, pg_is_in_recovery() AS is_replica';
 const INSERT='INSERT INTO mg_v126_fictional.verified_mfa_events (receipt_id,proof_reference,subject,session_id,method,verified_at_sec) VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5,$6::bigint) ON CONFLICT (receipt_id) DO NOTHING';
 const SELECT_BY_RECEIPT='SELECT receipt_id,event_id,proof_reference,subject,session_id,method,verified_at_sec FROM mg_v126_fictional.verified_mfa_events WHERE receipt_id=$1::uuid LIMIT 2';
@@ -25,10 +28,13 @@ const lower=s=>typeof s==='string'?s.toLowerCase():'';
 const NO=Object.freeze({recorded:false});
 const YES=Object.freeze({recorded:true});
 function createV126DurableMfaEventStore({issuerPool,readerPool,confirmAuthenticMfaReceipt,
- nowSec=()=>Math.floor(Date.now()/1000)}={}){
+ nowSec=()=>Math.floor(Date.now()/1000),
+ expectedIssuerRole=ISSUER,expectedReaderRole=READER}={}){
  if(!issuerPool||typeof issuerPool.connect!=='function'||
   !readerPool||typeof readerPool.connect!=='function'||
-  typeof confirmAuthenticMfaReceipt!=='function'||typeof nowSec!=='function')
+  typeof confirmAuthenticMfaReceipt!=='function'||typeof nowSec!=='function'||
+  ![ISSUER,REVIEWED_QA_ISSUER].includes(expectedIssuerRole)||
+  ![READER,REVIEWED_QA_READER].includes(expectedReaderRole))
   throw new TypeError('V126 requires separate private issuer/reader pools and trusted verifier');
  function tick(){try{const n=nowSec();return secs(n)?n:null;}catch{return null;}}
  function validRequest(q){return exact(q,REQUEST_KEYS)&&
@@ -74,7 +80,7 @@ function createV126DurableMfaEventStore({issuerPool,readerPool,confirmAuthenticM
    a.sessionBoundByAuthorizedFlow!==true||!secs(a.checkedAtSec)||
    a.checkedAtSec>t||t-a.checkedAtSec>2||
    !secs(a.verifiedAtSec)||a.verifiedAtSec>t||t-a.verifiedAtSec>300)return NO;
-  const result=await withPrincipal(issuerPool,ISSUER,async c=>{
+  const result=await withPrincipal(issuerPool,expectedIssuerRole,async c=>{
    const ins=await c.query(INSERT,[lower(a.receiptId),lower(a.proofReference),
     lower(a.subject),lower(a.sessionId),a.method,a.verifiedAtSec]);
    if(ins?.command!=='INSERT'||![0,1].includes(ins.rowCount))return null;
@@ -88,7 +94,7 @@ function createV126DurableMfaEventStore({issuerPool,readerPool,confirmAuthenticM
  }
  async function readTrustedVerifiedEvent(input){
   if(!validRequest(input))return null;
-  const result=await withPrincipal(readerPool,READER,async c=>{
+  const result=await withPrincipal(readerPool,expectedReaderRole,async c=>{
    const row=await c.query(SELECT_BY_PROOF,[lower(input.proofReference),
     lower(input.subject),lower(input.sessionId)]);
    const t=tick();
@@ -113,4 +119,4 @@ function createV126DurableMfaEventStore({issuerPool,readerPool,confirmAuthenticM
   })});
 }
 module.exports={createV126DurableMfaEventStore,IDENTITY,INSERT,
- SELECT_BY_RECEIPT,SELECT_BY_PROOF,ISSUER,READER};
+ SELECT_BY_RECEIPT,SELECT_BY_PROOF,ISSUER,READER,REVIEWED_QA_ISSUER,REVIEWED_QA_READER};

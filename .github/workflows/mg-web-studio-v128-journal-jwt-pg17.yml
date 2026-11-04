@@ -8,6 +8,9 @@ on:
     paths:
       - .github/workflows/mg-web-studio-v128-journal-jwt-pg17.yml
       - apps/mg-web-studio-cloud/server/v128-private-challenge-journal.cjs
+      - apps/mg-web-studio-cloud/server/v126-durable-mfa-event-store.cjs
+      - apps/mg-web-studio-cloud/server/v122-private-auth-session-row-reader.cjs
+      - apps/mg-web-studio-cloud/tests/v129-configured-private-roles.test.cjs
       - apps/mg-web-studio-cloud/server/v128-supabase-claims-verifier.cjs
       - apps/mg-web-studio-cloud/tests/v128-private-journal-pg17.test.cjs
       - apps/mg-web-studio-cloud/server/v127-supabase-native-mfa-bridge.cjs
@@ -111,7 +114,7 @@ jobs:
           V128_READER_PASS: v128-disposable-journal
         run: |
           set -euo pipefail
-          node --test --test-concurrency=1 tests/v128-private-journal-pg17.test.cjs
+          node --test --test-concurrency=1 tests/v128-private-journal-pg17.test.cjs tests/v129-configured-private-roles.test.cjs
       - name: Security gate remains closed
         if: always()
         run: |
