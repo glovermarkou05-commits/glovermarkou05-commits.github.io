@@ -101,8 +101,8 @@
     },
     {
       "id": "BRIDGE_PERSIST",
-      "state": "OPEN",
-      "detail": "V127 persistVerifiedReceipt is injected and not connected to a durable QA V126 implementation"
+      "state": "PARTIAL_PG17_VERIFIED_REAL_QA_PENDING",
+      "detail": "V130 private composition connects V127 verified MFA receipt callback to V126 durable event store and V125/V119 fictional operation in disposable PostgreSQL 17, 30/30 PASS. Official Auth calls/claims and private journal remain synthetic here; no live Supabase Auth or QA installation. Signed JWT/DBA/rollback/independent review remain required."
     },
     {
       "id": "AUTH_COMMIT_RACE",
@@ -156,6 +156,14 @@
       "result": "SUCCESS",
       "run": 41782552742,
       "notAnAuthorization": true
+    },
+    {
+      "phase": "V130",
+      "kind": "nativeMfaBridgeToDurableReceiptToFictionalBusinessPG17",
+      "passed": 30,
+      "run": 41788585706,
+      "realSupabaseAuth": false,
+      "realQaDdl": false
     }
   ],
   "releaseGates": {
@@ -200,6 +208,15 @@
       "ownerApproval": "PENDING",
       "production": "NO_GO",
       "formalV67Pass": 0
+    },
+    "privateVerifiedReceipt": {
+      "phase": "V130",
+      "state": "PARTIAL_LAB_PASS",
+      "file": "server/v130-private-verified-mfa-composition.cjs",
+      "testRun": 41788585706,
+      "productionConnected": false,
+      "realMfaVerifierConnected": false,
+      "publicEndpoint": false
     }
   }
 }
