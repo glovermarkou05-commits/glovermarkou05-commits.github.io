@@ -19,6 +19,7 @@ const {createV126DurableMfaEventStore,ISSUER,READER}=
  require('../server/v126-durable-mfa-event-store.cjs');
 const {createV125UniqueVerificationGateway}=
  require('../server/v125-unique-verification-gateway.cjs');
+const {createV126V2OnlySensitiveRoute}=require('../server/v126-v2-only-sensitive-route.cjs');
 const {createV118ScopedLabWriterPool}=
  require('../qa/v118-scoped-writer-pool.cjs');
 const {createV119AtomicBusinessLab}=
@@ -361,5 +362,64 @@ test('real Supabase verifier, retention approval and production remain explicitl
    eventRetentionReviewed:false,revocationLinearizable:false,
    productionAuthorized:false,formalV67Pass:0,decision:'NO_GO'
   });
+ });
+});
+
+test('V126 V2-only reference route cannot downgrade or replay persisted MFA events',async()=>{
+ await authSession();
+ await withFixture(async({store})=>{
+  assert.deepEqual(await store.recordVerifiedOnce(request()),YES);
+  const trans=transaction();
+  try{
+   const route=createV126V2OnlySensitiveRoute({
+    verificationStore:store,authenticatedSubject:USER,
+    authenticatedSessionId:SID,ledgerHmacKey:KEY,runAtomicOperation:trans.tx.execute,nowSec:now
+   });
+   assert.equal(route.readiness.protocol,'V125_EVENT_ID_V2_ONLY');
+   assert.equal(route.readiness.legacyV109Allowed,false);
+   assert.equal(route.readiness.legacyV121Allowed,false);
+   assert.deepEqual(await route.execute(gatewayRequest()),PASS);
+   assert.deepEqual(await route.execute(gatewayRequest()),DENY);
+   assert.equal(await countRows(),1);
+  }finally{await trans.close();}
+ });
+});
+test('V126 V2-only route blocks client-selected protocol, legacy event key and session fields',async()=>{
+ await authSession();
+ await withFixture(async({store})=>{
+  assert.deepEqual(await store.recordVerifiedOnce(request()),YES);
+  const trans=transaction();
+  try{
+   const route=createV126V2OnlySensitiveRoute({
+    verificationStore:store,authenticatedSubject:USER,authenticatedSessionId:SID,
+    ledgerHmacKey:KEY,runAtomicOperation:trans.tx.execute,nowSec:now
+   });
+   for(const input of [{protocol:'v1'},{protocolVersion:'V109'},{allowLegacy:true},
+    {eventKey:'a'.repeat(64)},{sessionId:SID},{receiptId:RECEIPT},{jwt:'fake'},
+    {verifiedAtSec:now()},{version:'v121'}]){
+    assert.deepEqual(await route.execute(gatewayRequest(input)),DENY);
+   }
+   assert.deepEqual(await route.execute(gatewayRequest()),PASS);
+  }finally{await trans.close();}
+ });
+});
+test('V126 route will not accept a mock legacy reader or mint an unissued proof',async()=>{
+ const fake={readTrustedVerifiedEvent:async()=>null,
+  readiness:{labOnly:false,realSupabaseVerifierIntegrated:false,productionAuthorized:false}};
+ assert.throws(()=>createV126V2OnlySensitiveRoute({verificationStore:fake,
+  authenticatedSubject:USER,authenticatedSessionId:SID,ledgerHmacKey:KEY,
+  runAtomicOperation:async()=>PASS,nowSec:now}),TypeError);
+ await authSession();
+ await withFixture(async({store,state})=>{
+  const trans=transaction();
+  try{
+   const route=createV126V2OnlySensitiveRoute({
+    verificationStore:store,authenticatedSubject:USER,authenticatedSessionId:SID,
+    ledgerHmacKey:KEY,runAtomicOperation:trans.tx.execute,nowSec:now
+   });
+   assert.deepEqual(await route.execute(gatewayRequest()),DENY);
+   assert.equal(state.checks,0);
+   assert.equal(await countRows(),0);
+  }finally{await trans.close();}
  });
 });
