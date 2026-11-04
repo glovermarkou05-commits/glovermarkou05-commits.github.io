@@ -1,0 +1,160 @@
+{
+  "artifact": "MG_WEB_STUDIO_QA_SINGLE_BATCH_REVIEW_GATE_20261104",
+  "project": {
+    "name": "MG WEB STUDIO AUTH QA",
+    "ref": "tbfhiqkivsoeuudlpkgi",
+    "region": "sa-east-1",
+    "postgres": "17.11.0.011"
+  },
+  "source": {
+    "repository": "glovermarkou05-commits/glovermarkou05-commits.github.io",
+    "pr": 7,
+    "branch": "docs/mg-web-studio-v94-preflight-20261101",
+    "headAtReview": "9ba9a06c15a4ee361787a264dcfdc9c3f60b224a"
+  },
+  "observedReadOnlyAt": "2026-11-04",
+  "observed": {
+    "projectHealth": "ACTIVE_HEALTHY",
+    "supabaseSecurityAdvisorLintCount": 0,
+    "auth": {
+      "users": 0,
+      "sessions": 0,
+      "mfaFactors": 0,
+      "mfaChallenges": 0
+    },
+    "absentSchemas": [
+      "mg_auth_ledger",
+      "mg_v126_fictional",
+      "mg_v128_fictional"
+    ],
+    "absentRoles": [
+      "mg_auth_ledger_writer",
+      "mg_v118_ci_backend",
+      "mg_v122_ci_auth_reader",
+      "mg_v126_ci_issuer",
+      "mg_v126_ci_reader",
+      "mg_v128_ci_journal"
+    ],
+    "dataApiUI": {
+      "exposedSchemas": [
+        "public",
+        "graphql_public"
+      ],
+      "autoExposeNewTables": false,
+      "source": "previously user-submitted screenshots; not an independent persisted-config query"
+    }
+  },
+  "approvals": {
+    "independentReviewer": {
+      "state": "PENDING",
+      "name": null,
+      "signature": null
+    },
+    "dbaSecurity": {
+      "state": "PENDING",
+      "name": null,
+      "signature": null
+    },
+    "qaOwnerSqlAndUser": {
+      "state": "NOT_REQUESTED",
+      "approvedScope": null,
+      "signature": null
+    },
+    "qaRollback": {
+      "state": "PENDING",
+      "name": null,
+      "signature": null
+    },
+    "production": {
+      "state": "NO_GO"
+    }
+  },
+  "allowedAfterIndependentReviewAndExplicitQaApproval": [
+    "tbfhiqkivsoeuudlpkgi only, private nonexposed schemas, minimal grants with RLS",
+    "single temporary QA TOTP identity, approved credentials and cleanup",
+    "one real official challenge/verify/getClaims test, session read and bounded fictional business effect",
+    "read only proof of role ACLs, data API isolation, negative and revocation tests",
+    "approved time-bounded rollback with backup/retention checks"
+  ],
+  "forbiddenWithoutSeparateApproval": [
+    "QA DDL/GRANT/CREATE ROLE/CREATE USER or permanent test users",
+    "Supabase production, Lovable publishing, merging PR #7",
+    "public Data API grants, service_role key in browser, security definer RPC",
+    "changing existing auth policies or bypassing MFA",
+    "destructive rollback of nonempty tables or unreviewed objects"
+  ],
+  "blockers": [
+    {
+      "id": "AUTH_PROOF_LIVE",
+      "state": "OPEN",
+      "detail": "MFA official APIs modeled but scoped live Auth client and signed JWT response not yet tested"
+    },
+    {
+      "id": "QA_ROLE_NAMES",
+      "state": "OPEN",
+      "detail": "V122/V126/V128 use hardcoded CI role names; DBA must approve distinct real principal mapping"
+    },
+    {
+      "id": "FULL_ROLLBACK",
+      "state": "OPEN",
+      "detail": "V112 rolls back only V110/V111 ledger; private challenge journal, receipt store and per-user test identity require separately reviewed rollback"
+    },
+    {
+      "id": "BRIDGE_PERSIST",
+      "state": "OPEN",
+      "detail": "V127 persistVerifiedReceipt is injected and not connected to a durable QA V126 implementation"
+    },
+    {
+      "id": "AUTH_COMMIT_RACE",
+      "state": "OPEN",
+      "detail": "MFA verify outside business PG transaction and final session read before COMMIT have crash/revocation windows"
+    },
+    {
+      "id": "RETENTION_AND_BACKUP",
+      "state": "OPEN",
+      "detail": "Journal lifetime, verified-event retention, backup/erase/incident policy need owner and security signoff"
+    },
+    {
+      "id": "INDEPENDENT_SIGNOFF",
+      "state": "OPEN",
+      "detail": "No independent human review; passing CI is not a formal V67 pass"
+    }
+  ],
+  "testsPreviouslyVerified": [
+    {
+      "phase": "V107",
+      "kind": "realQAAuthTOTP",
+      "result": "PASS_AND_CLEANUP_CONFIRMED",
+      "repeat": false
+    },
+    {
+      "phase": "V127",
+      "kind": "offlineSupabaseMfaContract",
+      "passed": 18,
+      "run": 41775511115
+    },
+    {
+      "phase": "V128",
+      "kind": "disposablePg17AndMockClaims",
+      "passed": 17,
+      "run": 41777740170
+    }
+  ],
+  "releaseGates": {
+    "formalV67Approved": 0,
+    "formalV67Total": 32,
+    "production": "NO_GO",
+    "pullRequestDraft": true,
+    "mergeAuthorized": false,
+    "qaSqlAuthorized": false
+  },
+  "technicalProgress": {
+    "source": "V95",
+    "method": "LAB_OBSERVED=1 PARTIAL=0.5 NOT_EXERCISED=0",
+    "observed": 15,
+    "partial": 14,
+    "notExercised": 3,
+    "estimatedPercent": 69,
+    "estimatedRemainingPercent": 31
+  }
+}
