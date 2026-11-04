@@ -18,6 +18,7 @@ const {createV118ScopedLabWriterPool}=require('../qa/v118-scoped-writer-pool.cjs
 const {createV119AtomicBusinessLab}=require('../qa/v119-atomic-business-lab.cjs');
 const {createV121TrustedMfaProofGateway}=require('../server/v121-trusted-mfa-proof-gateway.cjs');
 const {createV122PrivateAuthSessionRowReader}=require('../server/v122-private-auth-session-row-reader.cjs');
+const {createV125UniqueVerificationGateway}=require('../server/v125-unique-verification-gateway.cjs');
 const cfg={host:'127.0.0.1',port:Number(process.env.V124_PORT),database:'qa_ledger',
  connectionTimeoutMillis:7000,query_timeout:8000,application_name:'v124_ephemeral_fixture'};
 const admin=()=>new Client({...cfg,user:'postgres',password:process.env.V124_ADMIN_PASSWORD});
@@ -271,5 +272,95 @@ test('end-to-end readiness remains NO_GO, despite real PG17 integration of synth
   assert.equal(session.readiness.customTimeoutPoliciesVerified,false);
   assert.equal(session.readiness.revocationLinearizable,false);
   assert.equal(gate.readiness.productionAuthorized,false);
+ });
+});
+
+const EVENT_A='33333333-3333-4333-8333-333333333333';
+const EVENT_B='44444444-4444-4444-8444-444444444444';
+const PROOF2='ffffffff-ffff-4fff-8fff-ffffffffffff';
+const proofV125=(subject,sessionId,ref,eventId,verifiedAtSec)=>({
+ checkedAtSec:now(),eventId,eventIdBoundToVerification:true,
+ factorOwnershipVerified:true,method:'totp',proofReference:ref,
+ provenanceReviewed:true,sessionBoundByAuthorizedFlow:true,
+ sessionId,subject,verified:true,verifiedAtSec
+});
+function v125ForTx(tx,{user=USER,sid=SID1,verifiedAtSec=now()-10,issuer}={}){
+ const lookup=issuer||new Map([[REF,proofV125(user,sid,REF,EVENT_A,verifiedAtSec)]]);
+ return createV125UniqueVerificationGateway({
+  authenticatedSubject:user,authenticatedSessionId:sid,
+  ledgerHmacKey:KEY,nowSec:now,
+  readTrustedVerifiedEvent:async ({proofReference})=>lookup.get(proofReference)||null,
+  runAtomicOperation:tx.execute
+ });
+}
+const v125Hash=(eventId)=>createHmac('sha256',KEY)
+ .update('mg-v125-mfa-event-v2|'+eventId.toLowerCase()).digest('hex');
+
+test('V125 PG17: two distinct backend-issued proofs in the SAME second both commit',async()=>{
+ await addSession(SID1);
+ const stamp=now()-10,issuer=new Map([
+  [REF,proofV125(USER,SID1,REF,EVENT_A,stamp)],
+  [PROOF2,proofV125(USER,SID1,PROOF2,EVENT_B,stamp)]
+ ]);
+ await withFixture(async({tx})=>{
+  const gateway=v125ForTx(tx,{issuer});
+  assert.deepEqual(await gateway.execute(request()),pass);
+  assert.deepEqual(await gateway.execute(request({proofReference:PROOF2})),pass);
+  assert.notEqual(v125Hash(EVENT_A),v125Hash(EVENT_B));
+  assert.deepEqual(await count(v125Hash(EVENT_A)),{ledger:1,business:1});
+  assert.deepEqual(await count(v125Hash(EVENT_B)),{ledger:1,business:1});
+ });
+});
+test('V125 PG17: same verification event cannot be consumed twice by same or different tenant',async()=>{
+ await addSession(SID1);
+ await withFixture(async({tx})=>{
+  const gateway=v125ForTx(tx);
+  assert.deepEqual(await gateway.execute(request()),pass);
+  assert.deepEqual(await gateway.execute(request()),denied);
+  assert.deepEqual(await gateway.execute(request({organizationId:SITE,siteId:ORG,action:'billing'})),denied);
+  assert.deepEqual(await count(v125Hash(EVENT_A)),{ledger:1,business:1});
+ },{authorizeResource:async()=>true});
+});
+test('V125 PG17: same event ID cannot be re-spent through a second proof reference',async()=>{
+ await addSession(SID1);
+ const stamp=now()-10,issuer=new Map([
+  [REF,proofV125(USER,SID1,REF,EVENT_A,stamp)],
+  [PROOF2,proofV125(USER,SID1,PROOF2,EVENT_A,stamp)]
+ ]);
+ await withFixture(async({tx})=>{
+  const gateway=v125ForTx(tx,{issuer});
+  assert.deepEqual(await gateway.execute(request()),pass);
+  assert.deepEqual(await gateway.execute(request({proofReference:PROOF2})),denied);
+  assert.deepEqual(await count(v125Hash(EVENT_A)),{ledger:1,business:1});
+ });
+});
+test('V125 PG17: 16 concurrent attempts using same event ID commit exactly once',async()=>{
+ await addSession(SID1);
+ await withFixture(async({tx})=>{
+  const gateway=v125ForTx(tx);
+  const answers=await Promise.all(Array.from({length:16},()=>gateway.execute(request())));
+  assert.equal(answers.filter(x=>x.ok).length,1);
+  assert.equal(answers.filter(x=>!x.ok).length,15);
+  assert.deepEqual(await count(v125Hash(EVENT_A)),{ledger:1,business:1});
+ });
+});
+test('V125 PG17: revocation before final session SELECT rolls back BOTH effects',async()=>{
+ await addSession(SID1);
+ await withFixture(async({tx})=>{
+  const gateway=v125ForTx(tx);
+  assert.deepEqual(await gateway.execute(request()),denied);
+  assert.deepEqual(await count(v125Hash(EVENT_A)),{ledger:0,business:0});
+ },{hooks:{afterBusiness:async()=>removeSession(SID1)}});
+});
+test('V125 PG17: an untrusted event ID cannot reach reader or business writer',async()=>{
+ await addSession(SID1);
+ const stamp=now()-10,issuer=new Map([[REF,proofV125(USER,SID1,REF,
+  '99999999-9999-1999-8999-999999999999',stamp)]]);
+ await withFixture(async({tx,state,writer})=>{
+  const gateway=v125ForTx(tx,{issuer});
+  assert.deepEqual(await gateway.execute(request()),denied);
+  assert.equal(state.authChecks,0);
+  assert.equal(writer.snapshot().checkedOut,0);
+  assert.deepEqual(await count(v125Hash(EVENT_A)),{ledger:0,business:0});
  });
 });
