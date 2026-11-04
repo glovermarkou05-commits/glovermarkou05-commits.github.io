@@ -61,6 +61,23 @@ test('synthetic auth schema table has no public role USAGE and private columns d
   await assert.rejects(c.query('DELETE FROM auth.sessions'),e=>e.code==='42501');
  }finally{c.release(true);await pool.end();}
 });
+test('QA RLS parity: column grants without Auth session SELECT policy deny even a valid row',async()=>{
+ const sid=id(100);
+ await put(sid);
+ const meta=await adminSql("SELECT relrowsecurity AS enabled,relforcerowsecurity AS forced FROM pg_class WHERE oid='auth.sessions'::regclass");
+ assert.deepEqual(meta.rows[0],{enabled:true,forced:true});
+ const p=await adminSql("SELECT count(*)::int AS n FROM pg_policies WHERE schemaname='auth' AND tablename='sessions'");
+ assert.equal(p.rows[0].n,0);
+ await withReader(async({service})=>{
+  assert.equal(await service.readPrimarySession({subject:USER,sessionId:sid}),null);
+ });
+ // This temporary policy is ONLY for fake auth.sessions in disposable PG17.
+ // DO NOT repeat on Supabase-managed auth.sessions without independent DBA review.
+ await adminSql("CREATE POLICY v122_lab_reader_select ON auth.sessions FOR SELECT TO mg_v122_ci_auth_reader USING (true)");
+ await withReader(async({service})=>{
+  assert.equal((await service.readPrimarySession({subject:USER,sessionId:sid}))?.active,true);
+ });
+});
 test('real PG17 parameterized session lookup reads only three allowed columns',async()=>{
  const sid=id(101);
  await put(sid);

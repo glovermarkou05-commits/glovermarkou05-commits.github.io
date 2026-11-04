@@ -82,6 +82,10 @@ jobs:
             PASSWORD 'v122-synthetic-reader-fixture';
           GRANT USAGE ON SCHEMA auth TO mg_v122_ci_auth_reader;
           GRANT SELECT (id,user_id,not_after) ON auth.sessions TO mg_v122_ci_auth_reader;
+          ALTER TABLE auth.sessions ENABLE ROW LEVEL SECURITY;
+          ALTER TABLE auth.sessions FORCE ROW LEVEL SECURITY;
+          -- IMPORTANT: replicate Supabase QA's zero-policy private Auth sessions first.
+          -- A temporary policy will be created only AFTER a negative CI test.
           SQL
       - name: Real PG17 row-level existence and least-privilege role checks
         env:
