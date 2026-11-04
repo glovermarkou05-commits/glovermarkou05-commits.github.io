@@ -106,7 +106,7 @@ En el proyecto **MG WEB STUDIO AUTH QA**, referencia `tbfhiqkivsoeuudlpkgi`, una
 ### Plantilla para la persona revisora (NO completada)
 
 - Revisor/a y afiliación: **POR DESIGNAR**
-- Usuario GitHub para notificación: **POR DESIGNAR**
+- Canal de entrega del dictamen: **PDF o documento firmado, revisado fuera de GitHub; la persona revisora no necesita cuenta GitHub**. El propietario puede adjuntarlo o enlazarlo desde el Issue #8, sin incluir datos ni secretos sensibles.
 - Relación con autor/ejecutor: **POR VALIDAR**
 - Fecha, SHA del PR y alcance inspeccionado: **POR COMPLETAR**
 - Dictamen sobre DDL, privacidad, RLS, Auth, red y retención: **SIN DICTAMEN**
@@ -117,10 +117,12 @@ En el proyecto **MG WEB STUDIO AUTH QA**, referencia `tbfhiqkivsoeuudlpkgi`, una
 
 ## 6. Procedimiento concreto para avanzar
 
-1. Designar una **persona diferente del desarrollador/ejecutor** con experiencia en PostgreSQL/Supabase y seguridad, registrándola en [Issue #8](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/issues/8). Sin una identidad verificada, no inventar un nombre ni una firma.
-2. Compartir el PR #7 en borrador, este expediente y la matriz V95. El revisor debe revisar específicamente la confianza de `readPrimarySession`, la revocación entre última comprobación y `COMMIT`, la exposición Data API y el modelo `NOLOGIN`/pool.
+1. Identificar una **persona real y diferente del desarrollador/ejecutor** con experiencia en PostgreSQL/Supabase y seguridad. **No hace falta otra cuenta GitHub**: podrá leer el expediente exportado y entregar un dictamen fechado y firmado fuera de GitHub. El propietario podrá registrar su referencia o adjuntarlo en [Issue #8](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/issues/8), ocultando datos personales innecesarios. Si todavía no existe esta persona, la revisión sigue **PENDIENTE**; no inventar revisor, firma ni aprobación.
+2. Compartir el PR #7 en borrador (solo lectura), este expediente y la matriz V95 mediante enlaces o copia del material necesario. El revisor externo puede trabajar sin acceso de escritura ni credenciales Supabase. Debe evaluar especialmente la confianza de `readPrimarySession`, la carrera entre revocación y `COMMIT`, la exposición Data API y el modelo `NOLOGIN`/pool.
 3. Pedir dictamen escrito `APPROVE`, `REQUEST_CHANGES` o `NEEDS_EVIDENCE` **para el alcance de QA**, con requisitos y SHA revisados. No convertir ese dictamen en `PASS` V67 automáticamente.
 4. Solo cuando A–F estén satisfechos y el propietario autorice por separado G, preparar una ejecución controlada **solo en QA**. Nunca ejecutar SQL de laboratorio como migración productiva.
 5. Mantener el PR #7 en `draft` y producción `NO_GO` hasta una evaluación independiente y autorización operacional posteriores.
+
+**Alternativa mientras no haya revisor:** continuar únicamente auditoría estática, ensayos sintéticos y preparación de documentación. Un autochequeo del propietario o una revisión con IA puede ayudar a identificar problemas, pero **no sustituye el dictamen humano independiente** exigido para levantar el bloqueo actual de V67/producción. Crear una segunda cuenta propia de GitHub tampoco constituye independencia.
 
 **Resultado de este paquete:** documentación suficiente para solicitar revisión, **no autorización para SQL ni despliegue**.
