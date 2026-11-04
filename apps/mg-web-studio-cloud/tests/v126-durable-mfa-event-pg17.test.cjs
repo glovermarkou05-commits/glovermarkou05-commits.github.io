@@ -496,14 +496,11 @@ test('V130 PG17: invalid signed claims deny persistence and consume pending chal
   assert.equal(await countRows(),0);
  });
 });
-test('V130 PG17: mismatched private issuer connection fails closed after Auth success',async()=>{
+test('V130 PG17: mixed QA issuer and CI reader are rejected before any Auth challenge',async()=>{
  await withFixture(async({issuer,reader})=>{
-  const {flow}=v130Composition({issuer,reader,
-   expectedIssuerRole:'mg_qa_mfa_receipt_issuer'});
-  assert.equal((await flow.begin({factorId:V130_FACTOR})).ok,true);
-  assert.equal((await flow.confirm({proofReference:REF,code:'123456'})).ok,false);
+  assert.throws(()=>v130Composition({issuer,reader,
+   expectedIssuerRole:'mg_qa_mfa_receipt_issuer'}),TypeError);
   assert.equal(await countRows(),0);
-  assert.equal(await flow.readTrustedVerifiedEvent(request()),null);
  });
 });
 test('V130 PG17: verified durable receipt goes through existing one-time business ledger',async()=>{
