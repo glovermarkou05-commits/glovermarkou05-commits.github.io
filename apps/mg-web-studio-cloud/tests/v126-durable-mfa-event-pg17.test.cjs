@@ -21,6 +21,7 @@ const {createV125UniqueVerificationGateway}=
  require('../server/v125-unique-verification-gateway.cjs');
 const {createV126V2OnlySensitiveRoute}=require('../server/v126-v2-only-sensitive-route.cjs');
 const {createV130PrivateVerifiedMfaComposition}=require('../server/v130-private-verified-mfa-composition.cjs');
+const {createV132AuthServerSessionGate,QA_ISSUER}=require('../server/v132-auth-server-session-gate.cjs');
 const {createV118ScopedLabWriterPool}=
  require('../qa/v118-scoped-writer-pool.cjs');
 const {createV119AtomicBusinessLab}=
@@ -85,12 +86,12 @@ async function authSession(present=true){
  if(present)await sql('INSERT INTO auth.sessions(id,user_id,not_after,private_refresh_token) VALUES ($1,$2,NULL,$3)',[SID,USER,'NONREADABLE']);
  else await sql('DELETE FROM auth.sessions WHERE id=$1',[SID]);
 }
-function transaction({hooks={}}={}){
+function transaction({hooks={},sessionReader}={}){
  const raw=login('mg_v118_ci_backend',process.env.V126_WRITER_PWD);
  const auth=login('mg_v122_ci_auth_reader',process.env.V126_AUTH_READER_PWD);
  const writer=createV118ScopedLabWriterPool(raw);
  const reader=createV122PrivateAuthSessionRowReader({pool:auth,trustedTokenExpiresAtSec:now()+120,nowSec:now});
- const tx=createV119AtomicBusinessLab({pool:writer,readPrimarySession:reader.readPrimarySession,
+ const tx=createV119AtomicBusinessLab({pool:writer,readPrimarySession:sessionReader||reader.readPrimarySession,
   authorizeResource:async a=>a.actorId===USER&&a.organizationId===ORG&&a.siteId===SITE&&a.action==='publish',
   hooks,clock:now});
  return {tx,writer,async close(){await Promise.all([raw.end(),auth.end()]);}};
@@ -530,5 +531,64 @@ test('V130 PG17: session revoked after challenge prevents receipt and business e
   revoked=true;
   assert.equal((await flow.confirm({proofReference:REF,code:'123456'})).ok,false);
   assert.equal(await countRows(),0);
+ });
+});
+
+function v132AuthFixture(){
+ let revoked=false,users=0;
+ const token='SIGNED-INITIAL-AAL1-JWT-SYNTHETIC';
+ const auth={
+  async getClaims(t){
+   assert.equal(t,token);
+   return {data:{claims:{
+    iss:QA_ISSUER,aud:'authenticated',aal:'aal1',sub:USER,session_id:SID,
+    exp:now()+120,iat:now()-20
+   }},error:null};
+  },
+  async getUser(t){
+   assert.equal(t,token);users++;
+   return revoked?{data:{user:null},error:{message:'revoked'}}:
+    {data:{user:{id:USER}},error:null};
+  }
+ };
+ const gate=createV132AuthServerSessionGate({auth,accessToken:token,nowSec:now});
+ return {gate,revoke(){revoked=true;},checks:()=>users};
+}
+test('V132 plus V130/V125/V119: Auth server confirmation avoids managed auth.sessions DB read',async()=>{
+ const f=v132AuthFixture(),ctx=await f.gate.authenticate();
+ assert.ok(ctx?.actor);
+ // An auth.sessions row is NOT created. The app avoids managed Auth RLS entirely.
+ await withFixture(async({issuer,reader})=>{
+  const {flow}=v130Composition({issuer,reader,sessionReader:ctx.readActiveSession});
+  assert.equal((await flow.begin({factorId:V130_FACTOR})).ok,true);
+  assert.equal((await flow.confirm({proofReference:REF,code:'123456'})).ok,true);
+  const e=await flow.readTrustedVerifiedEvent(request());
+  const trans=transaction({sessionReader:ctx.readActiveSession});
+  try{
+   assert.deepEqual(await gateway(flow,trans.tx).execute(gatewayRequest()),PASS);
+   assert.deepEqual(await ledger(hmac(e.eventId)),{ledger:1,business:1});
+   assert.ok(f.checks()>=8,'Auth user checked repeatedly before business COMMIT');
+   const absent=await sql('SELECT count(*)::int AS n FROM auth.sessions');
+   assert.equal(absent.rows[0].n,0);
+  }finally{await trans.close();}
+ });
+});
+test('V132 plus V119: Auth server revocation during PG17 transaction causes rollback',async()=>{
+ const f=v132AuthFixture(),ctx=await f.gate.authenticate();
+ assert.ok(ctx);
+ await withFixture(async({issuer,reader})=>{
+  const {flow}=v130Composition({issuer,reader,sessionReader:ctx.readActiveSession});
+  assert.equal((await flow.begin({factorId:V130_FACTOR})).ok,true);
+  assert.equal((await flow.confirm({proofReference:REF,code:'123456'})).ok,true);
+  const e=await flow.readTrustedVerifiedEvent(request());
+  const trans=transaction({
+   sessionReader:ctx.readActiveSession,
+   hooks:{afterBusiness:async()=>f.revoke()}
+  });
+  try{
+   assert.deepEqual(await gateway(flow,trans.tx).execute(gatewayRequest()),DENY);
+   assert.deepEqual(await ledger(hmac(e.eventId)),{ledger:0,business:0});
+   assert.equal(await countRows(),1);
+  }finally{await trans.close();}
  });
 });

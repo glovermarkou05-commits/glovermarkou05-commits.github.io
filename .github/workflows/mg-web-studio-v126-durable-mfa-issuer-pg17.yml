@@ -10,6 +10,7 @@ on:
       - apps/mg-web-studio-cloud/server/v126-durable-mfa-event-store.cjs
       - apps/mg-web-studio-cloud/server/v130-private-verified-mfa-composition.cjs
       - apps/mg-web-studio-cloud/server/v127-supabase-native-mfa-bridge.cjs
+      - apps/mg-web-studio-cloud/server/v132-auth-server-session-gate.cjs
       - apps/mg-web-studio-cloud/server/v126-v2-only-sensitive-route.cjs
       - apps/mg-web-studio-cloud/tests/v126-durable-mfa-event-pg17.test.cjs
       - apps/mg-web-studio-cloud/server/v125-unique-verification-gateway.cjs

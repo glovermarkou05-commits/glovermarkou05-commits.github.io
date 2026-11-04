@@ -32,8 +32,10 @@ function createV119AtomicBusinessLab({pool,readPrimarySession,authorizeResource,
   try{result=await readPrimarySession(Object.freeze({subject:data.subject,sessionId:data.sessionId}));}
   catch{return false;}
   const now=tick();
-  return now!==null&&exact(result,['active','checkedAtSec','expiresAtSec','primaryRead','revocationChecked','sessionId','subject'])&&
-   result.active===true&&result.primaryRead===true&&result.revocationChecked===true&&
+  const dbProof=exact(result,['active','checkedAtSec','expiresAtSec','primaryRead','revocationChecked','sessionId','subject'])&&result.primaryRead===true;
+  const authProof=exact(result,['active','authServerConfirmed','checkedAtSec','expiresAtSec','revocationChecked','sessionId','subject'])&&result.authServerConfirmed===true;
+  return now!==null&&(dbProof||authProof)&&
+   result.active===true&&result.revocationChecked===true&&
    result.subject===data.subject&&result.sessionId===data.sessionId&&
    nowValid(result.checkedAtSec)&&result.checkedAtSec<=now&&now-result.checkedAtSec<=2&&
    nowValid(result.expiresAtSec)&&result.expiresAtSec>now;
