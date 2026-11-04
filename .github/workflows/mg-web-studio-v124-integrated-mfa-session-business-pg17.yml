@@ -1,4 +1,4 @@
-name: MG Web Studio V124 Combined MFA Auth Business PG17 Disposable
+name: MG Web Studio V124-V125 MFA Unique Event Integrated PG17
 
 on:
   pull_request:
@@ -9,6 +9,8 @@ on:
       - .github/workflows/mg-web-studio-v124-integrated-mfa-session-business-pg17.yml
       - apps/mg-web-studio-cloud/tests/v124-integrated-mfa-session-business-pg17.test.cjs
       - apps/mg-web-studio-cloud/server/v121-trusted-mfa-proof-gateway.cjs
+      - apps/mg-web-studio-cloud/server/v125-unique-verification-gateway.cjs
+      - apps/mg-web-studio-cloud/tests/v125-unique-verification-gateway.test.cjs
       - apps/mg-web-studio-cloud/server/v122-private-auth-session-row-reader.cjs
       - apps/mg-web-studio-cloud/qa/v119-atomic-business-lab.cjs
       - apps/mg-web-studio-cloud/qa/v118-scoped-writer-pool.cjs
@@ -54,6 +56,10 @@ jobs:
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
         with:
           node-version: '22'
+      - name: Test V125 event uniqueness without network or database
+        run: |
+          set -euo pipefail
+          node --require ./server/native-network-guard-v70.cjs --test --test-concurrency=1 tests/v125-unique-verification-gateway.test.cjs
       - name: Integrity-locked PostgreSQL client installation
         run: |
           set -euo pipefail
