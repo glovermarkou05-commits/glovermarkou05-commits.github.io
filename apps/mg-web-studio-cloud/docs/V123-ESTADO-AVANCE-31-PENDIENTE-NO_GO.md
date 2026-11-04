@@ -49,26 +49,28 @@ Sin ensayo en V95: **OBS-03** (retención y seguridad de registros), **OBS-04** 
 
 **Actualización de la barra:** se mantiene **69% técnico estimado / 31% pendiente** hasta que exista una matriz V95 revisada con nuevas evidencias; aprobación V67 continúa **0/32 (0%)**, producción **NO_GO**.
 
-## Evidencia visual de Data API — revisión solicitada (2026-11-03 Ecuador)
+## Evidencia visual de Data API — comprobación de esquemas y permisos (2026-11-03 Ecuador)
 
-El usuario aportó dos capturas del panel **API de datos → Ajustes** tras la solicitud de revisar `MG WEB STUDIO AUTH QA`. Son recortes de interfaz que **no muestran el ID del proyecto ni la lista desplegada de nombres de esquemas**, por lo que solo se documentan los valores visibles.
+El usuario compartió capturas del panel **API de datos → Ajustes**. Después envió una captura **con el selector desplegado**, que identifica los dos esquemas efectivamente elegidos para la API. Una consulta separada de solo lectura al catálogo PostgreSQL del proyecto QA `tbfhiqkivsoeuudlpkgi` confirmó sus nombres reales.
 
-| Opción Data API | Valor visible | Alcance de comprobación |
+| Comprobación | Observación | Procedencia |
 | --- | --- | --- |
-| Exponer automáticamente nuevas tablas | **OFF / desactivado** | Confirmación visual favorable; no sustituye revisión de grants por rol |
-| Esquemas expuestos | **2 de 2** seleccionados | **PENDIENTE: identificar sus nombres** al abrir el selector; no confundir con búsqueda |
-| Tablas expuestas | `No tables available` | No existen tablas seleccionables visibles en el control en esta captura; no acredita estado futuro de objetos |
-| Funciones expuestas | `No functions available` | No existen funciones seleccionables visibles en este control |
-| Ruta de búsqueda adicional | `public`, `extensions` | No prueba que esos sean los dos esquemas **expuestos** |
-| Máximo de filas | `1000` | Límite visual |
-| Tamaño de piscina de conexiones | `Configurado automáticamente` | No valida topología ni TLS de backend |
-| Reforzar la API de datos | Se muestra acción `Reforzar la API de datos` | **No accionada**; no inferir que cambió el esquema expuesto |
+| Esquemas expuestos | `graphql_public` y `public` (traducción visual «graphql_público», «público») | Selector mostrado por usuario + `pg_namespace` |
+| Esquema `auth` en Data API | **No seleccionado** | Captura del selector (aunque existe en catálogo) |
+| Esquema `mg_auth_ledger` | **No seleccionado y ausente en catálogo** | Captura + `pg_namespace` |
+| Exponer automáticamente nuevas tablas | **Desactivado (OFF)** | Captura anterior del usuario |
+| Tablas / funciones seleccionables | Controles muestran «No tables available» / «No functions available» | Captura anterior, instante observado |
+| Ruta de búsqueda adicional | `public` y `extensions` | Captura (no confundir con lista de esquemas expuestos) |
+| Máximo de filas | `1000` | Captura |
+| Pool de Data API | Configurado automáticamente | Captura |
+| Roles `anon`, `authenticated` y `service_role` frente a `auth.sessions` | `has_table_privilege(...,'SELECT'/'INSERT'/'UPDATE')=false` para los 3 roles | Consulta SQL de **solo lectura** a permisos efectivos |
+| `USAGE` de esos roles en esquema `auth` | `true` para los 3, `CREATE=false` | Catálogo PostgreSQL; **USAGE no equivale a exposición Data API ni permiso SELECT sobre la tabla** |
 
-**Decisión provisional:** no cambiar opciones ni pulsar Guardar. La desactivación de exposición automática reduce riesgos de nuevas tablas, pero **no constituye aislamiento demostrado**: falta conocer los dos nombres y revisar permisos/RLS de todos los objetos eventualmente expuestos. El esquema privado futuro `mg_auth_ledger` **NO debe figurar entre esquemas públicos de la Data API**. Si los nombres muestran `auth` o `mg_auth_ledger`, detener cualquier paso siguiente y solicitar revisión especializada antes de cambiar nada.
+**Conclusión puntual:** la combinación de esquemas observada no expone `auth` a través de la configuración Data API; los roles de API citados no tienen `SELECT` directo sobre `auth.sessions` según el catálogo del momento. **No** afirmar aislamiento futuro de cualquier nueva tabla ni seguridad integral de RLS/grants. Antes de crear `mg_auth_ledger`, un revisor DBA/Seguridad debe confirmar el aislamiento y permisos finales. **No se realizaron escrituras ni se pulsó Guardar.**
 
-**Siguiente evidencia mínima:** abrir **Esquemas expuestos** y compartir únicamente una captura del menú desplegado con los dos nombres. **No compartir claves, datos personales ni tokens.** No hace falta repetir las capturas de sesiones Auth ya recibidas.
+**Próximo bloqueo real:** no hacen falta más capturas de este selector. Continúan pendientes dictamen independiente de seguridad, principal backend privado y configuración TLS, autorización explícita solo QA para DDL y comprobación real del flujo MFA/revocación.
 
-**Barra sin modificación por evidencia visual parcial:** **69% técnico estimado / 31% pendiente**, baseline V95. **V67 0/32 formal; producción NO_GO.** No hubo SQL, cambios de Data API, roles, migraciones, merge ni publicación.
+**Barra:** mantiene **69% avance técnico estimado / 31% pendiente** por baseline V95 sin reetiquetar controles. **V67 0/32 aprobados; producción NO_GO; PR #7 en borrador**.
 
 ## Evidencias técnicas comprobadas anteriormente
 
