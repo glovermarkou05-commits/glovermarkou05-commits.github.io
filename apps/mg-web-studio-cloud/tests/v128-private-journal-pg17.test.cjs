@@ -165,11 +165,18 @@ test('JWT adapter calls official getClaims and returns only signed AAL2 identity
 test('JWT adapter fails closed for wrong issuer, audience, signature errors or AAL1',async()=>{
  for(const bad of [claims({iss:'https://evil.example/auth/v1'}),
   claims({aud:'anon'}),claims({aal:'aal1'}),
-  claims({sub:OTHER}),claims({session_id:'not-a-uuid'}),claims({exp:NOW}),
+  claims({session_id:'not-a-uuid'}),claims({exp:NOW}),
   claims({nbf:NOW+1}),claims({iat:NOW+90})]){
   assert.equal(await getVerifier({response:bad}).verifier.verifySignedJwt('signed-token'),null);
  }
  assert.equal(await getVerifier({error:{message:'invalid signature'}}).verifier.verifySignedJwt('signed-token'),null);
+});
+test('JWT adapter reports a verified different subject; V127 must enforce actor binding',async()=>{
+ const f=getVerifier({response:claims({sub:OTHER})});
+ const verified=await f.verifier.verifySignedJwt('signed-token');
+ assert.equal(verified.sub,OTHER);
+ assert.equal(verified.session_id,SID);
+ // This valid subject does not authorize the original USER's operation.
 });
 test('JWT adapter refuses missing or malformed token and untrusted issuer configuration',async()=>{
  const f=getVerifier();
