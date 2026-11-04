@@ -15,6 +15,10 @@ on:
       - apps/mg-web-studio-cloud/server/v128-supabase-claims-verifier.cjs
       - apps/mg-web-studio-cloud/server/v126-durable-mfa-event-store.cjs
       - apps/mg-web-studio-cloud/server/v127-supabase-native-mfa-bridge.cjs
+      - apps/mg-web-studio-cloud/qa/v133-private-qa-roles-disposable-only.sql
+      - apps/mg-web-studio-cloud/qa/v133-private-qa-rollback-disposable-only.sql
+      - apps/mg-web-studio-cloud/tests/v133-private-qa-pg17-real.test.cjs
+      - apps/mg-web-studio-cloud/qa/v116-pg-driver/package-lock.json
 
 permissions:
   contents: read
@@ -47,3 +51,83 @@ jobs:
           echo "Synthetic injected official Supabase Auth interfaces and PG pools only."
           echo "No actual QA users, schema, roles or networks touched."
           echo "PR #7 DRAFT; V67 0/32; production NO_GO."
+  disposable-role-and-rls-proof:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: qa_ledger
+          POSTGRES_PASSWORD: synthetic-v133-admin
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U postgres -d qa_ledger"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Pinned checkout, no retained credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Node.js 22 pinned
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Locked PostgreSQL driver
+        run: |
+          set -euo pipefail
+          npm ci --prefix qa/v116-pg-driver --ignore-scripts --no-audit --no-fund
+      - name: Install strictly disposable QA-like non-admin roles, FORCE RLS, private tables
+        env:
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger < qa/v133-private-qa-roles-disposable-only.sql
+      - name: Run V133 against actual ephemeral PostgreSQL 17 with QA-named roles
+        env:
+          CI: 'true'
+          NODE_PATH: ${{ github.workspace }}/apps/mg-web-studio-cloud/qa/v116-pg-driver/node_modules
+          V133_DISPOSABLE_ONLY: '1'
+          V133_HOST: '127.0.0.1'
+          V133_PORT: ${{ job.services.postgres.ports[5432] }}
+          V133_DB: qa_ledger
+          V133_ADMIN_PASSWORD: synthetic-v133-admin
+          V133_JOURNAL_PASSWORD: synthetic-v133-journal
+          V133_ISSUER_PASSWORD: synthetic-v133-issuer
+          V133_READER_PASSWORD: synthetic-v133-reader
+        run: |
+          set -euo pipefail
+          node --test --test-concurrency=1 tests/v133-private-qa-pg17-real.test.cjs
+      - name: Delete synthetic evidence for permitted empty rollback IN CI ONLY
+        env:
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger <<'SQL'
+          DELETE FROM mg_qa_mfa_receipts.verified_mfa_events;
+          DELETE FROM mg_qa_mfa_challenges.challenge_journal;
+          SQL
+      - name: Exercise RESTRICT-only empty rollback in disposable PG17
+        env:
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger < qa/v133-private-qa-rollback-disposable-only.sql
+          docker exec -i "$PG_CONTAINER" psql -X -tA -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "SELECT to_regnamespace('mg_qa_mfa_receipts') IS NULL AND to_regnamespace('mg_qa_mfa_challenges') IS NULL"
+      - name: Guardrail
+        if: always()
+        run: |
+          echo "Only disposable qa_ledger PG17. Never QA project tbfhiqkivsoeuudlpkgi."
+          echo "Synthetic login passwords only; no real Auth user or signed JWT."
+          echo "No actual QA DDL, migration, external review or production authorization. PR DRAFT, V67 0/32."
