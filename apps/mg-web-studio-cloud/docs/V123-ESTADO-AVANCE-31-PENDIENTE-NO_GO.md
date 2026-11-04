@@ -49,6 +49,27 @@ Sin ensayo en V95: **OBS-03** (retención y seguridad de registros), **OBS-04** 
 
 **Actualización de la barra:** se mantiene **69% técnico estimado / 31% pendiente** hasta que exista una matriz V95 revisada con nuevas evidencias; aprobación V67 continúa **0/32 (0%)**, producción **NO_GO**.
 
+## Evidencia visual de Data API — revisión solicitada (2026-11-03 Ecuador)
+
+El usuario aportó dos capturas del panel **API de datos → Ajustes** tras la solicitud de revisar `MG WEB STUDIO AUTH QA`. Son recortes de interfaz que **no muestran el ID del proyecto ni la lista desplegada de nombres de esquemas**, por lo que solo se documentan los valores visibles.
+
+| Opción Data API | Valor visible | Alcance de comprobación |
+| --- | --- | --- |
+| Exponer automáticamente nuevas tablas | **OFF / desactivado** | Confirmación visual favorable; no sustituye revisión de grants por rol |
+| Esquemas expuestos | **2 de 2** seleccionados | **PENDIENTE: identificar sus nombres** al abrir el selector; no confundir con búsqueda |
+| Tablas expuestas | `No tables available` | No existen tablas seleccionables visibles en el control en esta captura; no acredita estado futuro de objetos |
+| Funciones expuestas | `No functions available` | No existen funciones seleccionables visibles en este control |
+| Ruta de búsqueda adicional | `public`, `extensions` | No prueba que esos sean los dos esquemas **expuestos** |
+| Máximo de filas | `1000` | Límite visual |
+| Tamaño de piscina de conexiones | `Configurado automáticamente` | No valida topología ni TLS de backend |
+| Reforzar la API de datos | Se muestra acción `Reforzar la API de datos` | **No accionada**; no inferir que cambió el esquema expuesto |
+
+**Decisión provisional:** no cambiar opciones ni pulsar Guardar. La desactivación de exposición automática reduce riesgos de nuevas tablas, pero **no constituye aislamiento demostrado**: falta conocer los dos nombres y revisar permisos/RLS de todos los objetos eventualmente expuestos. El esquema privado futuro `mg_auth_ledger` **NO debe figurar entre esquemas públicos de la Data API**. Si los nombres muestran `auth` o `mg_auth_ledger`, detener cualquier paso siguiente y solicitar revisión especializada antes de cambiar nada.
+
+**Siguiente evidencia mínima:** abrir **Esquemas expuestos** y compartir únicamente una captura del menú desplegado con los dos nombres. **No compartir claves, datos personales ni tokens.** No hace falta repetir las capturas de sesiones Auth ya recibidas.
+
+**Barra sin modificación por evidencia visual parcial:** **69% técnico estimado / 31% pendiente**, baseline V95. **V67 0/32 formal; producción NO_GO.** No hubo SQL, cambios de Data API, roles, migraciones, merge ni publicación.
+
 ## Evidencias técnicas comprobadas anteriormente
 
 - [V116: 11/11 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41584359140)
