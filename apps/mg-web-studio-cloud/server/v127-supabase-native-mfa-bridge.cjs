@@ -108,7 +108,7 @@ function createV127NativeMfaBridge({auth,actor,readActiveSession,journal,
     assertions.session_id!==sessionId||!secureTime(assertions.exp)||
     at===null||assertions.exp<=at||!await sessionOk())return NO;
    const receipt=Object.freeze({
-    proofReference:claim.proofReference,receiptId:stableReceiptId(claim.challengeId),
+    checkedAtSec:at,proofReference:claim.proofReference,receiptId:stableReceiptId(claim.challengeId),
     subject,sessionId,method:claim.method,verifiedAtSec:at,
     factorOwnershipVerified:true,provenanceReviewed:true,
     sessionBoundByAuthorizedFlow:true,verified:true
