@@ -1,0 +1,47 @@
+name: MG Web Studio V121 Trusted MFA Proof HMAC Gate Offline
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v121-trusted-proof-hmac-offline.yml
+      - apps/mg-web-studio-cloud/server/v121-trusted-mfa-proof-gateway.cjs
+      - apps/mg-web-studio-cloud/tests/v121-trusted-mfa-proof-gateway.test.cjs
+      - apps/mg-web-studio-cloud/server/v109-atomic-mfa-redemption.cjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-webstudio-v121-pr7-offline
+  cancel-in-progress: false
+
+jobs:
+  trusted-proof-binding-no-db:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Pinned checkout without credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Pinned Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Verify HMAC derivation and untrusted caller rejection with native network blocked
+        run: |
+          set -euo pipefail
+          node --require ./server/native-network-guard-v70.cjs --test --test-concurrency=1 tests/v121-trusted-mfa-proof-gateway.test.cjs
+      - name: Retain explicit no-deployment restrictions
+        run: |
+          echo 'V121 is a server-only OFFLINE composition contract with a synthetic trusted provider.'
+          echo 'No Supabase QA, no live Auth sessions, no business deployment, no user secrets.'
+          echo 'PR #7 draft, no merge, V67 32 PENDING / 0 PASS, production NO_GO.'
