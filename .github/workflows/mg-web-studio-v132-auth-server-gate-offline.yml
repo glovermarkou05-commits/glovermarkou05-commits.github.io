@@ -10,6 +10,7 @@ on:
       - apps/mg-web-studio-cloud/server/v132-auth-server-session-gate.cjs
       - apps/mg-web-studio-cloud/server/v127-supabase-native-mfa-bridge.cjs
       - apps/mg-web-studio-cloud/tests/v132-auth-server-session-gate.test.cjs
+      - apps/mg-web-studio-cloud/qa/comprobar-revocacion-auth-v132-qa.ps1
 
 permissions:
   contents: read
@@ -36,6 +37,10 @@ jobs:
         run: |
           set -euo pipefail
           node --require ./server/native-network-guard-v70.cjs --test --test-concurrency=1 tests/v132-auth-server-session-gate.test.cjs
+      - name: Check PowerShell QA probe syntax without executing any Auth requests
+        run: |
+          set -euo pipefail
+          pwsh -NoProfile -Command '$tokens=$null; $errors=$null; [System.Management.Automation.Language.Parser]::ParseFile("qa/comprobar-revocacion-auth-v132-qa.ps1",[ref]$tokens,[ref]$errors) > $null; if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }; Write-Host "QA_PROBE_PARSE_ONLY_PASS: no network call or signout executed"'
       - name: Guardrail
         if: always()
         run: |
