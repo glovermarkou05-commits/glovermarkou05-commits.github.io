@@ -1,3 +1,13 @@
+## Cierre del ensayo V132 — limpieza verificada el 4 de noviembre de 2026
+
+**`CLEANUP=CONFIRMED`.** Tras recibir la confirmación de eliminación del usuario temporal, una consulta **solo lectura** a MG WEB STUDIO AUTH QA verificó **0 usuarios, 0 sesiones, 0 factores MFA y 0 desafíos MFA**. No volver a ejecutar el ensayo V132.
+
+El resultado previamente comunicado `GETUSER_RECHAZA_TOKEN_TRAS_LOGOUT` es evidencia favorable para ese intento de QA, pero el script agrupa HTTP 401/403 y no demuestra revocación atómica entre `getUser` y `COMMIT`. No se aplicaron DDL, roles ni políticas RLS. PR #7 continúa en borrador, V67 formal 0/32 y producción NO_GO.
+
+**Observación:** el asesor de seguridad muestra la advertencia `auth_leaked_password_protection` deshabilitada; pendiente revisar configuración en una etapa distinta.
+
+---
+
 ## Resultado de la única prueba real — 4 de noviembre de 2026
 
 El propietario ejecutó la prueba de Windows contra `MG WEB STUDIO AUTH QA` y compartió únicamente:
