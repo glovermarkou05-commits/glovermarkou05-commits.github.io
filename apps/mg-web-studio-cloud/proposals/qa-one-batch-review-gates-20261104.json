@@ -71,10 +71,11 @@
     "qaOwnerAuthProbe": {
       "state": "AUTHORIZED_SCOPED_20261104",
       "approvedScope": "ONE temporary QA Auth account; password sign-in; one local signout; check getUser old JWT; remove test user after result; no DDL, no production, no merge",
-      "accountCreated": false,
-      "realProbeExecuted": false,
+      "accountCreated": true,
+      "realProbeExecuted": true,
       "cleanupConfirmed": false,
-      "credentialsShared": false
+      "credentialsShared": false,
+      "lastOutcome": "USER_REPORTED_GETUSER_REJECTS_OLD_JWT_AFTER_LOCAL_LOGOUT"
     }
   },
   "allowedAfterIndependentReviewAndExplicitQaApproval": [
@@ -94,9 +95,9 @@
   "blockers": [
     {
       "id": "AUTH_SESSIONS_RLS_P0",
-      "state": "MITIGATED_IN_CODE_OFFICIAL_AUTH_API_REAL_QA_UNVERIFIED",
+      "state": "REAL_QA_GETUSER_REVOCATION_SINGLE_TEST_PASS_CLEANUP_PENDING_NOT_LINEARIZABLE",
       "severity": "P0",
-      "detail": "V132 replaces direct managed auth.sessions SELECT with pinned QA official auth.getClaims(jwt)+fresh auth.getUser(jwt) per sensitive check, returning server-confirmed subject/session; V127 and fictional V119 accept this distinct evidence shape. 12/12 offline and 32/32 PG17 integration PASS. No Auth RLS/GRANT changes; requires genuine QA revoked-token/identity behavior test, DBA signoff and owner approval; post-check-to-COMMIT race unresolved."
+      "detail": "Owner-reported Windows HTTP Auth test: before local logout GET /user accepted; following local logout GET /user with old bearer was rejected 401/403 (script does not disclose which). Read-only QA counts immediately after: 1 user, 0 sessions, 0 MFA factors, 0 challenges. Positive evidence for one session at one instant, not a guarantee of revocation linearizability or proof of entire MFA integration. Test account deletion/cleanup pending; no SQL/production changes."
     },
     {
       "id": "AUTH_PROOF_LIVE",
@@ -132,6 +133,12 @@
       "id": "INDEPENDENT_SIGNOFF",
       "state": "OPEN",
       "detail": "No independent human review; passing CI is not a formal V67 pass"
+    },
+    {
+      "id": "AUTH_LEAKED_PASSWORD_PROTECTION",
+      "state": "ADVISOR_WARNING_REVIEW_SETTING",
+      "severity": "WARNING",
+      "detail": "Supabase Security Advisor currently reports auth_leaked_password_protection disabled; no settings modified. Enable after confirming plan and impact, separate from scope of revocation QA."
     }
   ],
   "testsPreviouslyVerified": [
@@ -225,6 +232,17 @@
       "result": "PASS",
       "run": 41861940527,
       "actualSupabaseAuth": false
+    },
+    {
+      "phase": "V132_REAL_QA_AUTH_REVOCATION",
+      "kind": "ownerExecutedSingleTemporaryQaAuthTokenProbe",
+      "result": "USER_REPORTED_GETUSER_REJECTED_OLD_TOKEN_AFTER_LOGOUT",
+      "responseCategory": "HTTP_401_OR_403",
+      "scriptVerifiedHash": "e72c31e11798e5e305c1944e188b4678706dfdb2",
+      "localScriptModification": "Relaxed qa substring check with explicit temporary-account confirmation; local change not independently inspected",
+      "realQa": true,
+      "cleanupConfirmed": false,
+      "authoritativeCrossTransactionRevocation": false
     }
   ],
   "releaseGates": {
@@ -235,8 +253,8 @@
     "mergeAuthorized": false,
     "qaSqlAuthorized": false,
     "qaAuthProbeAuthorized": true,
-    "qaAuthProbeExecuted": false,
-    "qaTemporaryUserCreated": false
+    "qaAuthProbeExecuted": true,
+    "qaTemporaryUserCreated": true
   },
   "technicalProgress": {
     "source": "V95",
@@ -315,5 +333,14 @@
       "dataApiGrantNeeded": false,
       "rollbackScopeForSessionReader": "NONE_BECAUSE_NO_QA_AUTH_SCHEMA_GRANT_PLANNED"
     }
+  },
+  "observedReadOnlyAfterAuthProbe": {
+    "date": "2026-11-04",
+    "qaUsers": 1,
+    "qaSessions": 0,
+    "qaFactors": 0,
+    "qaChallenges": 0,
+    "advisorWarning": "auth_leaked_password_protection disabled",
+    "productionImpacted": false
   }
 }

@@ -1,3 +1,22 @@
+## Resultado de la única prueba real — 4 de noviembre de 2026
+
+El propietario ejecutó la prueba de Windows contra `MG WEB STUDIO AUTH QA` y compartió únicamente:
+
+```text
+RESULTADO: GETUSER_RECHAZA_TOKEN_TRAS_LOGOUT.
+LIMITACION: esto NO demuestra revocacion atomica antes de COMMIT ni autoriza produccion.
+```
+
+**Interpretación:** el script había verificado primero `GET /auth/v1/user` con la sesión temporal y, tras `POST /auth/v1/logout?scope=local`, clasificó la consulta del **mismo JWT anterior** como respuesta 401 o 403. El código actual agrupa ambas respuestas, por lo que no se conoce el HTTP exacto. **Resultado favorable de un único ensayo real**, no una auditoría independiente, ni prueba de revocación linealizable entre consulta y COMMIT, ni garantía sobre JWT de otros dispositivos.
+
+**Verificación posterior de solo lectura**: 1 usuario QA, 0 sesiones, 0 factores/desafíos MFA. **Limpieza de usuario pendiente**. No hubo SQL de instalación, cambios a RLS, merge, ni producción.
+
+**Nueva alerta**: Supabase Security Advisor muestra `auth_leaked_password_protection` desactivada. Tratar como advertencia para futura revisión, sin alterar el entorno dentro del permiso de esta prueba.
+
+**Siguiente paso obligatorio para cerrar el ensayo:** propietario debe ir a Dashboard QA → Authentication → Users → seleccionar **únicamente el usuario temporal creado para este ensayo** → Delete user, confirmar su eliminación; después comprobar mediante consulta de solo lectura que QA vuelve a 0 usuarios y 0 sesiones. Si la interfaz permite otras opciones, no borrar otras cuentas.
+
+---
+
 # MG Web Studio — decisión única de QA para revocación de sesión
 
 **4 de noviembre de 2026, Ecuador.** Preparado para el propietario; todavía **NO EJECUTADO**.
