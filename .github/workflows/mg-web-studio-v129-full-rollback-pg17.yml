@@ -102,7 +102,14 @@ jobs:
           if docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger < proposals/v129-full-rollback-disposable-review-only.sql; then
             echo 'FAIL: nonempty ledger rollback was not blocked'; exit 1
           fi
-          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "SELECT CASE WHEN to_regclass('mg_v128_fictional.challenge_journal') IS NULL THEN 1/0 ELSE 1 END"
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger <<'SQL'
+          DO $
+          BEGIN
+            IF to_regclass('mg_v128_fictional.challenge_journal') IS NULL THEN
+              RAISE EXCEPTION 'V129_GUARD_INCORRECTLY_DROPPED_JOURNAL';
+            END IF;
+          END $;
+          SQL
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "DELETE FROM mg_auth_ledger.mfa_redemptions"
       - name: Refuse unfamiliar private objects and unexpected external dependencies
         env:
