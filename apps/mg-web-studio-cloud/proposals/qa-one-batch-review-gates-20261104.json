@@ -86,9 +86,9 @@
   "blockers": [
     {
       "id": "AUTH_SESSIONS_RLS_P0",
-      "state": "BLOCKING_IN_REAL_QA",
+      "state": "MITIGATED_IN_CODE_OFFICIAL_AUTH_API_REAL_QA_UNVERIFIED",
       "severity": "P0",
-      "detail": "Read-only QA pg_class/pg_policies: auth.sessions RLS enabled, 0 SELECT policies, owned by supabase_auth_admin; nonowner non-BYPASSRLS reader cannot see rows even with column SELECT grants. Requires independent DBA-approved supported alternative; do not add RLS policy or SECURITY DEFINER automatically. Disposable V122 parity 31/31 PASS, plus 27/27 role checks."
+      "detail": "V132 replaces direct managed auth.sessions SELECT with pinned QA official auth.getClaims(jwt)+fresh auth.getUser(jwt) per sensitive check, returning server-confirmed subject/session; V127 and fictional V119 accept this distinct evidence shape. 12/12 offline and 32/32 PG17 integration PASS. No Auth RLS/GRANT changes; requires genuine QA revoked-token/identity behavior test, DBA signoff and owner approval; post-check-to-COMMIT race unresolved."
     },
     {
       "id": "AUTH_PROOF_LIVE",
@@ -196,6 +196,20 @@
       "passed": 27,
       "run": 41842888611,
       "realQaChanged": false
+    },
+    {
+      "phase": "V132_AUTH_API",
+      "kind": "officialGetUserPlusGetClaimsContractMock",
+      "passed": 12,
+      "run": 41849141865,
+      "actualSupabaseAuth": false
+    },
+    {
+      "phase": "V132_TO_FICTIONAL_BUSINESS",
+      "kind": "getUserContractWithPG17DurableMfaLedgerRollback",
+      "passed": 32,
+      "run": 41849141097,
+      "actualSupabaseAuth": false
     }
   ],
   "releaseGates": {
@@ -261,13 +275,27 @@
       "realInstallation": false
     },
     "authSessionRls": {
-      "state": "P0_REVIEW_REQUIRED",
-      "realQaRls": true,
-      "realQaPolicyCount": 0,
-      "tableOwner": "supabase_auth_admin",
-      "ciNegativeRlsTestPassed": true,
-      "realQaSqlAuthorized": false,
-      "recommendation": "Independent DBA must choose supported authoritative session verification; do not auto-modify Supabase managed Auth RLS"
+      "state": "P0_CODE_ALTERNATIVE_AVAILABLE",
+      "originalRealQaRls": true,
+      "originalRealQaPolicyCount": 0,
+      "preferredSessionAuthority": "official_supabase_auth_getUser(jwt)_plus_verified_getClaims(jwt)",
+      "code": "server/v132-auth-server-session-gate.cjs",
+      "directAuthSessionsSelectRequiredForPreferredPath": false,
+      "approvedToDisableManagedAuthRls": false,
+      "actualQaRevocationTestPassed": false,
+      "linearizableRevocation": false,
+      "finalExternalDbaSignature": "PENDING",
+      "ownerApproval": "PENDING"
+    },
+    "preferredQaSessionDesign": {
+      "noDirectAuthSessionsReader": true,
+      "privateBackendOnly": true,
+      "avoidsManagedAuthRlsChange": true,
+      "reliesOnFreshGetUserPerSensitiveCheck": true,
+      "accessTokenAndActorBoundByServer": true,
+      "exposedPublicRoute": false,
+      "dataApiGrantNeeded": false,
+      "rollbackScopeForSessionReader": "NONE_BECAUSE_NO_QA_AUTH_SCHEMA_GRANT_PLANNED"
     }
   }
 }

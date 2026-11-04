@@ -6,6 +6,18 @@
 **Código congelado para la revisión:** commit [`65fae5d236656fd578f13cfe6b9aac4ea7953b7b`](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/commit/65fae5d236656fd578f13cfe6b9aac4ea7953b7b)  
 **Dictamen:** **SIN EMITIR — revisión independiente pendiente**. El autor del paquete **no puede autoconcederse** la firma externa.
 
+## V132 — alternativa oficial en código para evitar el bloqueo RLS, sin cambios en QA
+
+**Evidencias:** [V132 getClaims/getUser 12/12 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41849141865) · [V132→V130/V125/V119 PostgreSQL 17 32/32 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41849141097). [Informe técnico V132](V132-ALTERNATIVA-OFICIAL-AUTH-SIN-RLS-20261104.md).
+
+Supabase recomienda `auth.getUser(jwt)` para una consulta actualizada al servidor Auth cuando importa detectar fin de sesión; `getClaims` solo verifica firma/vencimiento. **V132 pide ambas comprobaciones para cada operación sensible, liga sujeto y `session_id` al JWT firmado y rechaza errores de red, sesión ajena o respuesta revocada.** Un token `aal1` puede iniciar el desafío MFA; V127 todavía exige `aal2` firmado al confirmar.
+
+**Decisión de diseño propuesta para QA:** sustituir la dependencia V122 de consulta directa a `auth.sessions` por V132. **No se requieren ni recomiendan nuevos GRANT, RLS policies, BYPASSRLS o `SECURITY DEFINER` sobre Auth administrado** para esta ruta. El componente antiguo V122 queda solo para análisis/CI; no desplegarlo como lector del esquema Auth.
+
+**Límite crítico:** se han utilizado dobles de `getUser` y `getClaims`; el comportamiento con sesión realmente revocada **no se ha verificado en Supabase QA**. Entre la última respuesta Auth y `COMMIT` persiste una carrera. Por ello **el bloqueo P0 de acceso SQL queda mitigado a nivel de código, pero no se declara aprobado ni cerrado en QA**. Continúan requeridos dictamen DBA/Seguridad y autorización específica del propietario para una sola prueba real.
+
+---
+
 ## Hallazgo P0: RLS real de `auth.sessions` bloquea el lector de QA
 
 **Revisión externa obligatoria:** [informe de evidencia P0](P0-AUTH-SESSIONS-RLS-BLOQUEO-QA-20261104.md).
