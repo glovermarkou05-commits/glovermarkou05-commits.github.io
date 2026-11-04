@@ -3,6 +3,16 @@
 
 **Objetivo:** completar la integración MFA real de MG Web Studio **sin más series de pruebas ficticias**. Este documento NO es un permiso, script listo para desplegar, firma de seguridad ni garantía de publicación. El [PR #7](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/pull/7) sigue en borrador. El dictamen de un revisor independiente (sin cuenta GitHub si lo prefiere) y la autorización concreta del dueño continúan pendientes.
 
+## Solicitud de revisión independiente — paquete para entregar
+
+**Versión de código congelada:** [`65fae5d236656fd578f13cfe6b9aac4ea7953b7b`](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/commit/65fae5d236656fd578f13cfe6b9aac4ea7953b7b). El resto de cambios documentales no reescribe esa evidencia; si se altera el código, el revisor deberá examinar el diff.
+
+- [Expediente independiente DBA/Seguridad, controles A1–A6, B1–B5 y C1–C5](REVISION-EXTERNA-DBA-SEGURIDAD-V130-20261104.md).
+- [Plantilla de dictamen externo SIN FIRMAR](DICTAMEN-EXTERNO-EN-BLANCO-V130-20261104.md).
+- La persona revisora puede evaluar y firmar sin cuenta GitHub. **No se ha designado revisor, no hay dictamen ni aprobación**; solicitar revisión **no autoriza** instalar SQL o crear cuentas de prueba.
+
+---
+
 ## Actualización V130 — V127 conectado a V126 en CI, Auth real pendiente
 
 **Fecha:** 4 de noviembre de 2026. [Informe V130 y 30/30 PASS](V130-UNION-PRIVADA-MFA-RECIBO-PERSISTENTE-20261104.md).
