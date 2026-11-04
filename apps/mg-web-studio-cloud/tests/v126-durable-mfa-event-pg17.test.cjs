@@ -537,12 +537,13 @@ test('V130 PG17: session revoked after challenge prevents receipt and business e
 function v132AuthFixture(){
  let revoked=false,users=0;
  const token='SIGNED-INITIAL-AAL1-JWT-SYNTHETIC';
+ const signedAt=now(),fixedExpiry=signedAt+120;
  const auth={
   async getClaims(t){
    assert.equal(t,token);
    return {data:{claims:{
     iss:QA_ISSUER,aud:'authenticated',aal:'aal1',sub:USER,session_id:SID,
-    exp:now()+120,iat:now()-20
+    exp:fixedExpiry,iat:signedAt-20
    }},error:null};
   },
   async getUser(t){
