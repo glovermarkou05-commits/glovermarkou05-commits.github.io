@@ -82,6 +82,7 @@ El usuario compartió capturas del panel **API de datos → Ajustes**. Después 
 - [V122: 30/30 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41765139754)
 - [V124: 17/17 PASS — MFA→Auth→negocio ficticio PG17](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41768590732). La primera ejecución falló por contaminación entre escenarios y se corrigió únicamente el aislamiento de fixtures antes de la ejecución aprobada; [informe V124](V124-INTEGRACION-MFA-AUTH-NEGOCIO-PG17-20261103.md).
 - [V125: 42/42 PASS — ID único por verificación, 19 offline + 23 PG17](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41770325897). Dos verificaciones legítimas del mismo segundo producen HMAC diferentes; reintentar un mismo `eventId` conserva la clave de consumo. Fuente real de emisión todavía pendiente; [informe V125](V125-EVENTO-MFA-UNICO-PERSISTENTE-PG17-20261103.md).
+- [V126: 25/25 PASS — persistencia MFA + ruta V2 exclusiva, PostgreSQL 17](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41774038251). El mismo comprobante conserva un ID duradero entre reintentos, los eventos distintos de un mismo segundo no colisionan y la ruta de referencia rechaza downgrade. La emisión MFA real y la integración QA siguen pendientes; [informe V126](V126-EMISOR-PERSISTENTE-MFA-RUTA-V2-PG17-20261103.md).
 
 **Todas estas aprobaciones son de pruebas técnicas**, no de los 32 controles canónicos V67.
 
