@@ -112,18 +112,18 @@
     },
     {
       "id": "QA_ROLE_NAMES",
-      "state": "CODE_QA_ROLE_AND_SCHEMA_MAPPING_TESTED_REAL_GRANTS_PENDING",
-      "detail": "V131 now pairs allowlisted QA roles with fixed QA receipt/journal schema SQL and rejects mixed CI/QA issuer-reader roles before Auth challenge. 57/57 tests PASS in disposable PG17 and mock principal checks. No roles, schemas, RLS policies or grants installed in real Supabase QA; external DBA/owner approval still required."
+      "state": "QA_NAMED_ROLES_TESTED_IN_DISPOSABLE_PG17_REAL_QA_NOT_INSTALLED",
+      "detail": "V133 isolated PostgreSQL 17 QA-like fixture: 3 private roles without superuser/BYPASSRLS, FORCE RLS, private grants, role isolation, and full Auth mock→MFA→durable receipt path. 4/4 PG17 + 5/5 offline PASS; actual Supabase QA has 0 QA roles/schemas and no credential provisioning or approved migration."
     },
     {
       "id": "FULL_ROLLBACK",
-      "state": "LAB_GUARDS_PASS_REAL_QA_REVIEW_PENDING",
-      "detail": "V129 guarded rollback contract was validated ONLY in disposable PG17: deny on nonempty ledger, deny unfamiliar private object, deny public external dependency, successful empty teardown of 3 private fixture schemas and 6 CI roles while preserving auth/public. Actual QA schema/role names, user cleanup, retention, backup and rollback remain PENDING DBA+owner review."
+      "state": "QA_LIKE_PG17_RESTRICT_GUARDS_PASS_REAL_QA_ROLLBACK_PENDING",
+      "detail": "V133 fixture rollback on disposable qa_ledger denied nonempty MFA data; after synthetic cleanup, removed both schemas and three roles, confirmed absent. NOT a rollback script for Supabase QA."
     },
     {
       "id": "BRIDGE_PERSIST",
-      "state": "PARTIAL_PG17_VERIFIED_REAL_QA_PENDING",
-      "detail": "V130 private composition connects V127 verified MFA receipt callback to V126 durable event store and V125/V119 fictional operation in disposable PostgreSQL 17, 30/30 PASS. Official Auth calls/claims and private journal remain synthetic here; no live Supabase Auth or QA installation. Signed JWT/DBA/rollback/independent review remain required."
+      "state": "V133_WIRING_AND_REAL_PG17_PASS_REAL_SUPABASE_AUTH_PENDING",
+      "detail": "V133 combines V132+V128+V130 into server-only private pipeline with fixed QA role names. Actual postgres fixture created/read journal and receipt and denied reuse; Supabase Auth verify/getClaims/getUser remain simulated in this suite. Real QA installation and request-scoped Auth client integration remain pending."
     },
     {
       "id": "AUTH_COMMIT_RACE",
@@ -249,6 +249,27 @@
       "realQa": true,
       "cleanupConfirmed": false,
       "authoritativeCrossTransactionRevocation": false
+    },
+    {
+      "phase": "V133_PRIVATE_QA_AUTH_MFA_PIPELINE",
+      "kind": "backendWiringMockSupabaseAuthWithPrivatePools",
+      "passed": 5,
+      "run": 41891805674,
+      "realSupabaseAuth": false
+    },
+    {
+      "phase": "V133_QA_NAMED_ROLES_POSTGRES17",
+      "kind": "disposablePG17ForceRlsGrantMinimumAndPrivateMfaPipeline",
+      "passed": 4,
+      "run": 41891805674,
+      "realQaDdl": false
+    },
+    {
+      "phase": "V133_DISPOSABLE_ROLLBACK",
+      "kind": "refuseNonEmptyThenCheckTablesSchemasRolesDeleted",
+      "result": "PASS",
+      "run": 41891805674,
+      "realQaDdl": false
     }
   ],
   "releaseGates": {
@@ -350,5 +371,16 @@
     "qaChallenges": 0,
     "advisorWarning": "auth_leaked_password_protection disabled",
     "productionImpacted": false
+  },
+  "observedReadOnlyAfterV133": {
+    "date": "2026-11-04",
+    "project": "tbfhiqkivsoeuudlpkgi",
+    "qaUsers": 0,
+    "qaSessions": 0,
+    "privateQaChallengeSchemaExists": false,
+    "privateQaReceiptsSchemaExists": false,
+    "qaRoleCount": 0,
+    "projectHealth": "ACTIVE_HEALTHY",
+    "realQaDdlApplied": false
   }
 }
