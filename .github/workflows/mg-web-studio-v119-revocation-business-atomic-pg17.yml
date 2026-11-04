@@ -1,0 +1,110 @@
+name: MG Web Studio V119 Revocation and Atomic Business PG17
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v119-revocation-business-atomic-pg17.yml
+      - apps/mg-web-studio-cloud/qa/v119-atomic-business-lab.cjs
+      - apps/mg-web-studio-cloud/qa/v118-scoped-writer-pool.cjs
+      - apps/mg-web-studio-cloud/tests/v119-pg17-revocation-atomic-business.test.cjs
+      - apps/mg-web-studio-cloud/proposals/v110-private-mfa-ledger-review-only.sql
+      - apps/mg-web-studio-cloud/proposals/v111-insert-only-ledger-writer-review.sql
+      - apps/mg-web-studio-cloud/qa/v116-pg-driver/package-lock.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v119-pr7-pg17-disposable
+  cancel-in-progress: false
+
+jobs:
+  synthetic-revocation-and-fictional-atomic-action:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: qa_ledger
+          POSTGRES_PASSWORD: v119-public-admin-fixture
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U postgres -d qa_ledger"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Pinned checkout without persisted GitHub credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Pinned Node 22 setup
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Install integrity locked PostgreSQL test dependencies
+        run: |
+          set -euo pipefail
+          npm ci --prefix qa/v116-pg-driver --ignore-scripts --no-audit --no-fund
+      - name: Prepare V110 V111 and test-only fictional business schema
+        env:
+          V119_PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          test -n "$V119_PG_CONTAINER"
+          docker exec -i "$V119_PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c \
+            'CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE service_role NOLOGIN;'
+          docker exec -i "$V119_PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger \
+            < proposals/v110-private-mfa-ledger-review-only.sql
+          docker exec -i "$V119_PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger \
+            < proposals/v111-insert-only-ledger-writer-review.sql
+          docker exec -i "$V119_PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger <<'SQL'
+          CREATE ROLE mg_v118_ci_backend LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS
+            PASSWORD 'v119-public-backend-fixture';
+          GRANT mg_auth_ledger_writer TO mg_v118_ci_backend WITH ADMIN FALSE, INHERIT FALSE, SET TRUE;
+          CREATE SCHEMA mg_v119_fictional;
+          REVOKE ALL ON SCHEMA mg_v119_fictional FROM PUBLIC,anon,authenticated,service_role;
+          CREATE TABLE mg_v119_fictional.completed_operations (
+            event_key text PRIMARY KEY,
+            operation text NOT NULL CHECK (operation IN ('publish','members','billing')),
+            completed_at timestamptz NOT NULL DEFAULT clock_timestamp()
+          );
+          ALTER TABLE mg_v119_fictional.completed_operations ENABLE ROW LEVEL SECURITY;
+          ALTER TABLE mg_v119_fictional.completed_operations FORCE ROW LEVEL SECURITY;
+          REVOKE ALL ON mg_v119_fictional.completed_operations FROM PUBLIC,anon,authenticated,service_role;
+          GRANT USAGE ON SCHEMA mg_v119_fictional TO mg_auth_ledger_writer;
+          GRANT INSERT (event_key,operation) ON mg_v119_fictional.completed_operations TO mg_auth_ledger_writer;
+          CREATE POLICY v119_lab_insert_only ON mg_v119_fictional.completed_operations
+            FOR INSERT TO mg_auth_ledger_writer WITH CHECK (true);
+          SQL
+      - name: Test synthetic authoritative revocation and one-transaction business effect
+        env:
+          CI: 'true'
+          NODE_PATH: ${{ github.workspace }}/apps/mg-web-studio-cloud/qa/v116-pg-driver/node_modules
+          V119_DISPOSABLE_ONLY: '1'
+          V119_PG_HOST: '127.0.0.1'
+          V119_PG_PORT: ${{ job.services.postgres.ports[5432] }}
+          V119_PG_DB: qa_ledger
+          V119_PG_BACKEND_PASSWORD: v119-public-backend-fixture
+          V119_PG_ADMIN_PASSWORD: v119-public-admin-fixture
+        run: |
+          set -euo pipefail
+          node --test --test-concurrency=1 tests/v119-pg17-revocation-atomic-business.test.cjs
+      - name: Preserve NO_GO and forbid live migration claims
+        if: always()
+        run: |
+          echo "CI fake Auth revocation provider, fictional business table, disposable PG17 ONLY."
+          echo "No Supabase QA or production connectivity, users, roles, grants, DDL or migrations."
+          echo "No true race lock between remote Auth revocation and local business commit."
+          echo "Session source, resource authorization, approval, V67 independent signoff remain pending."
+          echo "PR #7 DRAFT; V67 32 PENDING / 0 PASS; Production NO_GO."
