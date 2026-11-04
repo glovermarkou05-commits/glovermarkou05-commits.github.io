@@ -16,6 +16,7 @@ for(const name of ['DATABASE_URL','SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','SU
 const {Pool,Client}=require('pg');
 const {createV118ScopedLabWriterPool}=require('../qa/v118-scoped-writer-pool.cjs');
 const {createV119AtomicBusinessLab}=require('../qa/v119-atomic-business-lab.cjs');
+const {createV121TrustedMfaProofGateway}=require('../server/v121-trusted-mfa-proof-gateway.cjs');
 const cfg={host:'127.0.0.1',port:Number(process.env.V119_PG_PORT),database:'qa_ledger',
  connectionTimeoutMillis:8000,query_timeout:9000,application_name:'v119_ci_synthetic_only'};
 const admin=()=>new Client({...cfg,user:'postgres',password:process.env.V119_PG_ADMIN_PASSWORD});
@@ -221,4 +222,58 @@ test('V119 source is lab-only and never accesses live Auth or production',()=>{
  const source=readFileSync(resolve(__dirname,'../qa/v119-atomic-business-lab.cjs'),'utf8');
  for(const forbidden of ["require('pg')",'process.env','auth.sessions','SUPABASE_SERVICE_ROLE_KEY',
   'SECURITY DEFINER','CREATE TABLE','fetch(','UPDATE auth.'])assert.equal(source.includes(forbidden),false);
+});
+
+test('V121 trusted proof HMAC goes through REAL PG17 V119 transaction only once',async()=>{
+ const proofReference='eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee';
+ const secret=Buffer.alloc(32,29);
+ const verifiedAtSec=Math.floor(Date.now()/1000)-10;
+ let trustReads=0;
+ await fixture(async({service})=>{
+  const gate=createV121TrustedMfaProofGateway({
+   authenticatedSubject:sub,authenticatedSessionId:session,ledgerHmacKey:secret,
+   readTrustedMfaProof:async({proofReference:ref,subject,sessionId})=>{
+    trustReads++;
+    assert.equal(ref,proofReference);
+    assert.equal(subject,sub);
+    assert.equal(sessionId,session);
+    return {checkedAtSec:Math.floor(Date.now()/1000),
+     factorOwnershipVerified:true,method:'totp',
+     provenanceReviewed:true,sessionBoundByAuthorizedFlow:true,
+     sessionId:session,subject:sub,verified:true,verifiedAtSec};
+   },
+   runAtomicOperation:service.execute
+  });
+  const incoming={action:'publish',organizationId:org,proofReference,siteId:site};
+  assert.equal((await gate.execute(incoming)).ok,true);
+  const message=['mg-v109-mfa-event-v1',sub,session,'totp',verifiedAtSec].join('|');
+  const key=createHash('sha256').update(message).digest('hex');
+  const {createHmac}=require('node:crypto');
+  const realKey=createHmac('sha256',secret).update(message).digest('hex');
+  assert.notEqual(key,realKey);
+  assert.deepEqual(await counts(realKey),{ledger:1,business:1});
+  assert.deepEqual(await gate.execute(incoming),denied);
+  assert.deepEqual(await counts(realKey),{ledger:1,business:1});
+  assert.equal(trustReads,2);
+ });
+});
+test('V121 gate rejects caller eventKey and a proof belonging to a different session before REAL PG transaction',async()=>{
+ const proofReference='ffffffff-ffff-4fff-8fff-ffffffffffff';
+ const secret=Buffer.alloc(32,31);
+ const verifiedAtSec=Math.floor(Date.now()/1000)-10;
+ await fixture(async({service,scoped})=>{
+  const gate=createV121TrustedMfaProofGateway({
+   authenticatedSubject:sub,authenticatedSessionId:session,ledgerHmacKey:secret,
+   readTrustedMfaProof:async()=>({
+    checkedAtSec:Math.floor(Date.now()/1000),factorOwnershipVerified:true,
+    method:'totp',provenanceReviewed:true,sessionBoundByAuthorizedFlow:true,
+    sessionId:site,subject:sub,verified:true,verifiedAtSec
+   }),
+   runAtomicOperation:service.execute
+  });
+  const incoming={action:'publish',organizationId:org,proofReference,siteId:site};
+  assert.deepEqual(await gate.execute({...incoming,eventKey:'f'.repeat(64)}),denied);
+  assert.deepEqual(await gate.execute(incoming),denied);
+  assert.equal(scoped.snapshot().checkedOut,0);
+ });
 });
