@@ -1,0 +1,106 @@
+name: MG Web Studio V122 Private Auth Session Row PG17 Disposable
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v122-private-auth-session-pg17.yml
+      - apps/mg-web-studio-cloud/server/v122-private-auth-session-row-reader.cjs
+      - apps/mg-web-studio-cloud/tests/v122-private-auth-session-row-reader.test.cjs
+      - apps/mg-web-studio-cloud/tests/v122-private-auth-session-pg17-real.test.cjs
+      - apps/mg-web-studio-cloud/qa/v116-pg-driver/package.json
+      - apps/mg-web-studio-cloud/qa/v116-pg-driver/package-lock.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-webstudio-v122-pr7-auth-session-disposable-pg17
+  cancel-in-progress: false
+
+jobs:
+  synthetic-private-auth-session-row-reader:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: qa_ledger
+          POSTGRES_PASSWORD: v122-synthetic-admin-fixture
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U postgres -d qa_ledger"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout PR without retained credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Pinned Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Offline tests with networking disabled
+        run: |
+          set -euo pipefail
+          node --require ./server/native-network-guard-v70.cjs --test --test-concurrency=1 tests/v122-private-auth-session-row-reader.test.cjs
+      - name: Install integrity-locked public PostgreSQL driver
+        run: |
+          set -euo pipefail
+          npm ci --prefix qa/v116-pg-driver --ignore-scripts --no-audit --no-fund
+      - name: Set up synthetic auth.sessions and read-only column-limited backend identity
+        env:
+          V122_PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          test -n "$V122_PG_CONTAINER"
+          docker exec -i "$V122_PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger <<'SQL'
+          CREATE ROLE anon NOLOGIN;
+          CREATE ROLE authenticated NOLOGIN;
+          CREATE ROLE service_role NOLOGIN;
+          CREATE SCHEMA auth;
+          REVOKE ALL ON SCHEMA auth FROM PUBLIC;
+          CREATE TABLE auth.sessions (
+            id uuid PRIMARY KEY,
+            user_id uuid NOT NULL,
+            not_after timestamptz,
+            private_refresh_token text NOT NULL
+          );
+          REVOKE ALL ON auth.sessions FROM PUBLIC, anon, authenticated, service_role;
+          CREATE ROLE mg_v122_ci_auth_reader LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS
+            PASSWORD 'v122-synthetic-reader-fixture';
+          GRANT USAGE ON SCHEMA auth TO mg_v122_ci_auth_reader;
+          GRANT SELECT (id,user_id,not_after) ON auth.sessions TO mg_v122_ci_auth_reader;
+          SQL
+      - name: Real PG17 row-level existence and least-privilege role checks
+        env:
+          CI: 'true'
+          NODE_PATH: ${{ github.workspace }}/apps/mg-web-studio-cloud/qa/v116-pg-driver/node_modules
+          V122_DISPOSABLE_ONLY: '1'
+          V122_HOST: '127.0.0.1'
+          V122_PORT: ${{ job.services.postgres.ports[5432] }}
+          V122_DB: qa_ledger
+          V122_READER_PASSWORD: v122-synthetic-reader-fixture
+          V122_ADMIN_PASSWORD: v122-synthetic-admin-fixture
+        run: |
+          set -euo pipefail
+          node --test --test-concurrency=1 tests/v122-private-auth-session-pg17-real.test.cjs
+      - name: Explicitly preserve NO_GO
+        if: always()
+        run: |
+          echo "Only fake auth.sessions in disposable CI PG17. Never connects to Supabase Auth QA or production."
+          echo "Revocation proof is row-deletion at read time; custom session limits may not proactively delete rows."
+          echo "Reader account is CI fixture, not an approved Supabase Auth principal."
+          echo "Image digest, TLS, ownership, real session policies, human review still pending."
+          echo "PR #7 DRAFT, 32 V67 PENDING / 0 PASS, production NO_GO."
