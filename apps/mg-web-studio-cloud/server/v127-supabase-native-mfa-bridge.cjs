@@ -34,7 +34,7 @@ function createV127NativeMfaBridge({auth,actor,readActiveSession,journal,
   try{
    const r=await readActiveSession(Object.freeze({subject,sessionId}));
    return r!==null&&typeof r==='object'&&r.active===true&&
-    r.primaryRead===true&&r.revocationChecked===true&&
+    (r.primaryRead===true||r.authServerConfirmed===true)&&r.revocationChecked===true&&
     r.subject===subject&&r.sessionId===sessionId&&
     secureTime(r.checkedAtSec)&&secureTime(r.expiresAtSec)&&
     r.checkedAtSec<=t&&t-r.checkedAtSec<=2&&r.expiresAtSec>t;
