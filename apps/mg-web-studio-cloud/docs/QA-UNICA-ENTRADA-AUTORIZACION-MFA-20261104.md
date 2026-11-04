@@ -3,6 +3,21 @@
 
 **Objetivo:** completar la integración MFA real de MG Web Studio **sin más series de pruebas ficticias**. Este documento NO es un permiso, script listo para desplegar, firma de seguridad ni garantía de publicación. El [PR #7](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/pull/7) sigue en borrador. El dictamen de un revisor independiente (sin cuenta GitHub si lo prefiere) y la autorización concreta del dueño continúan pendientes.
 
+## Próxima acción segura sin contratar auditoría
+
+**La contratación de un auditor externo no es un requisito universal de Supabase para desarrollar o hacer pruebas en un proyecto QA aislado**. El propietario optó por no contratar a nadie por ahora. Esto **no** convierte la autoevaluación en una firma independiente V67 ni otorga GO de producción.
+
+Antes de cualquier instalación de roles o migraciones, se preparó **un solo ensayo de Auth sin DDL**:
+
+- [Plan de prueba de revocación V132 con autorización específica](QA-PRUEBA-UNICA-GETUSER-TRAS-LOGOUT-V132-20261104.md).
+- [Script Windows PowerShell de destino QA fijo](../qa/comprobar-revocacion-auth-v132-qa.ps1): **no crea cuentas**, exige confirmación deliberada, usa clave `sb_publishable_` y credenciales de **una cuenta QA temporal introducidas solo en el PC**, confirma `getUser` y hace un único `signOut` local. **No ejecutar antes de autorización y de crear esa cuenta temporal.**
+- Debido a que los JWT existentes pueden continuar válidos tras cerrar sesión, ningún resultado de mocks demuestra revocación inmediata. La prueba real podría confirmar **que V132 no es suficiente** para operaciones sensibles; se aceptará ese resultado sin forzar un GO.
+- El ensayo de Auth y la futura instalación de BD privada son **dos autorizaciones distintas**. No se contempla el uso de `service_role`, creación de roles o cambios en RLS de `auth.sessions` en esta primera comprobación.
+
+**Estado:** cuenta temporal no creada, cierre de sesión no ejecutado, QA sin migraciones nuevas, V67 formal 0/32, PR DRAFT y producción NO_GO.
+
+---
+
 ## V132 — alternativa oficial en código para evitar el bloqueo RLS, sin cambios en QA
 
 **Evidencias:** [V132 getClaims/getUser 12/12 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41849141865) · [V132→V130/V125/V119 PostgreSQL 17 32/32 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41849141097). [Informe técnico V132](V132-ALTERNATIVA-OFICIAL-AUTH-SIN-RLS-20261104.md).
