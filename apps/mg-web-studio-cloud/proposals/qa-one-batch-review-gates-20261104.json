@@ -67,6 +67,14 @@
     },
     "production": {
       "state": "NO_GO"
+    },
+    "qaOwnerAuthProbe": {
+      "state": "AUTHORIZED_SCOPED_20261104",
+      "approvedScope": "ONE temporary QA Auth account; password sign-in; one local signout; check getUser old JWT; remove test user after result; no DDL, no production, no merge",
+      "accountCreated": false,
+      "realProbeExecuted": false,
+      "cleanupConfirmed": false,
+      "credentialsShared": false
     }
   },
   "allowedAfterIndependentReviewAndExplicitQaApproval": [
@@ -210,6 +218,13 @@
       "passed": 32,
       "run": 41849141097,
       "actualSupabaseAuth": false
+    },
+    {
+      "phase": "V132_WINDOWS_PROBE_STATIC",
+      "kind": "PowerShellSyntaxOnly",
+      "result": "PASS",
+      "run": 41861940527,
+      "actualSupabaseAuth": false
     }
   ],
   "releaseGates": {
@@ -218,7 +233,10 @@
     "production": "NO_GO",
     "pullRequestDraft": true,
     "mergeAuthorized": false,
-    "qaSqlAuthorized": false
+    "qaSqlAuthorized": false,
+    "qaAuthProbeAuthorized": true,
+    "qaAuthProbeExecuted": false,
+    "qaTemporaryUserCreated": false
   },
   "technicalProgress": {
     "source": "V95",
