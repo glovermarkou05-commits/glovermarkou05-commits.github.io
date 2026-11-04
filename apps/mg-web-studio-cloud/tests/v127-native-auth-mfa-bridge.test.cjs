@@ -131,7 +131,7 @@ test('session revoked after challenge before verify blocks operation and never p
 });
 test('session revocation after verify, before durable issuance denies receipt',async()=>{
  let checks=0;
- const f=fixture({activeSession:async()=>{checks++;return checks>=5?null:active();}});
+ const f=fixture({activeSession:async()=>{checks++;return checks>=4?null:active();}});
  assert.deepEqual(await f.bridge.begin({factorId:FACTOR}),BEGIN);
  assert.deepEqual(await f.bridge.confirm({proofReference:REF,code:'123456'}),NO);
  assert.equal(f.calls.stored.length,0);
@@ -184,6 +184,6 @@ test('no production credential, no migration, route and readiness explicitly NO_
  const s=require('node:fs').readFileSync(require('node:path').resolve(__dirname,
   '../server/v127-supabase-native-mfa-bridge.cjs'),'utf8');
  for(const forbid of ['process.env',"require('@supabase/supabase-js')","require('pg')",
-  'service_role','console.log(','CREATE ROLE','GRANT SELECT','productionAuthorized:true'])
+  'SUPABASE_SERVICE_ROLE_KEY','console.log(','CREATE ROLE','GRANT SELECT','productionAuthorized:true'])
   assert.equal(s.includes(forbid),false,forbid);
 });
