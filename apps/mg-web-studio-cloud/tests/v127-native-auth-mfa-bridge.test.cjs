@@ -67,6 +67,7 @@ test('verified MFA uses server-owned challenge and cryptographically checked AAL
  assert.equal(f.calls.stored[0].proofReference,REF);
  assert.equal(f.calls.stored[0].sessionId,SID);
  assert.equal(f.calls.stored[0].verifiedAtSec,NOW);
+ assert.equal(f.calls.stored[0].checkedAtSec,NOW);
  assert.equal(Object.isFrozen(f.calls.stored[0]),true);
 });
 test('unverified or wrong factor cannot create challenge',async()=>{
