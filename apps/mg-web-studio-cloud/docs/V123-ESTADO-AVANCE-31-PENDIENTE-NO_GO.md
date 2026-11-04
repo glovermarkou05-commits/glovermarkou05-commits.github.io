@@ -1,0 +1,53 @@
+# MG WEB STUDIO — tablero de avance V123 (estimación técnica)
+
+**Fecha:** 3 de noviembre de 2026, Ecuador. **Fuente:** V95, matriz de 32 controles, publicada 2026-11-02. Este documento **no es una certificación** ni un permiso de lanzamiento.
+
+## Barra de avance de la cobertura técnica estimada
+
+**69% completado / 31% pendiente (estimación)**
+
+`[██████████████░░░░░░]` **69%**
+
+Cálculo transparente, sin inflar resultados: **(15 observados × 1 + 14 parciales × 0,5 + 3 no ensayados × 0) / 32 × 100 = 68,75%, redondeado a 69%.** No es un porcentaje universal del proyecto ni un plazo de finalización. Los ensayos V116–V122 no se convierten automáticamente en cobertura V67 hasta reconciliarse y revisarse.
+
+**Aprobación formal V67: 0/32 (0%).** El estado de producción **es NO_GO**. La barra es una ayuda de seguimiento del trabajo técnico, **no** indica que falte «31% para publicar».
+
+## Controles del baseline
+
+| Cobertura V95 | Número | Interpretación |
+| --- | ---: | --- |
+| LAB_OBSERVED | 15 | Evidencia de laboratorio; falta firma y validación en entorno aplicable |
+| PARTIAL | 14 | Evidencia parcial; quedan pruebas o decisiones adicionales |
+| NOT_EXERCISED | 3 | Ensayo o decisión todavía inexistente |
+| Formalmente aprobado | **0/32** | Ningún control tiene aprobación independiente |
+
+Sin ensayo en V95: **OBS-03** (retención y seguridad de registros), **OBS-04** (incidentes/alertas y responsables), **OPS-02** (aprobación de producción y rollback).
+
+## Bloqueos reales para finalizar y publicar
+
+1. **Revisión independiente humana**: ninguna persona designada. Puede realizarse sin una segunda cuenta GitHub, mediante expediente y dictamen externo firmado.
+2. **Autorización específica para QA**: las propuestas V110/V111/V112 siguen en revisión; no hay permiso para aplicar DDL en MG WEB STUDIO AUTH QA.
+3. **Políticas de sesiones Auth reales**: se requiere inspeccionar en Dashboard duración de sesiones, inactividad, sesión única, vencimiento JWT y confirmar si V122 debe impedir el uso de presencia de fila como prueba suficiente. La conexión a Supabase real todavía NO está aprobada.
+4. **Integración real de MFA y acciones empresariales**: V121 y V122 utilizan proveedores confiables inyectados y V119 opera sobre un negocio ficticio en PG17. Faltan arquitectura, pruebas y validación en entorno autorizado.
+5. **Los 32 controles formales V67**: registrar evidencia válida por control, dictamen firmado independiente, cierre de observabilidad/operaciones/backup y autorización separada para producción.
+
+## Evidencias técnicas comprobadas anteriormente
+
+- [V116: 11/11 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41584359140)
+- [V117: 13/13 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41584359086)
+- [V118: 15/15 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41759192024)
+- [V119 + V121: 20/20 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41763003960)
+- [V121: 18/18 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41762848292)
+- [V122: 30/30 PASS](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41765139754)
+
+**Todas estas aprobaciones son de pruebas técnicas**, no de los 32 controles canónicos V67.
+
+## Estado de las autorizaciones
+
+- PR #7 abierto y en borrador; **NO MERGE**.
+- Supabase QA sin cambios DDL autorizados, sin rol lector V122 implantado.
+- Sin acceso de clientes a `auth.sessions`, sin claves de producción ni publicación.
+- Autoridad humana y owner QA pendientes.
+- **Producción: NO_GO**.
+
+El script `qa/v123-release-progress.cjs` recalcula el estado desde fuentes canónicas de solo lectura y rechaza falsificaciones de aprobación formal. El estado de Auth Sessions debe verificarse mediante el [Dashboard Auth Sessions de QA](https://supabase.com/dashboard/project/tbfhiqkivsoeuudlpkgi/auth/sessions) con acceso autorizado y sin exponer claves.
