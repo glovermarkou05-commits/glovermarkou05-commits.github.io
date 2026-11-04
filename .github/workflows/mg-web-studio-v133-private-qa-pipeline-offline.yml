@@ -124,7 +124,9 @@ jobs:
           set -euo pipefail
           test -n "$PG_CONTAINER"
           docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger < qa/v133-private-qa-rollback-disposable-only.sql
-          docker exec -i "$PG_CONTAINER" psql -X -tA -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "SELECT to_regnamespace('mg_qa_mfa_receipts') IS NULL AND to_regnamespace('mg_qa_mfa_challenges') IS NULL"
+          verify=$(docker exec -i "$PG_CONTAINER" psql -X -tA -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "SELECT to_regnamespace('mg_qa_mfa_receipts') IS NULL AND to_regnamespace('mg_qa_mfa_challenges') IS NULL AND (SELECT count(*) FROM pg_roles WHERE rolname IN ('mg_qa_mfa_challenge_journal','mg_qa_mfa_receipt_issuer','mg_qa_mfa_receipt_reader'))=0")
+          test "$verify" = "t"
+          echo "DISPOSABLE_PRIVATE_SCHEMA_ROLE_ROLLBACK_CONFIRMED"
       - name: Guardrail
         if: always()
         run: |
