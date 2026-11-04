@@ -14,6 +14,10 @@ const IDENTITY='SELECT session_user AS session_user, current_user AS current_use
 const INSERT='INSERT INTO mg_v126_fictional.verified_mfa_events (receipt_id,proof_reference,subject,session_id,method,verified_at_sec) VALUES ($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5,$6::bigint) ON CONFLICT (receipt_id) DO NOTHING';
 const SELECT_BY_RECEIPT='SELECT receipt_id,event_id,proof_reference,subject,session_id,method,verified_at_sec FROM mg_v126_fictional.verified_mfa_events WHERE receipt_id=$1::uuid LIMIT 2';
 const SELECT_BY_PROOF='SELECT receipt_id,event_id,proof_reference,subject,session_id,method,verified_at_sec FROM mg_v126_fictional.verified_mfa_events WHERE proof_reference=$1::uuid AND subject=$2::uuid AND session_id=$3::uuid LIMIT 2';
+// Hardcoded SQL per approved server-only principal pair. No schema name from requests.
+const QA_INSERT=INSERT.replace('mg_v126_fictional.', 'mg_qa_mfa_receipts.');
+const QA_SELECT_BY_RECEIPT=SELECT_BY_RECEIPT.replace('mg_v126_fictional.', 'mg_qa_mfa_receipts.');
+const QA_SELECT_BY_PROOF=SELECT_BY_PROOF.replace('mg_v126_fictional.', 'mg_qa_mfa_receipts.');
 const REQUEST_KEYS=['proofReference','sessionId','subject'];
 const RECEIPT_KEYS=['checkedAtSec','factorOwnershipVerified','method','proofReference',
  'provenanceReviewed','receiptId','sessionBoundByAuthorizedFlow','sessionId',
@@ -34,8 +38,13 @@ function createV126DurableMfaEventStore({issuerPool,readerPool,confirmAuthenticM
   !readerPool||typeof readerPool.connect!=='function'||
   typeof confirmAuthenticMfaReceipt!=='function'||typeof nowSec!=='function'||
   ![ISSUER,REVIEWED_QA_ISSUER].includes(expectedIssuerRole)||
-  ![READER,REVIEWED_QA_READER].includes(expectedReaderRole))
+  ![READER,REVIEWED_QA_READER].includes(expectedReaderRole)||
+  ((expectedIssuerRole===REVIEWED_QA_ISSUER)!==(expectedReaderRole===REVIEWED_QA_READER)))
   throw new TypeError('V126 requires separate private issuer/reader pools and trusted verifier');
+ const useQaSql=expectedIssuerRole===REVIEWED_QA_ISSUER;
+ const queries=useQaSql
+  ?Object.freeze({insert:QA_INSERT,byReceipt:QA_SELECT_BY_RECEIPT,byProof:QA_SELECT_BY_PROOF})
+  :Object.freeze({insert:INSERT,byReceipt:SELECT_BY_RECEIPT,byProof:SELECT_BY_PROOF});
  function tick(){try{const n=nowSec();return secs(n)?n:null;}catch{return null;}}
  function validRequest(q){return exact(q,REQUEST_KEYS)&&
   UUID.test(q.proofReference||'')&&UUID.test(q.sessionId||'')&&UUID.test(q.subject||'');}
@@ -81,10 +90,10 @@ function createV126DurableMfaEventStore({issuerPool,readerPool,confirmAuthenticM
    a.checkedAtSec>t||t-a.checkedAtSec>2||
    !secs(a.verifiedAtSec)||a.verifiedAtSec>t||t-a.verifiedAtSec>300)return NO;
   const result=await withPrincipal(issuerPool,expectedIssuerRole,async c=>{
-   const ins=await c.query(INSERT,[lower(a.receiptId),lower(a.proofReference),
+   const ins=await c.query(queries.insert,[lower(a.receiptId),lower(a.proofReference),
     lower(a.subject),lower(a.sessionId),a.method,a.verifiedAtSec]);
    if(ins?.command!=='INSERT'||![0,1].includes(ins.rowCount))return null;
-   const row=await c.query(SELECT_BY_RECEIPT,[lower(a.receiptId)]);
+   const row=await c.query(queries.byReceipt,[lower(a.receiptId)]);
    if(!rowMatches(row,input,a.receiptId))return null;
    const r=row.rows[0];
    if(r.method!==a.method||Number(r.verified_at_sec)!==a.verifiedAtSec)return null;
@@ -95,7 +104,7 @@ function createV126DurableMfaEventStore({issuerPool,readerPool,confirmAuthenticM
  async function readTrustedVerifiedEvent(input){
   if(!validRequest(input))return null;
   const result=await withPrincipal(readerPool,expectedReaderRole,async c=>{
-   const row=await c.query(SELECT_BY_PROOF,[lower(input.proofReference),
+   const row=await c.query(queries.byProof,[lower(input.proofReference),
     lower(input.subject),lower(input.sessionId)]);
    const t=tick();
    if(t===null||!rowMatches(row,input))return null;
@@ -119,4 +128,4 @@ function createV126DurableMfaEventStore({issuerPool,readerPool,confirmAuthenticM
   })});
 }
 module.exports={createV126DurableMfaEventStore,IDENTITY,INSERT,
- SELECT_BY_RECEIPT,SELECT_BY_PROOF,ISSUER,READER,REVIEWED_QA_ISSUER,REVIEWED_QA_READER};
+ SELECT_BY_RECEIPT,SELECT_BY_PROOF,QA_INSERT,QA_SELECT_BY_RECEIPT,QA_SELECT_BY_PROOF,ISSUER,READER,REVIEWED_QA_ISSUER,REVIEWED_QA_READER};

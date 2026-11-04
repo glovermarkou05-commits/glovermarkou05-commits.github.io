@@ -11,6 +11,9 @@ const REVIEWED_QA_ROLE='mg_qa_mfa_challenge_journal';
 const IDENT='SELECT session_user AS session_user,current_user AS current_user,pg_is_in_recovery() AS is_replica';
 const INSERT='INSERT INTO mg_v128_fictional.challenge_journal(proof_reference,challenge_id,factor_id,subject,session_id,method,created_at_sec) VALUES($1::uuid,$2::uuid,$3::uuid,$4::uuid,$5::uuid,$6,$7::bigint) ON CONFLICT DO NOTHING RETURNING proof_reference';
 const RESERVE="UPDATE mg_v128_fictional.challenge_journal SET state='CLAIMED',claimed_at_sec=$4::bigint WHERE proof_reference=$1::uuid AND subject=$2::uuid AND session_id=$3::uuid AND state='PENDING' AND created_at_sec BETWEEN $4::bigint - 300 AND $4::bigint RETURNING challenge_id,created_at_sec,factor_id,method,proof_reference,session_id,subject";
+// SQL is selected only by the server-owned allowlisted journal principal.
+const QA_INSERT=INSERT.replace('mg_v128_fictional.', 'mg_qa_mfa_challenges.');
+const QA_RESERVE=RESERVE.replace('mg_v128_fictional.', 'mg_qa_mfa_challenges.');
 const own=(x,k)=>Object.prototype.hasOwnProperty.call(x,k);
 const exact=(x,k)=>x!==null&&typeof x==='object'&&!Array.isArray(x)&&
  (Object.getPrototypeOf(x)===Object.prototype||Object.getPrototypeOf(x)===null)&&
@@ -22,6 +25,8 @@ function createV128PrivateChallengeJournal({pool,nowSec=()=>Math.floor(Date.now(
  if(!pool||typeof pool.connect!=='function'||typeof nowSec!=='function'||
   ![ROLE,REVIEWED_QA_ROLE].includes(expectedJournalRole))
   throw new TypeError('V128 requires a private nonadmin journal PostgreSQL pool');
+ const createSql=expectedJournalRole===REVIEWED_QA_ROLE?QA_INSERT:INSERT;
+ const claimSql=expectedJournalRole===REVIEWED_QA_ROLE?QA_RESERVE:RESERVE;
  function tick(){try{const t=nowSec();return positive(t)?t:null;}catch{return null;}}
  async function run(fn){
   let c;
@@ -49,7 +54,7 @@ function createV128PrivateChallengeJournal({pool,nowSec=()=>Math.floor(Date.now(
   if(t===null||input.createdAtSec>t||t-input.createdAtSec>2)return {recorded:false};
   const args=[input.proofReference,input.challengeId,input.factorId,
    input.subject,input.sessionId,input.method,input.createdAtSec].map((x,i)=>i<5?norm(x):x);
-  const result=await run(c=>c.query(INSERT,args));
+  const result=await run(c=>c.query(createSql,args));
   if(result?.command!=='INSERT'||result?.rowCount!==1||
    !Array.isArray(result.rows)||result.rows.length!==1||
    norm(result.rows[0]?.proof_reference)!==norm(input.proofReference))
@@ -61,7 +66,7 @@ function createV128PrivateChallengeJournal({pool,nowSec=()=>Math.floor(Date.now(
    ![input.proofReference,input.sessionId,input.subject].every(x=>UUID.test(x||'')))return null;
   const t=tick();
   if(t===null)return null;
-  const result=await run(c=>c.query(RESERVE,[
+  const result=await run(c=>c.query(claimSql,[
    norm(input.proofReference),norm(input.subject),norm(input.sessionId),t
   ]));
   if(result?.command!=='UPDATE'||result?.rowCount!==1||
@@ -87,4 +92,4 @@ function createV128PrivateChallengeJournal({pool,nowSec=()=>Math.floor(Date.now(
   })
  });
 }
-module.exports={createV128PrivateChallengeJournal,INSERT,RESERVE,IDENT,ROLE,REVIEWED_QA_ROLE};
+module.exports={createV128PrivateChallengeJournal,INSERT,RESERVE,QA_INSERT,QA_RESERVE,IDENT,ROLE,REVIEWED_QA_ROLE};

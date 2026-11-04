@@ -4,8 +4,8 @@
 const test=require('node:test');
 const assert=require('node:assert/strict');
 const {createV122PrivateAuthSessionRowReader,REVIEWED_QA_READER:SESSION_QA,VERIFY,QUERY}=require('../server/v122-private-auth-session-row-reader.cjs');
-const {createV126DurableMfaEventStore,REVIEWED_QA_ISSUER:RECEIPT_ISSUER,REVIEWED_QA_READER:RECEIPT_READER,IDENTITY,SELECT_BY_PROOF}=require('../server/v126-durable-mfa-event-store.cjs');
-const {createV128PrivateChallengeJournal,REVIEWED_QA_ROLE:JOURNAL_QA,IDENT,INSERT,RESERVE}=require('../server/v128-private-challenge-journal.cjs');
+const {createV126DurableMfaEventStore,REVIEWED_QA_ISSUER:RECEIPT_ISSUER,REVIEWED_QA_READER:RECEIPT_READER,IDENTITY,SELECT_BY_PROOF,QA_SELECT_BY_PROOF}=require('../server/v126-durable-mfa-event-store.cjs');
+const {createV128PrivateChallengeJournal,REVIEWED_QA_ROLE:JOURNAL_QA,IDENT,INSERT,RESERVE,QA_INSERT,QA_RESERVE}=require('../server/v128-private-challenge-journal.cjs');
 const NOW=2000000000;
 const USER='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const SESSION='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -57,7 +57,7 @@ test('V122 refuses impostor principal instead of attempting session SELECT',asyn
 test('V126 supports separately approved QA issuer/reader mapping, no role promotion',async()=>{
  const q=mockPool(RECEIPT_READER,{
   [IDENTITY]:{rows:[{session_user:RECEIPT_READER,current_user:RECEIPT_READER,is_replica:false}],rowCount:1},
-  [SELECT_BY_PROOF]:{rows:[{
+  [QA_SELECT_BY_PROOF]:{rows:[{
    receipt_id:RECEIPT,event_id:EVENT,proof_reference:REF,
    subject:USER,session_id:SESSION,method:'totp',verified_at_sec:NOW-10
   }],rowCount:1}
@@ -73,7 +73,7 @@ test('V126 supports separately approved QA issuer/reader mapping, no role promot
  });
  assert.equal(actual?.eventId,EVENT);
  assert.equal(actual?.eventIdBoundToVerification,true);
- assert.deepEqual(q.trace.queries.map(x=>x.sql),[IDENTITY,SELECT_BY_PROOF]);
+ assert.deepEqual(q.trace.queries.map(x=>x.sql),[IDENTITY,QA_SELECT_BY_PROOF]);
  assert.deepEqual(q.trace.releases,[true]);
 });
 test('V126 denies even correctly formatted rows returned by wrong physical role',async()=>{
@@ -93,7 +93,7 @@ test('V126 denies even correctly formatted rows returned by wrong physical role'
 test('V128 accepts only reviewed QA journal principal with exact physical identity',async()=>{
  const q=mockPool(JOURNAL_QA,{
   [IDENT]:{rows:[{session_user:JOURNAL_QA,current_user:JOURNAL_QA,is_replica:false}],rowCount:1},
-  [INSERT]:{rows:[{proof_reference:REF}],rowCount:1,command:'INSERT'}
+  [QA_INSERT]:{rows:[{proof_reference:REF}],rowCount:1,command:'INSERT'}
  });
  const journal=createV128PrivateChallengeJournal({
   pool:q.pool,expectedJournalRole:JOURNAL_QA,nowSec:()=>NOW
@@ -102,7 +102,7 @@ test('V128 accepts only reviewed QA journal principal with exact physical identi
   proofReference:REF,challengeId:CH,factorId:FACTOR,
   subject:USER,sessionId:SESSION,method:'totp',createdAtSec:NOW
  }),{recorded:true});
- assert.deepEqual(q.trace.queries.map(x=>x.sql),[IDENT,INSERT]);
+ assert.deepEqual(q.trace.queries.map(x=>x.sql),[IDENT,QA_INSERT]);
  assert.deepEqual(q.trace.releases,[true]);
 });
 test('V128 rejects a mismatched role before any INSERT or UPDATE',async()=>{
@@ -150,4 +150,28 @@ test('none of the configured QA roles mean authorization to deploy',()=>{
  assert.equal(a.readiness.formalV67Pass,0);
  assert.equal(b.readiness.formalV67Pass,0);
  assert.equal(c.readiness.formalV67Pass,0);
+});
+
+test('V131 schema targets are fixed, unexposed and cannot be mixed across lab and QA',()=>{
+ assert.ok(SELECT_BY_PROOF.includes('mg_v126_fictional.verified_mfa_events'));
+ assert.ok(QA_SELECT_BY_PROOF.includes('mg_qa_mfa_receipts.verified_mfa_events'));
+ assert.ok(INSERT.includes('mg_v128_fictional.challenge_journal'));
+ assert.ok(QA_INSERT.includes('mg_qa_mfa_challenges.challenge_journal'));
+ assert.ok(QA_RESERVE.includes('mg_qa_mfa_challenges.challenge_journal'));
+ for(const sql of [QA_SELECT_BY_PROOF,QA_INSERT,QA_RESERVE]){
+  assert.equal(sql.includes('public.'),false);
+  assert.equal(sql.includes('auth.sessions'),false);
+  assert.equal(sql.includes('mg_v128_fictional.'),false);
+  assert.equal(sql.includes('mg_v126_fictional.'),false);
+ }
+ const fake={connect:async()=>({})};
+ for(const [issuer,reader] of [
+  [RECEIPT_ISSUER,'mg_v126_ci_reader'],
+  ['mg_v126_ci_issuer',RECEIPT_READER]
+ ]){
+  assert.throws(()=>createV126DurableMfaEventStore({
+   issuerPool:fake,readerPool:fake,confirmAuthenticMfaReceipt:async()=>null,
+   expectedIssuerRole:issuer,expectedReaderRole:reader
+  }),TypeError);
+ }
 });
