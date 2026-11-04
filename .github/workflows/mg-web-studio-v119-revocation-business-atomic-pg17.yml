@@ -8,6 +8,7 @@ on:
     paths:
       - .github/workflows/mg-web-studio-v119-revocation-business-atomic-pg17.yml
       - apps/mg-web-studio-cloud/qa/v119-atomic-business-lab.cjs
+      - apps/mg-web-studio-cloud/server/v121-trusted-mfa-proof-gateway.cjs
       - apps/mg-web-studio-cloud/qa/v118-scoped-writer-pool.cjs
       - apps/mg-web-studio-cloud/tests/v119-pg17-revocation-atomic-business.test.cjs
       - apps/mg-web-studio-cloud/proposals/v110-private-mfa-ledger-review-only.sql
