@@ -23,9 +23,9 @@ BEGIN
  SELECT count(*) INTO c2 FROM mg_qa_mfa_receipts.verified_mfa_events;
  SELECT count(*) INTO expected_count
  FROM pg_policies WHERE (schemaname='mg_qa_mfa_challenges' AND tablename='challenge_journal'
-  AND policyname='mgqa_journal_owner_read' AND roles::text LIKE '%postgres%')
+  AND policyname='mgqa_journal_owner_read' AND roles::text LIKE '%postgres%' AND qual='true')
  OR (schemaname='mg_qa_mfa_receipts' AND tablename='verified_mfa_events'
-  AND policyname='mgqa_receipt_owner_read' AND roles::text LIKE '%postgres%');
+  AND policyname='mgqa_receipt_owner_read' AND roles::text LIKE '%postgres%' AND qual='true');
  IF expected_count<>2 OR
     NOT (SELECT relrowsecurity AND relforcerowsecurity
       FROM pg_class WHERE oid='mg_qa_mfa_challenges.challenge_journal'::regclass) OR
