@@ -1,5 +1,30 @@
 # V134 — instalación privada QA preparada para revisión, NO aprobada
 
+## Resultado de validación del candidato V134 (CI y QA)
+
+[GitHub Actions #41941820306](https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41941820306) **PASS** el 4 de noviembre de 2026 (zona Ecuador), PostgreSQL 17 aislado. La primera ejecución detectó un defecto importante: `current_setting(...,true)` devolvía `NULL` cuando faltaban las aprobaciones; una comparación con `<>` no bloqueaba el `IF`. Se corrigió **antes de ejecutar cualquier cambio real**, usando `IS DISTINCT FROM` tanto en instalación como en rollback.
+
+La ejecución final confirma explícitamente:
+
+- `QA_MISSING_AND_WRONG_PROJECT_GUARDS_PASS`
+- `QA_ROLE_NULL_PASSWORD_AND_FORCE_RLS_PASS`
+- `QA_ROLLBACK_FILTERED_OWNER_RLS_DENIED_PASS`
+- `QA_ROLLBACK_MISSING_APPROVAL_GUARD_PASS`
+- `QA_ROLLBACK_PRESERVES_NONEMPTY_DATA_PASS`
+- `QA_ROLLBACK_EMPTY_ONLY_REMOVES_ALL_PASS`
+
+**Archivos congelados para revisión (Git blob SHA):**
+
+- Instalación: `137526ce0ff22017414e142e7bbfba3123f4ca02`
+- Rollback: `723957f2f94e91ac02c4e01850832fa3cf453be6`
+
+La comprobación directa posterior al proyecto **QA auténtico** reportó **0 usuarios / 0 sesiones / 0 factores MFA / 0 desafíos MFA / 0 nuevos roles / 0 esquemas privados** y **0 avisos vigentes** en Supabase Security Advisor. No se autorizó ni ejecutó el SQL candidato en esa base.
+
+**Precaución:** el bloqueo operacional por GUC es una defensa de proceso, no una prueba criptográfica del proyecto de destino. No sustituye verificar el ID del proyecto y la conexión en el panel y en el instrumento ejecutor. La instalación real y la habilitación de credenciales son dos intervenciones distintas; hasta la aprobación específica siguen pendientes.
+
+---
+
+
 **Fecha:** 4 de noviembre de 2026. **Proyecto autorizado para análisis:** MG WEB STUDIO AUTH QA (`tbfhiqkivsoeuudlpkgi`).
 
 **Estado actual: `REVIEW_ONLY, NOT_INSTALLED`.** El usuario autorizó continuar desarrollo; no se presume de ello una aprobación de un SQL privilegiado con credenciales nuevas, cambios RLS o despliegue público. El PR #7 permanece DRAFT, V67 formal 0/32, producción NO_GO.

@@ -112,13 +112,13 @@
     },
     {
       "id": "QA_ROLE_NAMES",
-      "state": "QA_NAMED_ROLES_TESTED_IN_DISPOSABLE_PG17_REAL_QA_NOT_INSTALLED",
-      "detail": "V133 isolated PostgreSQL 17 QA-like fixture: 3 private roles without superuser/BYPASSRLS, FORCE RLS, private grants, role isolation, and full Auth mock→MFA→durable receipt path. 4/4 PG17 + 5/5 offline PASS; actual Supabase QA has 0 QA roles/schemas and no credential provisioning or approved migration."
+      "state": "V134_QA_INSTALL_REVIEW_SQL_CI_PASS_NOT_INSTALLED",
+      "detail": "V134 review-only QA SQL with 3 LOGIN PASSWORD NULL roles, exact GRANT/RLS and owner-read rollback proof passed disposable Postgres17; no Supabase QA DDL, no backend credentials provisioned, review and scoped approval pending."
     },
     {
       "id": "FULL_ROLLBACK",
-      "state": "QA_LIKE_PG17_RESTRICT_GUARDS_PASS_REAL_QA_ROLLBACK_PENDING",
-      "detail": "V133 fixture rollback on disposable qa_ledger denied nonempty MFA data; after synthetic cleanup, removed both schemas and three roles, confirmed absent. NOT a rollback script for Supabase QA."
+      "state": "V134_REVIEW_ROLLBACK_CI_PASS_REAL_QA_NOT_INSTALLED",
+      "detail": "V134 isolated PG17 proved missing/wrong-project guard denies install, missing rollback authorization denies revert, filtered-owner RLS fails closed, nonempty evidence is preserved, and empty rollback removes both schemas and 3 roles. No real Supabase QA migration yet; backup/retention approvals required."
     },
     {
       "id": "BRIDGE_PERSIST",
@@ -270,6 +270,16 @@
       "result": "PASS",
       "run": 41891805674,
       "realQaDdl": false
+    },
+    {
+      "phase": "V134_QA_DDL_REVIEW_CANDIDATE",
+      "kind": "PostgreSQL17_disposable_secretless_qa_schema_roles_force_rls_failclosed_rollback",
+      "result": "PASS",
+      "run": 41941820306,
+      "realQaDdl": false,
+      "installedQaSchemas": false,
+      "roleCredentialsProvisioned": false,
+      "validation": "NULL approvals, wrong project, passwordless roles, forced RLS, filtered owner RLS rollback denial, missing rollback approval, nonempty evidence refusal, empty-only cleanup"
     }
   ],
   "releaseGates": {
@@ -382,5 +392,33 @@
     "qaRoleCount": 0,
     "projectHealth": "ACTIVE_HEALTHY",
     "realQaDdlApplied": false
+  },
+  "qaSqlReviewCandidate": {
+    "state": "PREPARED_TESTED_DISPOSABLE_PG17_NOT_INSTALLED",
+    "projectId": "tbfhiqkivsoeuudlpkgi",
+    "sourceBranch": "docs/mg-web-studio-v94-preflight-20261101",
+    "installBlobSha": "137526ce0ff22017414e142e7bbfba3123f4ca02",
+    "rollbackBlobSha": "723957f2f94e91ac02c4e01850832fa3cf453be6",
+    "referenceRun": 41941820306,
+    "roleLoginPasswordNull": true,
+    "roleCredentialProvisioningAuthorized": false,
+    "needsSpecificScopedOwnerApproval": true,
+    "migrationTrackingCreated": false,
+    "qaDdlApplied": false,
+    "securityReviewIndependent": false,
+    "operationalGucNotCryptographicTargetProof": true
+  },
+  "observedReadOnlyAfterV134": {
+    "date": "2026-11-04",
+    "project": "tbfhiqkivsoeuudlpkgi",
+    "users": 0,
+    "sessions": 0,
+    "mfaFactors": 0,
+    "mfaChallenges": 0,
+    "journalSchemaPresent": false,
+    "receiptsSchemaPresent": false,
+    "qaRoleCount": 0,
+    "securityAdvisorLintCount": 0,
+    "realDdlApplied": false
   }
 }
