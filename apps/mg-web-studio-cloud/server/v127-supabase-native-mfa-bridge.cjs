@@ -29,10 +29,10 @@ function createV127NativeMfaBridge({auth,actor,readActiveSession,journal,
  const subject=actor.subject.toLowerCase(),sessionId=actor.sessionId.toLowerCase();
  const key=Buffer.from(receiptKey);
  function tick(){try{const t=nowSec();return secureTime(t)?t:null;}catch{return null;}}
- async function sessionOk(){
+ async function sessionOk(verifiedMfaToken){
   const t=tick();if(t===null||actor.tokenExpiresAtSec<=t)return false;
   try{
-   const r=await readActiveSession(Object.freeze({subject,sessionId}));
+   const r=await readActiveSession(Object.freeze({subject,sessionId}),verifiedMfaToken);
    return r!==null&&typeof r==='object'&&r.active===true&&
     (r.primaryRead===true||r.authServerConfirmed===true)&&r.revocationChecked===true&&
     r.subject===subject&&r.sessionId===sessionId&&
@@ -106,7 +106,7 @@ function createV127NativeMfaBridge({auth,actor,readActiveSession,journal,
    if(!exact(assertions,['aal','exp','session_id','sub'])||
     assertions.aal!=='aal2'||assertions.sub!==subject||
     assertions.session_id!==sessionId||!secureTime(assertions.exp)||
-    at===null||assertions.exp<=at||!await sessionOk())return NO;
+    at===null||assertions.exp<=at||!await sessionOk(v.data.access_token))return NO;
    const receipt=Object.freeze({
     checkedAtSec:at,proofReference:claim.proofReference,receiptId:stableReceiptId(claim.challengeId),
     subject,sessionId,method:claim.method,verifiedAtSec:at,

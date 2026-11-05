@@ -14,6 +14,9 @@ on:
       - apps/mg-web-studio-cloud/qa/v135-conectar-postgres-qa-seguro.ps1
       - apps/mg-web-studio-cloud/server/v133-private-qa-mfa-pipeline.cjs
       - apps/mg-web-studio-cloud/server/v132-auth-server-session-gate.cjs
+      - apps/mg-web-studio-cloud/server/v127-supabase-native-mfa-bridge.cjs
+      - apps/mg-web-studio-cloud/tests/v132-auth-server-session-gate.test.cjs
+      - apps/mg-web-studio-cloud/tests/v127-native-auth-mfa-bridge.test.cjs
       - apps/mg-web-studio-cloud/server/v130-private-verified-mfa-composition.cjs
       - apps/mg-web-studio-cloud/server/v128-private-challenge-journal.cjs
       - apps/mg-web-studio-cloud/server/v126-durable-mfa-event-store.cjs
@@ -42,7 +45,7 @@ jobs:
       - name: QA-only runtime mock tests with network disabled
         run: |
           set -euo pipefail
-          node --require ./server/native-network-guard-v70.cjs --test --test-concurrency=1 tests/v135-private-qa-runtime.test.cjs tests/v135-mfa-integrated-one-shot.test.cjs
+          node --require ./server/native-network-guard-v70.cjs --test --test-concurrency=1 tests/v132-auth-server-session-gate.test.cjs tests/v127-native-auth-mfa-bridge.test.cjs tests/v135-private-qa-runtime.test.cjs tests/v135-mfa-integrated-one-shot.test.cjs
       - name: Parse-only local V135 integrated runner
         run: |
           set -euo pipefail

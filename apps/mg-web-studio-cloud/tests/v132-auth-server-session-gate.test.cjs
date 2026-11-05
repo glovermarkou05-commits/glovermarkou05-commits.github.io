@@ -20,11 +20,11 @@ function fixture({claimOverride,serverUser,revoked=false,
  let isRevoked=revoked,claimsCount=0,userCount=0;
  const auth={
   async getClaims(jwt){
-   assert.equal(jwt,JWT);claimsCount++;
-   return {data:{claims:claimOverride||claims()},error:null};
+   assert.ok(jwt===JWT||jwt==='SIGNED-AAL2-FIXTURE');claimsCount++;
+   return {data:{claims:jwt===JWT?(claimOverride||claims()):claims({aal:'aal2',exp:NOW+180})},error:null};
   },
   async getUser(jwt){
-   assert.equal(jwt,JWT);userCount++;
+   assert.ok(jwt===JWT||jwt==='SIGNED-AAL2-FIXTURE');userCount++;
    if(networkError)throw Error('offline');
    if(isRevoked)return {data:{user:null},error:{message:'session-ended'}};
    return {data:{user:{id:serverUser||USER}},error:null};
@@ -141,4 +141,78 @@ test('Readiness preserves NO_GO and does not claim atomic revocation',()=>{
  assert.equal(f.gate.readiness.usesManagedAuthTableDirectly,false);
  assert.equal(f.gate.readiness.revocationLinearizable,false);
  assert.equal(f.gate.readiness.productionAuthorized,false);
+});
+
+test('V135: rotated AAL2 token succeeds despite revoked previous AAL1 JWT, with exact session binding',async()=>{
+ const AAL2='SIGNED-ROTATED-AAL2-FIXTURE-ONLY';
+ let oldRevoked=false,newRevoked=false,saved=null,claimed=false,stored=0;
+ const auth={
+  async getClaims(token){
+   if(token===JWT)return {data:{claims:claims()},error:null};
+   if(token===AAL2)return {data:{claims:claims({aal:'aal2',exp:NOW+240})},error:null};
+   return {data:null,error:{message:'unrecognized token'}};
+  },
+  async getUser(token){
+   if((token===JWT&&!oldRevoked)||(token===AAL2&&!newRevoked))
+    return {data:{user:{id:USER}},error:null};
+   return {data:{user:null},error:{message:'revoked'}};
+  },
+  mfa:{
+   listFactors:async()=>({data:{totp:[{id:FACTOR,status:'verified'}],phone:[]},error:null}),
+   challenge:async()=>({data:{id:CH},error:null}),
+   verify:async()=>{oldRevoked=true;return {data:{access_token:AAL2},error:null};}
+  }
+ };
+ const ctx=await createV132AuthServerSessionGate({auth,accessToken:JWT,nowSec:()=>NOW}).authenticate();
+ assert.ok(ctx);
+ const bridge=createV127NativeMfaBridge({
+  auth,actor:ctx.actor,readActiveSession:ctx.readActiveSession,
+  journal:{
+   createPending:async x=>{saved=x;return {recorded:true};},
+   claimPending:async()=>{if(claimed||!saved)return null;claimed=true;return {claimed:true,...saved};}
+  },
+  verifySignedJwt:async t=>{
+   assert.equal(t,AAL2);return {aal:'aal2',exp:NOW+240,sub:USER,session_id:SID};
+  },
+  persistVerifiedReceipt:async()=>{stored++;return {recorded:true};},
+  receiptKey:Buffer.alloc(32,127),newReference:()=>REF,nowSec:()=>NOW
+ });
+ assert.equal((await bridge.begin({factorId:FACTOR})).ok,true);
+ assert.equal((await bridge.confirm({proofReference:REF,code:'123456'})).ok,true);
+ assert.equal(stored,1);
+ assert.equal(await ctx.readActiveSession({subject:USER,sessionId:SID}),null,
+  'old token revoked after MFA must not be accepted');
+ newRevoked=true;
+ assert.equal(await ctx.readActiveSession({subject:USER,sessionId:SID},AAL2),null,
+  'revoking new AAL2 token must deny even after signed claims');
+});
+test('V135: post-MFA session gate rejects AAL1, different subject/session, expired JWT, revoked Auth user or untrusted token',async()=>{
+ const AAL2='SIGNED-NEW-AAL2-JWT-FIXTURE-ONLY';
+ for(const item of [
+  {name:'aal1',claim:{aal:'aal1'}},
+  {name:'subject',claim:{sub:OTHER}},
+  {name:'session',claim:{session_id:OTHER}},
+  {name:'expired',claim:{exp:NOW}},
+  {name:'audience',claim:{aud:'anon'}},
+  {name:'issuer',claim:{iss:'https://another-project.supabase.co/auth/v1'}},
+  {name:'revoked',remoteError:true},
+  {name:'network',throws:true}
+ ]){
+  const auth={
+   async getClaims(t){
+    assert.ok(t===JWT||t===AAL2);
+    return {data:{claims:t===JWT?claims():claims({aal:'aal2',exp:NOW+240,...item.claim})},error:null};
+   },
+   async getUser(t){
+    assert.ok(t===JWT||t===AAL2);
+    if(t===AAL2&&item.throws)throw Error('network failure');
+    if(t===AAL2&&item.remoteError)return {data:{user:null},error:{message:'revoked'}};
+    return {data:{user:{id:USER}},error:null};
+   }
+  };
+  const ctx=await createV132AuthServerSessionGate({auth,accessToken:JWT,nowSec:()=>NOW}).authenticate();
+  assert.ok(ctx,item.name);
+  assert.equal(await ctx.readActiveSession({subject:USER,sessionId:SID},AAL2),null,item.name);
+  assert.equal(await ctx.readActiveSession({subject:USER,sessionId:SID},JWT),null,'original token must not masquerade as post-MFA proof');
+ }
 });

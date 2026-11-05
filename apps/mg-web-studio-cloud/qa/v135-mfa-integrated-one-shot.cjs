@@ -168,12 +168,13 @@ async function executeWith({admin,user,Pool,caPem,passwords,nowMs=()=>Date.now()
   if(begun?.ok!==true||!isUuid(begun?.proofReference))
    throw Error('CHALLENGE_NOT_RECORDED');
 
-  stage='TOTP_AAL2';
+  stage='TOTP_AAL2_VERIFY_AND_RECEIPT';
   await nextTotpWindow(usedWindow);
   const confirm=await flow.confirm({
    proofReference:begun.proofReference,code:totp(secret,nowMs())
   });
   if(confirm?.ok!==true)throw Error('RECEIPT_NOT_RECORDED');
+  stage='TOTP_AAL2_SIGNED_CLAIMS';
   const verifiedSession=await user.auth.getSession();
   const freshJwt=verifiedSession.data?.session?.access_token;
   const signed=await user.auth.getClaims(freshJwt);

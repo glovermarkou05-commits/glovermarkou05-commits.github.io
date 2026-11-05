@@ -22,13 +22,15 @@ function createV132AuthServerSessionGate({
   throw new TypeError('V132 requires QA-pinned Auth, access JWT and server clock');
  const jwt=accessToken;
  function tick(){try{const t=nowSec();return valid(t)?t:null;}catch{return null;}}
- async function verifyOne(){
-  const started=tick();if(started===null)return null;
+ async function verifyOne(checkToken=jwt){
+  const started=tick();
+  if(started===null||typeof checkToken!=='string'||
+   checkToken.length<10||checkToken.length>16384)return null;
   let c,userResponse;
   try{
    // The configured real Supabase client must verify the JWT cryptographically.
    // This is not equivalent to decoding a client-provided JWT or getSession().
-   const claimsResult=await auth.getClaims(jwt);
+   const claimsResult=await auth.getClaims(checkToken);
    if(claimsResult?.error)return null;
    c=claimsResult?.data?.claims;
    if(!c||typeof c!=='object'||Array.isArray(c)||
@@ -43,7 +45,7 @@ function createV132AuthServerSessionGate({
     return null;
    // Do not cache this response. Explicit JWT ensures no session-global,
    // cookie or browser state can silently change the checked identity.
-   userResponse=await auth.getUser(jwt);
+   userResponse=await auth.getUser(checkToken);
   }catch{return null;}
   const ended=tick();
   if(ended===null||ended<started||ended-started>2||c.exp<=ended||
@@ -62,14 +64,23 @@ function createV132AuthServerSessionGate({
    subject:proof.subject,sessionId:proof.sessionId,
    tokenExpiresAtSec:proof.tokenExpiresAtSec
   });
-  async function readActiveSession(input){
+  // Only the private V127 bridge supplies the token returned by mfa.verify.
+  // The pre-MFA checks keep using the original AAL1 token. After MFA, Auth
+  // may rotate/revoke that token: check the new signed AAL2 token against
+  // Auth server instead, still requiring the SAME subject and session.
+  async function readActiveSession(input,verifiedMfaToken){
    if(!exact(input,['subject','sessionId'])||
     input.subject!==actor.subject||input.sessionId!==actor.sessionId)
     return null;
-   const current=await verifyOne();
+   const afterMfa=verifiedMfaToken!==undefined;
+   if(afterMfa&&(typeof verifiedMfaToken!=='string'||
+    verifiedMfaToken.length<10||verifiedMfaToken.length>16384||
+    verifiedMfaToken===jwt))return null;
+   const current=await verifyOne(afterMfa?verifiedMfaToken:jwt);
    if(!current||current.subject!==actor.subject||
     current.sessionId!==actor.sessionId||
-    current.tokenExpiresAtSec!==actor.tokenExpiresAtSec)return null;
+    (afterMfa?current.aal!=='aal2':
+     current.tokenExpiresAtSec!==actor.tokenExpiresAtSec))return null;
    return Object.freeze({
     active:true,authServerConfirmed:true,revocationChecked:true,
     checkedAtSec:current.checkedAtSec,expiresAtSec:current.tokenExpiresAtSec,
