@@ -8,6 +8,11 @@ if docker exec -i "$PG_CONTAINER" psql -X -1 -v ON_ERROR_STOP=1 -U postgres -d p
  echo "FAIL: install without approval"; exit 1
 fi
 grep -q 'V134 QA gate denied' /tmp/v134-negative.log
+if docker exec -i -e PGOPTIONS='-c mg.qa_target_project_ref=wrong-qa-project -c mg.qa_install_approved=I_REVIEWED_V134_QA_ONLY' "$PG_CONTAINER" psql -X -1 -v ON_ERROR_STOP=1 -U postgres -d postgres < proposals/V134-QA-REVIEW-INSTALL-NO-SECRETS.sql >/tmp/v134-wrong-project.log 2>&1; then
+ echo "FAIL: wrong project accepted"; exit 1
+fi
+grep -q 'V134 QA gate denied' /tmp/v134-wrong-project.log
+echo "QA_MISSING_AND_WRONG_PROJECT_GUARDS_PASS"
 docker exec -i -e PGOPTIONS='-c mg.qa_target_project_ref=tbfhiqkivsoeuudlpkgi -c mg.qa_install_approved=I_REVIEWED_V134_QA_ONLY' "$PG_CONTAINER" psql -X -1 -v ON_ERROR_STOP=1 -U postgres -d postgres < proposals/V134-QA-REVIEW-INSTALL-NO-SECRETS.sql
 check=$(docker exec -i "$PG_CONTAINER" psql -X -tA -v ON_ERROR_STOP=1 -U postgres -d postgres <<'SQL'
 SELECT
@@ -34,6 +39,11 @@ INSERT INTO mg_qa_mfa_receipts.verified_mfa_events(receipt_id,proof_reference,su
 VALUES ('66666666-6666-4666-8666-666666666666','11111111-1111-4111-8111-111111111111','44444444-4444-4444-8444-444444444444','55555555-5555-4555-8555-555555555555','totp',2000000001);
 RESET ROLE;
 SQL
+if docker exec -i "$PG_CONTAINER" psql -X -1 -v ON_ERROR_STOP=1 -U postgres -d postgres < proposals/V134-QA-REVIEW-ROLLBACK-EMPTY-ONLY.sql >/tmp/v134-no-rollback-approval.log 2>&1; then
+ echo "FAIL: rollback without approval"; exit 1
+fi
+grep -q 'V134 rollback gate denied' /tmp/v134-no-rollback-approval.log
+echo "QA_ROLLBACK_MISSING_APPROVAL_GUARD_PASS"
 if docker exec -i -e PGOPTIONS='-c mg.qa_target_project_ref=tbfhiqkivsoeuudlpkgi -c mg.qa_rollback_approved=I_REVIEWED_V134_EMPTY_ONLY' "$PG_CONTAINER" psql -X -1 -v ON_ERROR_STOP=1 -U postgres -d postgres < proposals/V134-QA-REVIEW-ROLLBACK-EMPTY-ONLY.sql >/tmp/v134-rollback-negative.log 2>&1; then
  echo "FAIL: rollback deleted evidence"; exit 1
 fi
