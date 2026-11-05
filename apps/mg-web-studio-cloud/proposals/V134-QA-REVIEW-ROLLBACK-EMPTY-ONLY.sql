@@ -4,8 +4,8 @@
 DO $guard$
 BEGIN
  IF current_database()<>'postgres' OR current_user<>'postgres' OR pg_is_in_recovery() OR
-    current_setting('mg.qa_target_project_ref',true)<>'tbfhiqkivsoeuudlpkgi' OR
-    current_setting('mg.qa_rollback_approved',true)<>'I_REVIEWED_V134_EMPTY_ONLY' THEN
+    current_setting('mg.qa_target_project_ref',true) IS DISTINCT FROM 'tbfhiqkivsoeuudlpkgi' OR
+    current_setting('mg.qa_rollback_approved',true) IS DISTINCT FROM 'I_REVIEWED_V134_EMPTY_ONLY' THEN
   RAISE EXCEPTION 'V134 rollback gate denied';
  END IF;
  IF to_regclass('mg_qa_mfa_challenges.challenge_journal') IS NULL OR

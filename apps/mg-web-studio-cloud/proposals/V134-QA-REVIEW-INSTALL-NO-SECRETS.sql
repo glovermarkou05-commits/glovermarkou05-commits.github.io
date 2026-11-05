@@ -6,8 +6,8 @@
 DO $guard$
 BEGIN
  IF current_database()<>'postgres' OR current_user<>'postgres' OR pg_is_in_recovery() OR
-    current_setting('mg.qa_target_project_ref',true)<>'tbfhiqkivsoeuudlpkgi' OR
-    current_setting('mg.qa_install_approved',true)<>'I_REVIEWED_V134_QA_ONLY' THEN
+    current_setting('mg.qa_target_project_ref',true) IS DISTINCT FROM 'tbfhiqkivsoeuudlpkgi' OR
+    current_setting('mg.qa_install_approved',true) IS DISTINCT FROM 'I_REVIEWED_V134_QA_ONLY' THEN
   RAISE EXCEPTION 'V134 QA gate denied: project/session/operator approvals missing';
  END IF;
  IF EXISTS(SELECT 1 FROM pg_namespace WHERE nspname IN
