@@ -1,0 +1,47 @@
+name: MG Web Studio V135 Private QA TLS Auth Runtime Offline
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches: [feature/mg-digital-v5-web-services]
+    paths:
+      - .github/workflows/mg-web-studio-v135-private-qa-runtime-offline.yml
+      - apps/mg-web-studio-cloud/server/v135-private-qa-runtime.cjs
+      - apps/mg-web-studio-cloud/tests/v135-private-qa-runtime.test.cjs
+      - apps/mg-web-studio-cloud/server/v133-private-qa-mfa-pipeline.cjs
+      - apps/mg-web-studio-cloud/server/v132-auth-server-session-gate.cjs
+      - apps/mg-web-studio-cloud/server/v130-private-verified-mfa-composition.cjs
+      - apps/mg-web-studio-cloud/server/v128-private-challenge-journal.cjs
+      - apps/mg-web-studio-cloud/server/v126-durable-mfa-event-store.cjs
+
+permissions:
+  contents: read
+
+jobs:
+  v135-backend-offline:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Pinned checkout without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Node.js 22 pinned
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: QA-only runtime mock tests with network disabled
+        run: |
+          set -euo pipefail
+          node --require ./server/native-network-guard-v70.cjs --test --test-concurrency=1 tests/v135-private-qa-runtime.test.cjs
+      - name: No secrets or real Supabase execution
+        if: always()
+        run: |
+          echo "V135 simulated SDK Auth and PG pools only; no real QA users, secrets or passwords."
+          echo "V134 roles remain PASSWORD NULL. No endpoint or production deployment."
+          echo "PR #7 DRAFT; formal V67 0/32; production NO_GO."
