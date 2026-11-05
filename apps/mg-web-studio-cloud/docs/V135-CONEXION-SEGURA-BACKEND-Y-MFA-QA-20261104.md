@@ -51,3 +51,16 @@ V135 puede declararse cerrada **solo** cuando existan tres conexiones reales TLS
 **Importante:** estos éxitos comprueban **psql por rol**, no prueban aún el arranque real de `createV135PrivateQaRuntime` con las tres contraseñas, CA y SDK, ni una emisión y consumo real TOTP/AAL2 ni revocación atómica. No generar evidencia artificial. El proyecto QA no tiene usuarios Auth; antes de cerrar hay que crear una única cuenta temporal QA, inscribir MFA TOTP usando el SDK oficial, comprobar flujo privado y anti-replay, eliminar la cuenta de prueba y auditar. Las credenciales van únicamente en el entorno secreto del propietario.
 
 La sección inicial de este documento describe el **estado histórico previo** a estas pruebas y ya no debe usarse para afirmar que las contraseñas de QA permanecen bloqueadas. **PR #7 DRAFT / no publicar / V67 formal 0/32 / producción NO_GO.**
+
+## Integración V135 QA real — ejecutor único preparado
+
+**Estado: ejecución real aún pendiente.** El flujo ya probado de V107 no debe repetirse. Este ejecutor exclusivo de V135 crea una sola identidad sintética, la elimina al terminar y prueba además el journal y el recibo PostgreSQL con los tres roles.
+
+- Ejecutores locales: [Node integrado](../qa/v135-mfa-integrated-one-shot.cjs) y [PowerShell](../qa/EJECUTAR_MG_WEB_STUDIO_V135_QA.ps1).
+- Se requiere rama fija PR #7, proyecto QA fijado, CA confiable, claves locales privadas y cero usuarios existentes en el laboratorio. El propio ejecutor comprueba que el laboratorio está vacío antes de crear.
+- Inscribe TOTP, comprueba AAL1→AAL2, conecta tres roles con TLS verify-full, emite y lee un comprobante privado, rechaza reutilización del mismo desafío y limpia únicamente la cuenta que acaba de crear.
+- Se bloquea la concurrencia local; ante resultado ambiguo no se reintenta automáticamente y se realiza revisión humana de QA. Las credenciales jamás se guardan ni se publican.
+- Dependencias fijadas previamente: @supabase/supabase-js 2.118.0 y pg 8.23.1 en lockfiles; npm ci local sin scripts.
+- CI offline con red denegada y parser PowerShell: **PASS**, commit 8788f6f7d0a07119f3dd8af7bab8a45454170889: https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41963867563
+
+**Criterio de cierre:** solo resultado real PASS / stage=COMPLETE / cleanup=CONFIRMED junto a auditoría final del QA. No se ha ejecutado aún el flujo integrado real: producción NO_GO, V67 formal 0/32, PR #7 DRAFT.
