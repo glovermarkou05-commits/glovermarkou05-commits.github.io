@@ -39,6 +39,13 @@ INSERT INTO mg_qa_mfa_receipts.verified_mfa_events(receipt_id,proof_reference,su
 VALUES ('66666666-6666-4666-8666-666666666666','11111111-1111-4111-8111-111111111111','44444444-4444-4444-8444-444444444444','55555555-5555-4555-8555-555555555555','totp',2000000001);
 RESET ROLE;
 SQL
+docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres -c "ALTER POLICY mgqa_receipt_owner_read ON mg_qa_mfa_receipts.verified_mfa_events USING (false)"
+if docker exec -i -e PGOPTIONS='-c mg.qa_target_project_ref=tbfhiqkivsoeuudlpkgi -c mg.qa_rollback_approved=I_REVIEWED_V134_EMPTY_ONLY' "$PG_CONTAINER" psql -X -1 -v ON_ERROR_STOP=1 -U postgres -d postgres < proposals/V134-QA-REVIEW-ROLLBACK-EMPTY-ONLY.sql >/tmp/v134-filtered-owner.log 2>&1; then
+ echo "FAIL: rollback proceeded with filtered owner RLS"; exit 1
+fi
+grep -q 'V134 rollback: owner read policy/RLS proof missing' /tmp/v134-filtered-owner.log
+docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d postgres -c "ALTER POLICY mgqa_receipt_owner_read ON mg_qa_mfa_receipts.verified_mfa_events USING (true)"
+echo "QA_ROLLBACK_FILTERED_OWNER_RLS_DENIED_PASS"
 if docker exec -i "$PG_CONTAINER" psql -X -1 -v ON_ERROR_STOP=1 -U postgres -d postgres < proposals/V134-QA-REVIEW-ROLLBACK-EMPTY-ONLY.sql >/tmp/v134-no-rollback-approval.log 2>&1; then
  echo "FAIL: rollback without approval"; exit 1
 fi
