@@ -8,6 +8,8 @@ on:
       - .github/workflows/mg-web-studio-v135-private-qa-runtime-offline.yml
       - apps/mg-web-studio-cloud/server/v135-private-qa-runtime.cjs
       - apps/mg-web-studio-cloud/tests/v135-private-qa-runtime.test.cjs
+      - apps/mg-web-studio-cloud/tests/v135-mfa-integrated-one-shot.test.cjs
+      - apps/mg-web-studio-cloud/qa/v135-mfa-integrated-one-shot.cjs
       - apps/mg-web-studio-cloud/qa/v135-conectar-postgres-qa-seguro.ps1
       - apps/mg-web-studio-cloud/server/v133-private-qa-mfa-pipeline.cjs
       - apps/mg-web-studio-cloud/server/v132-auth-server-session-gate.cjs
@@ -39,7 +41,11 @@ jobs:
       - name: QA-only runtime mock tests with network disabled
         run: |
           set -euo pipefail
-          node --require ./server/native-network-guard-v70.cjs --test --test-concurrency=1 tests/v135-private-qa-runtime.test.cjs
+          node --require ./server/native-network-guard-v70.cjs --test --test-concurrency=1 tests/v135-private-qa-runtime.test.cjs tests/v135-mfa-integrated-one-shot.test.cjs
+      - name: Parse-only local V135 integrated runner
+        run: |
+          set -euo pipefail
+          node --check qa/v135-mfa-integrated-one-shot.cjs
       - name: Parse-only Windows secure psql setup script
         run: |
           pwsh -NoProfile -Command '$tokens=$null; $errors=$null; [System.Management.Automation.Language.Parser]::ParseFile("qa/v135-conectar-postgres-qa-seguro.ps1",[ref]$tokens,[ref]$errors) > $null; if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }; Write-Host "V135_POWERSHELL_PARSE_ONLY_PASS: no databases or passwords touched"'
@@ -47,5 +53,5 @@ jobs:
         if: always()
         run: |
           echo "V135 simulated SDK Auth and PG pools only; no real QA users, secrets or passwords."
-          echo "V134 roles remain PASSWORD NULL. No endpoint or production deployment."
+          echo "No real QA identities or PG sessions are exercised in CI. No endpoint or production deployment."
           echo "PR #7 DRAFT; formal V67 0/32; production NO_GO."
