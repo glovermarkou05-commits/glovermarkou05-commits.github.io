@@ -37,3 +37,17 @@ En las primeras verificaciones de V135, QA mantenía 0 usuarios, 0 sesiones, 3 r
 
 V135 puede declararse cerrada **solo** cuando existan tres conexiones reales TLS/hostname verificado con roles distintos, un token `aal2` de Supabase auténtico haya producido un recibo QA bajo control de anti-replay, la cuenta temporal esté eliminada y el inventario final haya sido auditado. Pasar pruebas sintéticas no sustituye esos controles.
 
+
+## Adenda verificada — 4 de noviembre de 2026, 22:xx hora de Ecuador
+
+**Estado actualizado:** `CONECTIVIDAD_IV4_PASS / TLS_VERIFY_FULL_PASS / TRES_ROLES_QA_PASS / MFA_REAL_PENDIENTE / NO_GO`.
+
+- El propietario validó `postgres` sobre `aws-1-sa-east-1.pooler.supabase.com:5432`, con PostgreSQL 17.11 y `sslmode=verify-full`: identidad `postgres`, exit 0 y TLSv1.3 AES-256-GCM.
+- Contraseñas individuales asignadas localmente por `\\password`; consulta de catálogo solo lectura confirmó 3 claves presentes, `LOGIN=true`, `SUPERUSER=false`, `BYPASSRLS=false`. Nunca se consultaron ni almacenaron contraseñas, hashes, tokens ni secretos.
+- Tres pruebas reales de autenticación individual mediante Session Pooler IPv4 con usuarios `role.tbfhiqkivsoeuudlpkgi` y comparación `current_user=session_user=role`: `mg_qa_mfa_challenge_journal=PASS`, `mg_qa_mfa_receipt_issuer=PASS`, `mg_qa_mfa_receipt_reader=PASS`. La primera tentativa del lector devolvió timeout Supavisor `(EAUTHQUERY) auth_query secret check timed out` (corroborado en logs); la comprobación única posterior fue `PASS`, sin cambio de contraseña.
+- Los dos objetos MFA reales siguen vacíos; RLS y FORCE RLS activos en ambos, 7 políticas. `auth.users=0`, `auth.sessions=0`, `challenge_journal=0`, `verified_mfa_events=0`. Security Advisor sin avisos.
+- El backend admite además de conexión directa, `transport='session_pooler'` con `POOL_HOST` fijado, usuarios específicos por proyecto, verificación TLS del socket cliente y comprobación de identidad PostgreSQL. Tests mock offline V135: **10/10 PASS** (<https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41959927027>).
+
+**Importante:** estos éxitos comprueban **psql por rol**, no prueban aún el arranque real de `createV135PrivateQaRuntime` con las tres contraseñas, CA y SDK, ni una emisión y consumo real TOTP/AAL2 ni revocación atómica. No generar evidencia artificial. El proyecto QA no tiene usuarios Auth; antes de cerrar hay que crear una única cuenta temporal QA, inscribir MFA TOTP usando el SDK oficial, comprobar flujo privado y anti-replay, eliminar la cuenta de prueba y auditar. Las credenciales van únicamente en el entorno secreto del propietario.
+
+La sección inicial de este documento describe el **estado histórico previo** a estas pruebas y ya no debe usarse para afirmar que las contraseñas de QA permanecen bloqueadas. **PR #7 DRAFT / no publicar / V67 formal 0/32 / producción NO_GO.**
