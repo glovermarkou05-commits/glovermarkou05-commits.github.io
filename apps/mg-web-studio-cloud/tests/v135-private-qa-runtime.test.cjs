@@ -1,7 +1,7 @@
 'use strict';
 const test=require('node:test');
 const assert=require('node:assert/strict');
-const {createV135PrivateQaRuntime,HOST,ROLES}=
+const {createV135PrivateQaRuntime,HOST,POOL_HOST,PROJECT_REF,ROLES}=
  require('../server/v135-private-qa-runtime.cjs');
 const SUBJECT='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
 const SESSION='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -17,10 +17,11 @@ let pools=[],pending=null,claimed=false,stored=null,verifyCalls=0;
 class MockPool{
  static ssl=true;
  static overrideUser=null;
+ static tlsStream=null;
  constructor(opts){this.opts=opts;this.closed=false;this.calls=0;pools.push(this);}
  async connect(){
   const role=this.opts.user;
-  return {query:async(sql,args)=>{
+  return {connection:{stream:MockPool.tlsStream},query:async(sql,args)=>{
    this.calls++;
    if(sql.includes('current_database() AS db'))return {rowCount:1,rows:[{
     db:'postgres',current_user:MockPool.overrideUser||role,
@@ -50,7 +51,7 @@ class MockPool{
  }
  async end(){this.closed=true;}
 }
-function reset(){pools=[];pending=null;claimed=false;stored=null;verifyCalls=0;MockPool.ssl=true;MockPool.overrideUser=null;}
+function reset(){pools=[];pending=null;claimed=false;stored=null;verifyCalls=0;MockPool.ssl=true;MockPool.overrideUser=null;MockPool.tlsStream=null;}
 function makeAuth({sessionToken=TOKEN,revoked=false}={}){
  return {
   getSession:async()=>({data:{session:{access_token:sessionToken}},error:null}),
@@ -142,4 +143,73 @@ test('V135 uses three SSL-verified least-privilege roles, joins MFA and closes p
  assert.equal(await flow.readTrustedVerifiedEvent({
   proofReference:REF,subject:SUBJECT,sessionId:SESSION
  }),null);
+});
+
+function mockVerifiedPoolerSocket(host=POOL_HOST){
+ return {encrypted:true,authorized:true,getPeerCertificate:()=>({
+  subject:{CN:host},subjectaltname:'DNS:'+host
+ })};
+}
+test('V135 session pooler pins verified IPv4 endpoint, project-suffixed roles and TLS identity',async()=>{
+ reset();
+ MockPool.tlsStream=mockVerifiedPoolerSocket();
+ // The backend PostgreSQL hop may not report ssl=true through Supavisor;
+ // this MUST NOT replace verification of client-side TLS at the pooler.
+ MockPool.ssl=false;
+ const flow=await createV135PrivateQaRuntime({
+  ...opts(),transport:'session_pooler',dbHost:POOL_HOST
+ });
+ assert.ok(flow);
+ assert.deepEqual(pools.map(p=>p.opts.host),[POOL_HOST,POOL_HOST,POOL_HOST]);
+ assert.deepEqual(pools.map(p=>p.opts.user),ROLES.map(role=>role+'.'+PROJECT_REF));
+ for(const p of pools){
+  assert.equal(p.opts.ssl.servername,POOL_HOST);
+  assert.equal(p.opts.ssl.rejectUnauthorized,true);
+  assert.equal(p.opts.port,5432);
+ }
+ assert.equal(flow.readiness.transport,'session_pooler');
+ assert.equal(flow.readiness.pinnedDbHost,POOL_HOST);
+ assert.equal(flow.readiness.productionAuthorized,false);
+ assert.equal((await flow.begin({factorId:FACTOR})).ok,true);
+ assert.equal((await flow.confirm({proofReference:REF,code:'123456'})).ok,true);
+ await flow.close();
+ assert.ok(pools.every(p=>p.closed));
+});
+test('V135 session pooler denies wrong host or mode before allocating pools',async()=>{
+ reset();
+ for(const patch of [
+  {transport:'session_pooler',dbHost:HOST},
+  {transport:'session_pooler',dbHost:'evil.pooler.supabase.com'},
+  {transport:'transaction_pooler',dbHost:POOL_HOST},
+  {transport:'session_pooler',dbHost:POOL_HOST,dbPort:6543}
+ ]){
+  await assert.rejects(createV135PrivateQaRuntime({...opts(),...patch}),TypeError);
+ }
+ assert.equal(pools.length,0);
+});
+test('V135 session pooler rejects missing, unauthorized and hostname-mismatched client TLS',async()=>{
+ for(const stream of [
+  null,
+  {...mockVerifiedPoolerSocket(),authorized:false},
+  {...mockVerifiedPoolerSocket(),encrypted:false},
+  mockVerifiedPoolerSocket('wrong.example.com')
+ ]){
+  reset();MockPool.tlsStream=stream;
+  const result=await createV135PrivateQaRuntime({
+   ...opts(),transport:'session_pooler',dbHost:POOL_HOST
+  });
+  assert.equal(result,null);
+  assert.ok(pools.every(p=>p.closed));
+  assert.equal(stored,null);
+ }
+});
+test('V135 session pooler rejects backend role escalation despite verified TLS',async()=>{
+ reset();
+ MockPool.tlsStream=mockVerifiedPoolerSocket();
+ MockPool.overrideUser='postgres';
+ const result=await createV135PrivateQaRuntime({
+  ...opts(),transport:'session_pooler',dbHost:POOL_HOST
+ });
+ assert.equal(result,null);
+ assert.ok(pools.every(p=>p.closed));
 });
