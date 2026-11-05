@@ -10,6 +10,7 @@ on:
       - apps/mg-web-studio-cloud/tests/v135-private-qa-runtime.test.cjs
       - apps/mg-web-studio-cloud/tests/v135-mfa-integrated-one-shot.test.cjs
       - apps/mg-web-studio-cloud/qa/v135-mfa-integrated-one-shot.cjs
+      - apps/mg-web-studio-cloud/qa/EJECUTAR_MG_WEB_STUDIO_V135_QA.ps1
       - apps/mg-web-studio-cloud/qa/v135-conectar-postgres-qa-seguro.ps1
       - apps/mg-web-studio-cloud/server/v133-private-qa-mfa-pipeline.cjs
       - apps/mg-web-studio-cloud/server/v132-auth-server-session-gate.cjs
@@ -49,6 +50,9 @@ jobs:
       - name: Parse-only Windows secure psql setup script
         run: |
           pwsh -NoProfile -Command '$tokens=$null; $errors=$null; [System.Management.Automation.Language.Parser]::ParseFile("qa/v135-conectar-postgres-qa-seguro.ps1",[ref]$tokens,[ref]$errors) > $null; if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }; Write-Host "V135_POWERSHELL_PARSE_ONLY_PASS: no databases or passwords touched"'
+      - name: Parse-only V135 integrated Windows runner
+        run: |
+          pwsh -NoProfile -Command '$tokens=$null; $errors=$null; [System.Management.Automation.Language.Parser]::ParseFile("qa/EJECUTAR_MG_WEB_STUDIO_V135_QA.ps1",[ref]$tokens,[ref]$errors) > $null; if($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }; Write-Host "V135_INTEGRATED_POWERSHELL_PARSE_PASS"'
       - name: No secrets or real Supabase execution
         if: always()
         run: |
