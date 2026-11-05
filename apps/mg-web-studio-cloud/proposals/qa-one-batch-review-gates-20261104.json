@@ -147,6 +147,12 @@
       "state": "ADVISOR_WARNING_REVIEW_SETTING",
       "severity": "WARNING",
       "detail": "Supabase Security Advisor currently reports auth_leaked_password_protection disabled; no settings modified. Enable after confirming plan and impact, separate from scope of revocation QA."
+    },
+    {
+      "id": "V135_QA_RUNTIME_ACTIVATION",
+      "severity": "P1",
+      "state": "OFFLINE_BACKEND_AND_POWERSHELL_PARSE_PASS_LIVE_SECRETS_TLS_AND_MFA_PENDING",
+      "detail": "V135 QA-pinned TLS/hostname and 3 distinct roles, session-scoped Auth runtime in code. CI 6/6 and PowerShell parse PASS. In real QA all three PostgreSQL role passwords remain NULL and there are zero users/sessions/receipt rows. Requires local secure credential provisioning, real CA/IPv6 connectivity, request-scoped SDK integration, single authorized real MFA AAL2 proof and cleanup."
     }
   ],
   "testsPreviouslyVerified": [
@@ -298,6 +304,23 @@
       "securityAdvisorLints": 0,
       "credentialsEnabled": false,
       "productionAuthorized": false
+    },
+    {
+      "phase": "V135_TLS_AUTH_PRIVATE_BACKEND_OFFLINE",
+      "kind": "requestScopedAuthThreePrivatePgPoolsPinnedQaTlsAndSecretIsolation",
+      "passed": 6,
+      "run": 41945577874,
+      "realSupabaseAuth": false,
+      "realQaDatabaseConnections": false,
+      "secretProvisioning": false,
+      "productionAuthorized": false
+    },
+    {
+      "phase": "V135_WINDOWS_ROLE_PROVISION_STATIC",
+      "kind": "PowerShellSyntaxParseOnlyNoDatabaseCalls",
+      "result": "PASS",
+      "run": 41945577874,
+      "secretProvisioning": false
     }
   ],
   "releaseGates": {
@@ -463,5 +486,33 @@
     "realDdlApplied": true,
     "rollbackExecuted": false,
     "migrationVersion": "20261105003921"
+  },
+  "v135": {
+    "state": "SERVER_IMPLEMENTED_OFFLINE_PASS_REAL_QA_CREDENTIALS_AND_MFA_PENDING",
+    "qaProject": "tbfhiqkivsoeuudlpkgi",
+    "module": "apps/mg-web-studio-cloud/server/v135-private-qa-runtime.cjs",
+    "runbook": "apps/mg-web-studio-cloud/docs/V135-CONEXION-SEGURA-BACKEND-Y-MFA-QA-20261104.md",
+    "powershell": "apps/mg-web-studio-cloud/qa/v135-conectar-postgres-qa-seguro.ps1",
+    "ciRun": 41945577874,
+    "testsPassed": 6,
+    "powershellSyntaxOnlyPassed": true,
+    "backendCredentialProvisioned": false,
+    "realQaPoolsVerified": false,
+    "realMfaAal2Proof": false,
+    "realQaUserCreated": false,
+    "realReceiptWritten": false,
+    "portAndHostPinned": "db.tbfhiqkivsoeuudlpkgi.supabase.co:5432",
+    "realDeployment": false
+  },
+  "observedReadOnlyAfterV135": {
+    "project": "tbfhiqkivsoeuudlpkgi",
+    "users": 0,
+    "sessions": 0,
+    "privateSchemas": 2,
+    "rolePasswordNullCount": 3,
+    "journalRows": 0,
+    "receiptRows": 0,
+    "securityAdvisorLints": 0,
+    "ddlChangedAfterV134": false
   }
 }
