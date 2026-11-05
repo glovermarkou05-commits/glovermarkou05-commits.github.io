@@ -3,8 +3,11 @@
 // Requires user-scoped, pre-authenticated official Supabase Auth client and
 // distinct least-privilege PG roles provisioned by backend secret manager.
 const {timingSafeEqual}=require('node:crypto');
+const {checkServerIdentity}=require('node:tls');
 const {createV133PrivateQaMfaPipeline}=require('./v133-private-qa-mfa-pipeline.cjs');
 const HOST='db.tbfhiqkivsoeuudlpkgi.supabase.co';
+const POOL_HOST='aws-1-sa-east-1.pooler.supabase.com';
+const PROJECT_REF='tbfhiqkivsoeuudlpkgi';
 const ROLES=Object.freeze([
  'mg_qa_mfa_challenge_journal','mg_qa_mfa_receipt_issuer',
  'mg_qa_mfa_receipt_reader'
@@ -20,7 +23,8 @@ const certificate=x=>typeof x==='string'&&x.length>=80&&x.length<20000&&
  x.includes('-----BEGIN CERTIFICATE-----')&&x.includes('-----END CERTIFICATE-----');
 async function createV135PrivateQaRuntime({
  Pool,auth,accessToken,caPem,rolePasswords,receiptKey,
- dbHost=HOST,dbPort=5432,dbName='postgres',nowSec,newReference
+ transport='direct',dbHost=transport==='session_pooler'?POOL_HOST:HOST,
+ dbPort=5432,dbName='postgres',nowSec,newReference
 }={}){
  if(typeof Pool!=='function'||!auth||typeof auth.getSession!=='function'||
   typeof auth.getClaims!=='function'||typeof auth.getUser!=='function'||
@@ -29,7 +33,8 @@ async function createV135PrivateQaRuntime({
   !Array.isArray(rolePasswords)||rolePasswords.length!==3||
   !rolePasswords.every(secret)||equals(rolePasswords[0],rolePasswords[1])||
   equals(rolePasswords[0],rolePasswords[2])||equals(rolePasswords[1],rolePasswords[2])||
-  !certificate(caPem)||dbHost!==HOST||dbPort!==5432||dbName!=='postgres'||
+  !certificate(caPem)||!['direct','session_pooler'].includes(transport)||
+  dbHost!==(transport==='direct'?HOST:POOL_HOST)||dbPort!==5432||dbName!=='postgres'||
   !Buffer.isBuffer(receiptKey)||receiptKey.length<32||
   (nowSec!==undefined&&typeof nowSec!=='function')||
   (newReference!==undefined&&typeof newReference!=='function'))
@@ -49,9 +54,10 @@ async function createV135PrivateQaRuntime({
  try{
   for(let i=0;i<3;i++){
    const p=new Pool({
-    host:HOST,port:5432,database:'postgres',user:ROLES[i],
+    host:dbHost,port:5432,database:'postgres',
+    user:transport==='session_pooler'?`${ROLES[i]}.${PROJECT_REF}`:ROLES[i],
     password:rolePasswords[i],
-    ssl:{ca:caPem,rejectUnauthorized:true,servername:HOST},
+    ssl:{ca:caPem,rejectUnauthorized:true,servername:dbHost},
     max:2,connectionTimeoutMillis:6000,idleTimeoutMillis:5000,
     query_timeout:8000,application_name:'mg-web-studio-v135-qa-only'
    });
@@ -65,6 +71,18 @@ async function createV135PrivateQaRuntime({
     conn=await pools[i].connect();
     if(!conn||typeof conn.query!=='function'||typeof conn.release!=='function')
      throw Error('Missing PG connection');
+    // On Supavisor session mode, pg_stat_ssl is for the backend hop, not
+    // the verified TLS connection between this client and the pooler.
+    // Require the actual TLS socket to be encrypted, authorized and bound
+    // to the pinned pooler hostname; fail closed when metadata is missing.
+    if(transport==='session_pooler'){
+     const stream=conn.connection?.stream;
+     const peer=typeof stream?.getPeerCertificate==='function'?
+      stream.getPeerCertificate():null;
+     if(stream?.encrypted!==true||stream?.authorized!==true||
+       !peer||checkServerIdentity(POOL_HOST,peer)!==undefined)
+      throw Error('Unverified client-to-pooler TLS');
+    }
     const result=await conn.query(
      'SELECT current_database() AS db,current_user AS current_user,'+
      'session_user AS session_user,pg_is_in_recovery() AS is_replica,'+
@@ -73,7 +91,8 @@ async function createV135PrivateQaRuntime({
     const row=result?.rows?.[0];
     if(result?.rowCount!==1||result.rows?.length!==1||!row||
      row.db!=='postgres'||row.current_user!==ROLES[i]||
-     row.session_user!==ROLES[i]||row.is_replica!==false||row.ssl!==true)
+     row.session_user!==ROLES[i]||row.is_replica!==false||
+     (transport==='direct'&&row.ssl!==true))
      throw Error('Wrong private backend identity or TLS');
    }finally{if(conn){try{conn.release(true);}catch{}}}
   }
@@ -90,7 +109,7 @@ async function createV135PrivateQaRuntime({
    readTrustedVerifiedEvent:input=>closed?Promise.resolve(null):pipeline.readTrustedVerifiedEvent(input),
    close,
    readiness:Object.freeze({
-    qaOnly:true,pinnedDbHost:HOST,roles:ROLES,
+    qaOnly:true,pinnedDbHost:dbHost,transport,roles:ROLES,
     verifiedTlsAndServerRole:true,sourceSessionBindingVerified:true,
     privatePools:3,publicEndpointWired:false,realMfaTestPassed:false,
     productionAuthorized:false,revocationLinearizable:false,
@@ -99,4 +118,4 @@ async function createV135PrivateQaRuntime({
   });
  }catch{await close();return null;}
 }
-module.exports={createV135PrivateQaRuntime,HOST,ROLES};
+module.exports={createV135PrivateQaRuntime,HOST,POOL_HOST,PROJECT_REF,ROLES};
