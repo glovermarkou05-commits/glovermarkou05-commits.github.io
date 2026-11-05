@@ -1,0 +1,54 @@
+name: MG Web Studio V134 QA Review Installation PG17
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches: [feature/mg-digital-v5-web-services]
+    paths:
+      - .github/workflows/mg-web-studio-v134-qa-review-pg17.yml
+      - apps/mg-web-studio-cloud/qa/v134-review-pg17-fixture.sh
+      - apps/mg-web-studio-cloud/proposals/V134-QA-REVIEW-INSTALL-NO-SECRETS.sql
+      - apps/mg-web-studio-cloud/proposals/V134-QA-REVIEW-ROLLBACK-EMPTY-ONLY.sql
+
+permissions:
+  contents: read
+
+jobs:
+  disposable-qa-review:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_PASSWORD: disposable-v134-admin
+        ports: ['5432/tcp']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    defaults:
+      run:
+        shell: bash
+        working-directory: apps/mg-web-studio-cloud
+    steps:
+      - name: Pinned checkout, do not persist credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Test SQL gate, locked credentials, FORCE RLS and guarded rollback
+        env:
+          CI: 'true'
+          V134_DISPOSABLE_ONLY: '1'
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          bash qa/v134-review-pg17-fixture.sh
+      - name: Never touch real Supabase
+        if: always()
+        run: |
+          echo "Disposable postgres:17 only. QA no DDL, no secrets, no production."
+          echo "PR DRAFT, V67 0/32, production NO_GO."
