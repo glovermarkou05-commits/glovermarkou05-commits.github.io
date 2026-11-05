@@ -1,3 +1,26 @@
+# V134 — instalación privada completada y verificada en Supabase QA
+
+**Instalación real autorizada y realizada el 4 de noviembre de 2026 (hora Ecuador).** Se conserva más abajo el diseño y las advertencias del candidato original, que no deben interpretarse como permiso para repetirlo.
+
+## Acta de ejecución (solo proyecto QA)
+
+- **Proyecto:** `MG WEB STUDIO AUTH QA` (`tbfhiqkivsoeuudlpkgi`), PostgreSQL 17.11, activo y saludable.
+- **Migración aplicada y registrada:** `20261105003921_mg_web_studio_v134_qa_private_mfa_locked_roles`. La marca UTC del servidor corresponde a la madrugada del 5 de noviembre, pero el trabajo fue realizado el 4 de noviembre en Ecuador.
+- **Fuente revisada para instalación:** `proposals/V134-QA-REVIEW-INSTALL-NO-SECRETS.sql` blob Git `137526ce0ff22017414e142e7bbfba3123f4ca02`. El operador antepuso en la misma transacción `BEGIN; SET LOCAL mg.qa_target_project_ref=...; SET LOCAL mg.qa_install_approved=...;` y `COMMIT;`.
+- **Alcance aplicado:** 2 esquemas privados, 2 tablas MFA, 3 roles `LOGIN PASSWORD NULL`, 7 políticas RLS, `FORCE RLS` en ambas tablas y solo permisos necesarios por columna.
+- **Comprobación de passwords:** 3/3 nulos confirmados directamente con un booleano sobre `pg_authid.rolpassword`; los nuevos roles **no tienen contraseña habilitada**.
+- **ACL verificados:** `anon`, `authenticated`, `service_role` sin `USAGE` sobre los esquemas; emisor puede insertar las columnas permitidas; lector no puede insertar; journal solo puede actualizar estado/fecha de reclamación; ningún rol nuevo puede hacer `SELECT` sobre `auth.sessions` ni hereda otros roles.
+- **Integridad e inventario:** cero usuarios y sesiones Auth; cero desafíos y comprobantes persistidos; cero factores y desafíos MFA; ningún trigger o función adicional en esquemas V134; Security Advisor 0 avisos.
+- **Rollback real:** **NO EJECUTADO**. El archivo de reversión sigue siendo un candidato protegido, requiere aprobación de retención/backup y no se debe ejecutar con registros.
+- **Cambios expresamente NO realizados:** contraseñas de PostgreSQL; credenciales de backend; cuentas MFA, endpoints o funciones públicas; RLS/GRANT sobre Auth administrado; publicación Lovable, merge PR #7 o producción.
+- **Control formal:** `V67 0/32`, producción `NO_GO`. El permiso de esta única migración se ha consumido; nuevas intervenciones deberán autorizarse según su riesgo y alcance.
+
+**Nota de método:** `pg_roles.rolpassword` puede mostrar una máscara, por lo que el postflight comprobó correctamente el estado nulo en `pg_authid`. Del mismo modo, `has_table_privilege(...,'INSERT')` no acredita permisos otorgados solo por columna: se verificó `has_column_privilege` para emisor, lector y journal.
+
+---
+
+## Expediente histórico del candidato antes de su instalación
+
 # V134 — instalación privada QA preparada para revisión, NO aprobada
 
 ## Resultado de validación del candidato V134 (CI y QA)
