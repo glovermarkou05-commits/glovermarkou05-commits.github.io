@@ -56,9 +56,11 @@
       "signature": null
     },
     "qaOwnerSqlAndUser": {
-      "state": "NOT_REQUESTED",
-      "approvedScope": null,
-      "signature": null
+      "state": "V134_DDL_ONLY_SCOPE_APPROVED_AND_CONSUMED_20261104",
+      "approvedScope": "tbfhiqkivsoeuudlpkgi two private schemas, two empty MFA tables, 3 LOGIN PASSWORD NULL roles, RLS policies and narrow grants. No users/credentials/production.",
+      "signature": null,
+      "credentialProvisioningApproved": false,
+      "userCreationApproved": false
     },
     "qaRollback": {
       "state": "PENDING",
@@ -112,13 +114,13 @@
     },
     {
       "id": "QA_ROLE_NAMES",
-      "state": "V134_QA_INSTALL_REVIEW_SQL_CI_PASS_NOT_INSTALLED",
-      "detail": "V134 review-only QA SQL with 3 LOGIN PASSWORD NULL roles, exact GRANT/RLS and owner-read rollback proof passed disposable Postgres17; no Supabase QA DDL, no backend credentials provisioned, review and scoped approval pending."
+      "state": "QA_REAL_ROLES_SCHEMAS_RLS_INSTALLED_PASSWORDS_LOCKED",
+      "detail": "Real QA V134 applied via Supabase migration 20261105003921 to project tbfhiqkivsoeuudlpkgi after owner scope approval: 2 schemas, 2 empty tables with FORCE RLS, 3 LOGIN PASSWORD NULL roles, 7 policies; effective column grants and public/managed auth denial verified. Backend role credentials NOT provisioned; scope consumed."
     },
     {
       "id": "FULL_ROLLBACK",
-      "state": "V134_REVIEW_ROLLBACK_CI_PASS_REAL_QA_NOT_INSTALLED",
-      "detail": "V134 isolated PG17 proved missing/wrong-project guard denies install, missing rollback authorization denies revert, filtered-owner RLS fails closed, nonempty evidence is preserved, and empty rollback removes both schemas and 3 roles. No real Supabase QA migration yet; backup/retention approvals required."
+      "state": "QA_REVIEWED_RESTRICTIVE_ROLLBACK_FILE_NOT_EXECUTED_ON_QA",
+      "detail": "V134 rollback candidate passed disposable PG17, no rollback executed in actual Supabase QA; real schemas/tables are intentionally present and empty, retention and backup/restore remain unapproved."
     },
     {
       "id": "BRIDGE_PERSIST",
@@ -280,6 +282,22 @@
       "installedQaSchemas": false,
       "roleCredentialsProvisioned": false,
       "validation": "NULL approvals, wrong project, passwordless roles, forced RLS, filtered owner RLS rollback denial, missing rollback approval, nonempty evidence refusal, empty-only cleanup"
+    },
+    {
+      "phase": "V134_REAL_SUPABASE_QA_INSTALL",
+      "kind": "ownerAuthorizedOneTimeDDLAndReadOnlyPrivilegeInventory",
+      "result": "INSTALL_PASS_WITH_LOCKED_ROLES",
+      "migrationVersion": "20261105003921",
+      "actualProject": "tbfhiqkivsoeuudlpkgi",
+      "authUsers": 0,
+      "authSessions": 0,
+      "privateSchemas": 2,
+      "tablesForceRls": 2,
+      "rolesPasswordNull": 3,
+      "policies": 7,
+      "securityAdvisorLints": 0,
+      "credentialsEnabled": false,
+      "productionAuthorized": false
     }
   ],
   "releaseGates": {
@@ -293,7 +311,12 @@
     "qaAuthProbeExecuted": true,
     "qaTemporaryUserCreated": true,
     "qaAuthProbeCompletedAndCleaned": true,
-    "qaTemporaryUserExists": false
+    "qaTemporaryUserExists": false,
+    "v134OneTimeQaSqlScopeCompleted": true,
+    "qaRolesCreatedLocked": true,
+    "qaCredentialsAuthorized": false,
+    "qaCredentialsActive": false,
+    "qaMfaRealRunAuthorized": false
   },
   "technicalProgress": {
     "source": "V95",
@@ -394,7 +417,7 @@
     "realQaDdlApplied": false
   },
   "qaSqlReviewCandidate": {
-    "state": "PREPARED_TESTED_DISPOSABLE_PG17_NOT_INSTALLED",
+    "state": "INSTALLED_AND_READ_ONLY_VERIFIED_IN_QA_SCOPE_COMPLETE",
     "projectId": "tbfhiqkivsoeuudlpkgi",
     "sourceBranch": "docs/mg-web-studio-v94-preflight-20261101",
     "installBlobSha": "137526ce0ff22017414e142e7bbfba3123f4ca02",
@@ -402,11 +425,18 @@
     "referenceRun": 41941820306,
     "roleLoginPasswordNull": true,
     "roleCredentialProvisioningAuthorized": false,
-    "needsSpecificScopedOwnerApproval": true,
-    "migrationTrackingCreated": false,
-    "qaDdlApplied": false,
+    "needsSpecificScopedOwnerApproval": false,
+    "migrationTrackingCreated": true,
+    "qaDdlApplied": true,
     "securityReviewIndependent": false,
-    "operationalGucNotCryptographicTargetProof": true
+    "operationalGucNotCryptographicTargetProof": true,
+    "migrationVersion": "20261105003921",
+    "migrationName": "mg_web_studio_v134_qa_private_mfa_locked_roles",
+    "scopeApprovedByOwner": "2026-11-04 explicitly approved 2 private schemas, 2 tables, 3 locked roles and minimal grants/RLS only",
+    "scopeConsumed": true,
+    "roleCredentialsProvisioned": false,
+    "liveAuthMfaTested": false,
+    "productionAuthorized": false
   },
   "observedReadOnlyAfterV134": {
     "date": "2026-11-04",
@@ -415,10 +445,23 @@
     "sessions": 0,
     "mfaFactors": 0,
     "mfaChallenges": 0,
-    "journalSchemaPresent": false,
-    "receiptsSchemaPresent": false,
-    "qaRoleCount": 0,
+    "journalSchemaPresent": true,
+    "receiptsSchemaPresent": true,
+    "qaRoleCount": 3,
+    "qaRolePasswordNullVerifiedInPgAuthid": 3,
+    "qaForceRlsTables": 2,
+    "rlsPolicies": 7,
+    "privateJournalRows": 0,
+    "privateReceiptRows": 0,
+    "publicSchemasDenied": true,
+    "columnPrivilegesVerified": true,
+    "directAuthSessionsSelectDeniedForQaRoles": true,
+    "customFunctions": 0,
+    "customTriggers": 0,
+    "roleMemberships": 0,
     "securityAdvisorLintCount": 0,
-    "realDdlApplied": false
+    "realDdlApplied": true,
+    "rollbackExecuted": false,
+    "migrationVersion": "20261105003921"
   }
 }
