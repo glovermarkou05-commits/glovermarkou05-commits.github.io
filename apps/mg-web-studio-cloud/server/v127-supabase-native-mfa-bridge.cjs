@@ -30,14 +30,22 @@ function createV127NativeMfaBridge({auth,actor,readActiveSession,journal,
  const key=Buffer.from(receiptKey);
  function tick(){try{const t=nowSec();return secureTime(t)?t:null;}catch{return null;}}
  async function sessionOk(verifiedMfaToken){
-  const t=tick();if(t===null||actor.tokenExpiresAtSec<=t)return false;
+  const started=tick();
+  if(started===null||actor.tokenExpiresAtSec<=started)return false;
   try{
    const r=await readActiveSession(Object.freeze({subject,sessionId}),verifiedMfaToken);
-   return r!==null&&typeof r==='object'&&r.active===true&&
+   // Auth checks finish AFTER the request starts. A valid server timestamp
+   // may be one second later: compare against a clock read AFTER the response.
+   // Keep the two-second freshness bound, expiry and revocation fail-closed.
+   const checked=tick();
+   return checked!==null&&checked>=started&&
+    actor.tokenExpiresAtSec>checked&&
+    r!==null&&typeof r==='object'&&r.active===true&&
     (r.primaryRead===true||r.authServerConfirmed===true)&&r.revocationChecked===true&&
     r.subject===subject&&r.sessionId===sessionId&&
     secureTime(r.checkedAtSec)&&secureTime(r.expiresAtSec)&&
-    r.checkedAtSec<=t&&t-r.checkedAtSec<=2&&r.expiresAtSec>t;
+    r.checkedAtSec>=started&&r.checkedAtSec<=checked&&
+    checked-r.checkedAtSec<=2&&r.expiresAtSec>checked;
   }catch{return false;}
  }
  function stableReceiptId(challengeId){

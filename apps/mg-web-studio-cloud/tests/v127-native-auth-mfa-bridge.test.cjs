@@ -188,3 +188,31 @@ test('no production credential, no migration, route and readiness explicitly NO_
   'SUPABASE_SERVICE_ROLE_KEY','console.log(','CREATE ROLE','GRANT SELECT','productionAuthorized:true'])
   assert.equal(s.includes(forbid),false,forbid);
 });
+
+test('V135 Auth check crossing a one-second boundary remains valid and can start MFA',async()=>{
+ let current=NOW,reads=0;
+ const f=fixture({
+  clock:()=>current,
+  activeSession:async()=>{
+   reads++;
+   if(reads===1)current=NOW+1;
+   return {...active(),checkedAtSec:current,expiresAtSec:NOW+100};
+  }
+ });
+ assert.deepEqual(await f.bridge.begin({factorId:FACTOR}),BEGIN);
+ assert.equal(f.calls.challenge.length,1);
+ assert.equal(f.calls.saved.length,1);
+});
+test('V135 denies timestamp from the future and stale or expired Auth confirmation',async()=>{
+ for(const scenario of [
+  {name:'future',read:()=>({...active(),checkedAtSec:NOW+1})},
+  {name:'stale',read:()=>({...active(),checkedAtSec:NOW-3})},
+  {name:'expired',read:()=>({...active(),expiresAtSec:NOW})},
+  {name:'unchecked-revocation',read:()=>({...active(),revocationChecked:false})},
+  {name:'wrong-session',read:()=>({...active(),sessionId:FACTOR})}
+ ]){
+  const f=fixture({activeSession:scenario.read});
+  assert.deepEqual(await f.bridge.begin({factorId:FACTOR}),NO,scenario.name);
+  assert.equal(f.calls.challenge.length,0,scenario.name);
+ }
+});

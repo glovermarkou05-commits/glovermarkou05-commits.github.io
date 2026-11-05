@@ -157,13 +157,14 @@ async function executeWith({admin,user,Pool,caPem,passwords,nowMs=()=>Date.now()
   if(initial.error||claims?.aal!=='aal1'||claims?.sub!==createdId||
    !isUuid(claims?.session_id))throw Error('AAL1_NOT_CONFIRMED');
 
-  stage='PRIVATE_BACKEND';
+  stage='PRIVATE_BACKEND_INIT';
   flow=await createV135PrivateQaRuntime({
    Pool,auth:user.auth,accessToken:token,caPem,
    rolePasswords:passwords,receiptKey:randomBytes(32),
    transport:'session_pooler'
   });
   if(!flow||flow.readiness?.decision!=='NO_GO')throw Error('PRIVATE_RUNTIME_UNAVAILABLE');
+  stage='PRIVATE_CHALLENGE';
   const begun=await flow.begin({factorId});
   if(begun?.ok!==true||!isUuid(begun?.proofReference))
    throw Error('CHALLENGE_NOT_RECORDED');
