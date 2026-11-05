@@ -20,7 +20,8 @@ class MockPool{
  static tlsStream=null;
  constructor(opts){this.opts=opts;this.closed=false;this.calls=0;pools.push(this);}
  async connect(){
-  const role=this.opts.user;
+  // Supavisor routes role.project-ref; PG reports the original role.
+  const role=this.opts.user.split('.')[0];
   return {connection:{stream:MockPool.tlsStream},query:async(sql,args)=>{
    this.calls++;
    if(sql.includes('current_database() AS db'))return {rowCount:1,rows:[{
