@@ -7,6 +7,7 @@ const fs=require('node:fs');
 const path=require('node:path');
 const os=require('node:os');
 const {randomBytes}=require('node:crypto');
+const {checkServerIdentity}=require('node:tls');
 const {validateScope,PROJECT_NAME,totp}=require('./v107-mfa-one-shot.cjs');
 const {createV135PrivateQaRuntime}=require('../server/v135-private-qa-runtime.cjs');
 const CONSENT='YES_V135_ONE_EPHEMERAL_QA_USER_AND_DELETE';
@@ -63,6 +64,50 @@ async function nextTotpWindow(previous){
  }
  await new Promise(resolve=>setTimeout(resolve,1200));
 }
+// Authentication preflight runs BEFORE creating any Auth user and discloses
+// only the failing role, never native driver errors (which may include secrets).
+async function checkPrivateRoleConnections({Pool,caPem,passwords}){
+ const host='aws-1-sa-east-1.pooler.supabase.com';
+ const project='tbfhiqkivsoeuudlpkgi';
+ if(typeof Pool!=='function'||!Array.isArray(passwords)||
+  passwords.length!==3||!passwords.every(VALID_SECRET))
+  return 'PRIVATE_ROLE_SECRETS_INVALID';
+ for(let i=0;i<ROLES.length;i++){
+  const role=ROLES[i];
+  let pool,client;
+  try{
+   pool=new Pool({
+    host,port:5432,database:'postgres',user:role+'.'+project,
+    password:passwords[i],
+    ssl:{ca:caPem,rejectUnauthorized:true,servername:host},
+    max:1,connectionTimeoutMillis:12000,idleTimeoutMillis:1000,
+    application_name:'mg-web-studio-v135-local-precheck'
+   });
+   client=await pool.connect();
+   const socket=client.connection?.stream;
+   const cert=typeof socket?.getPeerCertificate==='function'?
+    socket.getPeerCertificate():null;
+   if(socket?.encrypted!==true||socket?.authorized!==true||
+    !cert||checkServerIdentity(host,cert)!==undefined)
+    return 'TLS_OR_SERVER_IDENTITY_REJECTED';
+   const r=await client.query(
+    'SELECT current_database() AS db,current_user AS current_user,'+
+    'session_user AS session_user,pg_is_in_recovery() AS is_replica'
+   );
+   const q=r.rows?.[0];
+   if(r.rowCount!==1||q?.db!=='postgres'||q?.current_user!==role||
+    q?.session_user!==role||q?.is_replica!==false)
+    return 'ROLE_IDENTITY_MISMATCH_'+role;
+  }catch{
+   return 'ROLE_CONNECTION_FAILED_'+role;
+  }finally{
+   if(client){try{client.release(true);}catch{}}
+   if(pool){try{await pool.end();}catch{}}
+  }
+ }
+ return null;
+}
+
 async function executeWith({admin,user,Pool,caPem,passwords,nowMs=()=>Date.now()}){
  let stage='PRECHECK',createdId=null,createdAttempted=false;
  let sessionStarted=false,flow=null,logoutOk=true,deleteOk=true;
@@ -189,10 +234,17 @@ async function main(args=process.argv.slice(2),e=process.env){
  try{lockFd=fs.openSync(lock,'wx',0o600);}
  catch{process.stderr.write('V135 BLOCKED: CONCURRENT_OR_STALE_LOCK_REVIEW_QA\n');return 2;}
  try{
-  const admin=createClient(e.MG_AUTH_QA_URL,e.MG_AUTH_QA_ADMIN_KEY,authOptions);
-  const user=createClient(e.MG_AUTH_QA_URL,e.MG_AUTH_QA_PUBLISHABLE_KEY,authOptions);
   const caPem=fs.readFileSync(e.MG_V135_CA_PATH,'utf8');
   const passwords=envRoleNames.map(k=>e[k]);
+  const failedRole=await checkPrivateRoleConnections({Pool,caPem,passwords});
+  if(failedRole){
+   process.stdout.write('V135 BLOCKED: '+failedRole+
+    '; stage=PG_PREFLIGHT; cleanup=NOT_NEEDED; production=NO_GO\n');
+   return 1;
+  }
+  process.stdout.write('V135_PRIVATE_ROLES_PRECHECK: 3/3 PASS\n');
+  const admin=createClient(e.MG_AUTH_QA_URL,e.MG_AUTH_QA_ADMIN_KEY,authOptions);
+  const user=createClient(e.MG_AUTH_QA_URL,e.MG_AUTH_QA_PUBLISHABLE_KEY,authOptions);
   const outcome=await executeWith({admin,user,Pool,caPem,passwords});
   process.stdout.write('V135 RESULT: '+(outcome.passed?'PASS':'BLOCKED')+
    '; stage='+outcome.stage+'; cleanup='+outcome.cleanup+'; production=NO_GO\n');
@@ -208,4 +260,4 @@ if(require.main===module){
   process.exitCode=1;
  });
 }
-module.exports={main,preflight,executeWith,CONSENT};
+module.exports={main,preflight,checkPrivateRoleConnections,executeWith,CONSENT};
