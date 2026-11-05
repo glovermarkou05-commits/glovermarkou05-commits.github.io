@@ -540,17 +540,22 @@ test('V130 PG17: session revoked after challenge prevents receipt and business e
 function v132AuthFixture(){
  let revoked=false,users=0;
  const token='SIGNED-INITIAL-AAL1-JWT-SYNTHETIC';
+ const verifiedToken='SIGNED-AAL2-SYNTHETIC';
  const signedAt=now(),fixedExpiry=signedAt+120;
  const auth={
   async getClaims(t){
-   assert.equal(t,token);
+   // After MFA the SDK receives a distinct signed AAL2 JWT for the same session.
+   // The real V132 gate still checks issuer, signature, revocation, subject and session.
+   assert.ok(t===token||t===verifiedToken);
+   const afterMfa=t===verifiedToken;
    return {data:{claims:{
-    iss:QA_ISSUER,aud:'authenticated',aal:'aal1',sub:USER,session_id:SID,
-    exp:fixedExpiry,iat:signedAt-20
+    iss:QA_ISSUER,aud:'authenticated',aal:afterMfa?'aal2':'aal1',
+    sub:USER,session_id:SID,exp:afterMfa?fixedExpiry+60:fixedExpiry,
+    iat:signedAt-20
    }},error:null};
   },
   async getUser(t){
-   assert.equal(t,token);users++;
+   assert.ok(t===token||t===verifiedToken);users++;
    return revoked?{data:{user:null},error:{message:'revoked'}}:
     {data:{user:{id:USER}},error:null};
   }
