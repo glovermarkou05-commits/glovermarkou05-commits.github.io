@@ -5,6 +5,7 @@
 // Never log credentials, JWT, OTP, MFA seed, email, user id or DB row content.
 const fs=require('node:fs');
 const path=require('node:path');
+const os=require('node:os');
 const {randomBytes}=require('node:crypto');
 const {validateScope,PROJECT_NAME,totp}=require('./v107-mfa-one-shot.cjs');
 const {createV135PrivateQaRuntime}=require('../server/v135-private-qa-runtime.cjs');
@@ -182,14 +183,24 @@ async function main(args=process.argv.slice(2),e=process.env){
   ({createClient}=require('@supabase/supabase-js'));
   ({Pool}=require('./v116-pg-driver/node_modules/pg'));
  }catch{process.stderr.write('V135 BLOCKED: PINNED_MODULES_MISSING\n');return 2;}
- const admin=createClient(e.MG_AUTH_QA_URL,e.MG_AUTH_QA_ADMIN_KEY,authOptions);
- const user=createClient(e.MG_AUTH_QA_URL,e.MG_AUTH_QA_PUBLISHABLE_KEY,authOptions);
- const caPem=fs.readFileSync(e.MG_V135_CA_PATH,'utf8');
- const passwords=envRoleNames.map(k=>e[k]);
- const outcome=await executeWith({admin,user,Pool,caPem,passwords});
- process.stdout.write('V135 RESULT: '+(outcome.passed?'PASS':'BLOCKED')+
-  '; stage='+outcome.stage+'; cleanup='+outcome.cleanup+'; production=NO_GO\n');
- return outcome.passed?0:1;
+ // Local mutual exclusion. A stale lock requires human QA cleanup review.
+ const lock=path.join(os.tmpdir(),'mg-webstudio-v135-one-shot-'+e.MG_AUTH_QA_PROJECT_REF+'.lock');
+ let lockFd;
+ try{lockFd=fs.openSync(lock,'wx',0o600);}
+ catch{process.stderr.write('V135 BLOCKED: CONCURRENT_OR_STALE_LOCK_REVIEW_QA\n');return 2;}
+ try{
+  const admin=createClient(e.MG_AUTH_QA_URL,e.MG_AUTH_QA_ADMIN_KEY,authOptions);
+  const user=createClient(e.MG_AUTH_QA_URL,e.MG_AUTH_QA_PUBLISHABLE_KEY,authOptions);
+  const caPem=fs.readFileSync(e.MG_V135_CA_PATH,'utf8');
+  const passwords=envRoleNames.map(k=>e[k]);
+  const outcome=await executeWith({admin,user,Pool,caPem,passwords});
+  process.stdout.write('V135 RESULT: '+(outcome.passed?'PASS':'BLOCKED')+
+   '; stage='+outcome.stage+'; cleanup='+outcome.cleanup+'; production=NO_GO\n');
+  return outcome.passed?0:1;
+ }finally{
+  try{fs.closeSync(lockFd);}catch{}
+  try{fs.unlinkSync(lock);}catch{}
+ }
 }
 if(require.main===module){
  main().then(code=>{process.exitCode=code;}).catch(()=>{
