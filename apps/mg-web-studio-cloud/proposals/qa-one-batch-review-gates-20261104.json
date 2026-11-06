@@ -1,0 +1,518 @@
+{
+  "artifact": "MG_WEB_STUDIO_QA_SINGLE_BATCH_REVIEW_GATE_20261104",
+  "project": {
+    "name": "MG WEB STUDIO AUTH QA",
+    "ref": "tbfhiqkivsoeuudlpkgi",
+    "region": "sa-east-1",
+    "postgres": "17.11.0.011"
+  },
+  "source": {
+    "repository": "glovermarkou05-commits/glovermarkou05-commits.github.io",
+    "pr": 7,
+    "branch": "docs/mg-web-studio-v94-preflight-20261101",
+    "headAtReview": "9ba9a06c15a4ee361787a264dcfdc9c3f60b224a"
+  },
+  "observedReadOnlyAt": "2026-11-04",
+  "observed": {
+    "projectHealth": "ACTIVE_HEALTHY",
+    "supabaseSecurityAdvisorLintCount": 0,
+    "auth": {
+      "users": 0,
+      "sessions": 0,
+      "mfaFactors": 0,
+      "mfaChallenges": 0
+    },
+    "absentSchemas": [
+      "mg_auth_ledger",
+      "mg_v126_fictional",
+      "mg_v128_fictional"
+    ],
+    "absentRoles": [
+      "mg_auth_ledger_writer",
+      "mg_v118_ci_backend",
+      "mg_v122_ci_auth_reader",
+      "mg_v126_ci_issuer",
+      "mg_v126_ci_reader",
+      "mg_v128_ci_journal"
+    ],
+    "dataApiUI": {
+      "exposedSchemas": [
+        "public",
+        "graphql_public"
+      ],
+      "autoExposeNewTables": false,
+      "source": "previously user-submitted screenshots; not an independent persisted-config query"
+    }
+  },
+  "approvals": {
+    "independentReviewer": {
+      "state": "PENDING",
+      "name": null,
+      "signature": null
+    },
+    "dbaSecurity": {
+      "state": "PENDING",
+      "name": null,
+      "signature": null
+    },
+    "qaOwnerSqlAndUser": {
+      "state": "V134_DDL_ONLY_SCOPE_APPROVED_AND_CONSUMED_20261104",
+      "approvedScope": "tbfhiqkivsoeuudlpkgi two private schemas, two empty MFA tables, 3 LOGIN PASSWORD NULL roles, RLS policies and narrow grants. No users/credentials/production.",
+      "signature": null,
+      "credentialProvisioningApproved": false,
+      "userCreationApproved": false
+    },
+    "qaRollback": {
+      "state": "PENDING",
+      "name": null,
+      "signature": null
+    },
+    "production": {
+      "state": "NO_GO"
+    },
+    "qaOwnerAuthProbe": {
+      "state": "COMPLETE_CLEANUP_CONFIRMED_20261104",
+      "approvedScope": "ONE temporary QA Auth account; password sign-in; one local signout; check getUser old JWT; remove test user after result; no DDL, no production, no merge",
+      "accountCreated": true,
+      "realProbeExecuted": true,
+      "cleanupConfirmed": true,
+      "credentialsShared": false,
+      "lastOutcome": "USER_REPORTED_GETUSER_REJECTS_OLD_JWT_AFTER_LOCAL_LOGOUT",
+      "finalQaCounts": {
+        "users": 0,
+        "sessions": 0,
+        "mfaFactors": 0,
+        "mfaChallenges": 0
+      }
+    }
+  },
+  "allowedAfterIndependentReviewAndExplicitQaApproval": [
+    "tbfhiqkivsoeuudlpkgi only, private nonexposed schemas, minimal grants with RLS",
+    "single temporary QA TOTP identity, approved credentials and cleanup",
+    "one real official challenge/verify/getClaims test, session read and bounded fictional business effect",
+    "read only proof of role ACLs, data API isolation, negative and revocation tests",
+    "approved time-bounded rollback with backup/retention checks"
+  ],
+  "forbiddenWithoutSeparateApproval": [
+    "QA DDL/GRANT/CREATE ROLE/CREATE USER or permanent test users",
+    "Supabase production, Lovable publishing, merging PR #7",
+    "public Data API grants, service_role key in browser, security definer RPC",
+    "changing existing auth policies or bypassing MFA",
+    "destructive rollback of nonempty tables or unreviewed objects"
+  ],
+  "blockers": [
+    {
+      "id": "AUTH_SESSIONS_RLS_P0",
+      "state": "SINGLE_REAL_QA_PROBE_PASS_CLEANUP_CONFIRMED_NON_LINEARIZABLE",
+      "severity": "P0",
+      "detail": "One owner-observed getUser old-token rejection after local logout, exact code 401/403 not distinguished; read-only postflight verifies 0 QA users, 0 sessions, 0 factors, 0 challenges. No claim of revocation linearizability or production readiness."
+    },
+    {
+      "id": "AUTH_PROOF_LIVE",
+      "state": "OPEN",
+      "detail": "MFA official APIs modeled but scoped live Auth client and signed JWT response not yet tested"
+    },
+    {
+      "id": "QA_ROLE_NAMES",
+      "state": "QA_REAL_ROLES_SCHEMAS_RLS_INSTALLED_PASSWORDS_LOCKED",
+      "detail": "Real QA V134 applied via Supabase migration 20261105003921 to project tbfhiqkivsoeuudlpkgi after owner scope approval: 2 schemas, 2 empty tables with FORCE RLS, 3 LOGIN PASSWORD NULL roles, 7 policies; effective column grants and public/managed auth denial verified. Backend role credentials NOT provisioned; scope consumed."
+    },
+    {
+      "id": "FULL_ROLLBACK",
+      "state": "QA_REVIEWED_RESTRICTIVE_ROLLBACK_FILE_NOT_EXECUTED_ON_QA",
+      "detail": "V134 rollback candidate passed disposable PG17, no rollback executed in actual Supabase QA; real schemas/tables are intentionally present and empty, retention and backup/restore remain unapproved."
+    },
+    {
+      "id": "BRIDGE_PERSIST",
+      "state": "V133_WIRING_AND_REAL_PG17_PASS_REAL_SUPABASE_AUTH_PENDING",
+      "detail": "V133 combines V132+V128+V130 into server-only private pipeline with fixed QA role names. Actual postgres fixture created/read journal and receipt and denied reuse; Supabase Auth verify/getClaims/getUser remain simulated in this suite. Real QA installation and request-scoped Auth client integration remain pending."
+    },
+    {
+      "id": "AUTH_COMMIT_RACE",
+      "state": "OPEN",
+      "detail": "MFA verify outside business PG transaction and final session read before COMMIT have crash/revocation windows"
+    },
+    {
+      "id": "RETENTION_AND_BACKUP",
+      "state": "OPEN",
+      "detail": "Journal lifetime, verified-event retention, backup/erase/incident policy need owner and security signoff"
+    },
+    {
+      "id": "INDEPENDENT_SIGNOFF",
+      "state": "OPEN",
+      "detail": "No independent human review; passing CI is not a formal V67 pass"
+    },
+    {
+      "id": "AUTH_LEAKED_PASSWORD_PROTECTION",
+      "state": "ADVISOR_WARNING_REVIEW_SETTING",
+      "severity": "WARNING",
+      "detail": "Supabase Security Advisor currently reports auth_leaked_password_protection disabled; no settings modified. Enable after confirming plan and impact, separate from scope of revocation QA."
+    },
+    {
+      "id": "V135_QA_RUNTIME_ACTIVATION",
+      "severity": "P1",
+      "state": "OFFLINE_BACKEND_AND_POWERSHELL_PARSE_PASS_LIVE_SECRETS_TLS_AND_MFA_PENDING",
+      "detail": "V135 QA-pinned TLS/hostname and 3 distinct roles, session-scoped Auth runtime in code. CI 6/6 and PowerShell parse PASS. In real QA all three PostgreSQL role passwords remain NULL and there are zero users/sessions/receipt rows. Requires local secure credential provisioning, real CA/IPv6 connectivity, request-scoped SDK integration, single authorized real MFA AAL2 proof and cleanup."
+    }
+  ],
+  "testsPreviouslyVerified": [
+    {
+      "phase": "V107",
+      "kind": "realQAAuthTOTP",
+      "result": "PASS_AND_CLEANUP_CONFIRMED",
+      "repeat": false
+    },
+    {
+      "phase": "V127",
+      "kind": "offlineSupabaseMfaContract",
+      "passed": 18,
+      "run": 41775511115
+    },
+    {
+      "phase": "V128",
+      "kind": "disposablePg17AndMockClaims",
+      "passed": 17,
+      "run": 41777740170
+    },
+    {
+      "phase": "V129_ROLE_CONFIG",
+      "kind": "privateRoleAllowlistCiAndPg17Regression",
+      "passed": 81,
+      "runs": [
+        41781887321,
+        41781887348,
+        41781887179
+      ],
+      "evidence": "26+25+18+12 tests, all PASS"
+    },
+    {
+      "phase": "V129_ROLLBACK",
+      "kind": "disposablePG17OnlyGuardedRollback",
+      "result": "SUCCESS",
+      "run": 41782552742,
+      "notAnAuthorization": true
+    },
+    {
+      "phase": "V130",
+      "kind": "nativeMfaBridgeToDurableReceiptToFictionalBusinessPG17",
+      "passed": 30,
+      "run": 41788585706,
+      "realSupabaseAuth": false,
+      "realQaDdl": false
+    },
+    {
+      "phase": "V131",
+      "kind": "qaSchemaAndRoleMappingWithoutDeployment",
+      "passed": 57,
+      "runs": [
+        41841586814,
+        41841586997
+      ],
+      "codeSha": "f2b940caab5b804a9b625ed32126df8030ed6689",
+      "testFixSha": "06c61d585e53c0393c6077111b761790164a1947",
+      "realQaDdl": false
+    },
+    {
+      "phase": "V122_RLS_PARITY",
+      "kind": "disposableQaLikeRlsDenialWithoutPolicies",
+      "passed": 31,
+      "run": 41842888590,
+      "realQaChanged": false
+    },
+    {
+      "phase": "V122_ROLE_HARDENING",
+      "kind": "sessionUserAndCurrentUserRoleIdentity",
+      "passed": 27,
+      "run": 41842888611,
+      "realQaChanged": false
+    },
+    {
+      "phase": "V132_AUTH_API",
+      "kind": "officialGetUserPlusGetClaimsContractMock",
+      "passed": 12,
+      "run": 41849141865,
+      "actualSupabaseAuth": false
+    },
+    {
+      "phase": "V132_TO_FICTIONAL_BUSINESS",
+      "kind": "getUserContractWithPG17DurableMfaLedgerRollback",
+      "passed": 32,
+      "run": 41849141097,
+      "actualSupabaseAuth": false
+    },
+    {
+      "phase": "V132_WINDOWS_PROBE_STATIC",
+      "kind": "PowerShellSyntaxOnly",
+      "result": "PASS",
+      "run": 41861940527,
+      "actualSupabaseAuth": false
+    },
+    {
+      "phase": "V132_REAL_QA_AUTH_REVOCATION",
+      "kind": "ownerExecutedSingleTemporaryQaAuthTokenProbe",
+      "result": "USER_REPORTED_GETUSER_REJECTED_OLD_TOKEN_AFTER_LOGOUT",
+      "responseCategory": "HTTP_401_OR_403",
+      "scriptVerifiedHash": "e72c31e11798e5e305c1944e188b4678706dfdb2",
+      "localScriptModification": "Relaxed qa substring check with explicit temporary-account confirmation; local change not independently inspected",
+      "realQa": true,
+      "cleanupConfirmed": false,
+      "authoritativeCrossTransactionRevocation": false
+    },
+    {
+      "phase": "V133_PRIVATE_QA_AUTH_MFA_PIPELINE",
+      "kind": "backendWiringMockSupabaseAuthWithPrivatePools",
+      "passed": 5,
+      "run": 41891805674,
+      "realSupabaseAuth": false
+    },
+    {
+      "phase": "V133_QA_NAMED_ROLES_POSTGRES17",
+      "kind": "disposablePG17ForceRlsGrantMinimumAndPrivateMfaPipeline",
+      "passed": 4,
+      "run": 41891805674,
+      "realQaDdl": false
+    },
+    {
+      "phase": "V133_DISPOSABLE_ROLLBACK",
+      "kind": "refuseNonEmptyThenCheckTablesSchemasRolesDeleted",
+      "result": "PASS",
+      "run": 41891805674,
+      "realQaDdl": false
+    },
+    {
+      "phase": "V134_QA_DDL_REVIEW_CANDIDATE",
+      "kind": "PostgreSQL17_disposable_secretless_qa_schema_roles_force_rls_failclosed_rollback",
+      "result": "PASS",
+      "run": 41941820306,
+      "realQaDdl": false,
+      "installedQaSchemas": false,
+      "roleCredentialsProvisioned": false,
+      "validation": "NULL approvals, wrong project, passwordless roles, forced RLS, filtered owner RLS rollback denial, missing rollback approval, nonempty evidence refusal, empty-only cleanup"
+    },
+    {
+      "phase": "V134_REAL_SUPABASE_QA_INSTALL",
+      "kind": "ownerAuthorizedOneTimeDDLAndReadOnlyPrivilegeInventory",
+      "result": "INSTALL_PASS_WITH_LOCKED_ROLES",
+      "migrationVersion": "20261105003921",
+      "actualProject": "tbfhiqkivsoeuudlpkgi",
+      "authUsers": 0,
+      "authSessions": 0,
+      "privateSchemas": 2,
+      "tablesForceRls": 2,
+      "rolesPasswordNull": 3,
+      "policies": 7,
+      "securityAdvisorLints": 0,
+      "credentialsEnabled": false,
+      "productionAuthorized": false
+    },
+    {
+      "phase": "V135_TLS_AUTH_PRIVATE_BACKEND_OFFLINE",
+      "kind": "requestScopedAuthThreePrivatePgPoolsPinnedQaTlsAndSecretIsolation",
+      "passed": 6,
+      "run": 41945577874,
+      "realSupabaseAuth": false,
+      "realQaDatabaseConnections": false,
+      "secretProvisioning": false,
+      "productionAuthorized": false
+    },
+    {
+      "phase": "V135_WINDOWS_ROLE_PROVISION_STATIC",
+      "kind": "PowerShellSyntaxParseOnlyNoDatabaseCalls",
+      "result": "PASS",
+      "run": 41945577874,
+      "secretProvisioning": false
+    }
+  ],
+  "releaseGates": {
+    "formalV67Approved": 0,
+    "formalV67Total": 32,
+    "production": "NO_GO",
+    "pullRequestDraft": true,
+    "mergeAuthorized": false,
+    "qaSqlAuthorized": false,
+    "qaAuthProbeAuthorized": true,
+    "qaAuthProbeExecuted": true,
+    "qaTemporaryUserCreated": true,
+    "qaAuthProbeCompletedAndCleaned": true,
+    "qaTemporaryUserExists": false,
+    "v134OneTimeQaSqlScopeCompleted": true,
+    "qaRolesCreatedLocked": true,
+    "qaCredentialsAuthorized": false,
+    "qaCredentialsActive": false,
+    "qaMfaRealRunAuthorized": false
+  },
+  "technicalProgress": {
+    "source": "V95",
+    "method": "LAB_OBSERVED=1 PARTIAL=0.5 NOT_EXERCISED=0",
+    "observed": 15,
+    "partial": 14,
+    "notExercised": 3,
+    "estimatedPercent": 69,
+    "estimatedRemainingPercent": 31
+  },
+  "reviewedChanges": {
+    "status": "REVIEW_PACKAGE_UPDATED_NOT_QA_AUTHORIZATION",
+    "roleConfig": {
+      "files": [
+        "server/v122-private-auth-session-row-reader.cjs",
+        "server/v126-durable-mfa-event-store.cjs",
+        "server/v128-private-challenge-journal.cjs"
+      ],
+      "strictRoleAllowlist": true,
+      "qaRolesCreated": false,
+      "independentApproval": "PENDING"
+    },
+    "rollback": {
+      "path": "proposals/v129-full-rollback-disposable-review-only.sql",
+      "ciRun": 41782552742,
+      "disposableOnly": true,
+      "realQaRollbackApproved": false,
+      "realQaRollbackRequiresFullRedesign": true
+    },
+    "hardGatesRemain": {
+      "independentReviewer": "PENDING",
+      "dba": "PENDING",
+      "ownerApproval": "PENDING",
+      "production": "NO_GO",
+      "formalV67Pass": 0
+    },
+    "privateVerifiedReceipt": {
+      "phase": "V130",
+      "state": "PARTIAL_LAB_PASS",
+      "file": "server/v130-private-verified-mfa-composition.cjs",
+      "testRun": 41788585706,
+      "productionConnected": false,
+      "realMfaVerifierConnected": false,
+      "publicEndpoint": false
+    },
+    "qaSchemaMapping": {
+      "state": "CODE_VERIFIED_ONLY",
+      "schemas": [
+        "mg_qa_mfa_challenges",
+        "mg_qa_mfa_receipts"
+      ],
+      "proposal": "proposals/V131-QA-PRIVADO-INSTALACION-REVISION-NO-EJECUTAR.md",
+      "requiresDbaFinalSql": true,
+      "realInstallation": false
+    },
+    "authSessionRls": {
+      "state": "P0_CODE_ALTERNATIVE_AVAILABLE",
+      "originalRealQaRls": true,
+      "originalRealQaPolicyCount": 0,
+      "preferredSessionAuthority": "official_supabase_auth_getUser(jwt)_plus_verified_getClaims(jwt)",
+      "code": "server/v132-auth-server-session-gate.cjs",
+      "directAuthSessionsSelectRequiredForPreferredPath": false,
+      "approvedToDisableManagedAuthRls": false,
+      "actualQaRevocationTestPassed": false,
+      "linearizableRevocation": false,
+      "finalExternalDbaSignature": "PENDING",
+      "ownerApproval": "PENDING"
+    },
+    "preferredQaSessionDesign": {
+      "noDirectAuthSessionsReader": true,
+      "privateBackendOnly": true,
+      "avoidsManagedAuthRlsChange": true,
+      "reliesOnFreshGetUserPerSensitiveCheck": true,
+      "accessTokenAndActorBoundByServer": true,
+      "exposedPublicRoute": false,
+      "dataApiGrantNeeded": false,
+      "rollbackScopeForSessionReader": "NONE_BECAUSE_NO_QA_AUTH_SCHEMA_GRANT_PLANNED"
+    }
+  },
+  "observedReadOnlyAfterAuthProbe": {
+    "date": "2026-11-04",
+    "qaUsers": 1,
+    "qaSessions": 0,
+    "qaFactors": 0,
+    "qaChallenges": 0,
+    "advisorWarning": "auth_leaked_password_protection disabled",
+    "productionImpacted": false
+  },
+  "observedReadOnlyAfterV133": {
+    "date": "2026-11-04",
+    "project": "tbfhiqkivsoeuudlpkgi",
+    "qaUsers": 0,
+    "qaSessions": 0,
+    "privateQaChallengeSchemaExists": false,
+    "privateQaReceiptsSchemaExists": false,
+    "qaRoleCount": 0,
+    "projectHealth": "ACTIVE_HEALTHY",
+    "realQaDdlApplied": false
+  },
+  "qaSqlReviewCandidate": {
+    "state": "INSTALLED_AND_READ_ONLY_VERIFIED_IN_QA_SCOPE_COMPLETE",
+    "projectId": "tbfhiqkivsoeuudlpkgi",
+    "sourceBranch": "docs/mg-web-studio-v94-preflight-20261101",
+    "installBlobSha": "137526ce0ff22017414e142e7bbfba3123f4ca02",
+    "rollbackBlobSha": "723957f2f94e91ac02c4e01850832fa3cf453be6",
+    "referenceRun": 41941820306,
+    "roleLoginPasswordNull": true,
+    "roleCredentialProvisioningAuthorized": false,
+    "needsSpecificScopedOwnerApproval": false,
+    "migrationTrackingCreated": true,
+    "qaDdlApplied": true,
+    "securityReviewIndependent": false,
+    "operationalGucNotCryptographicTargetProof": true,
+    "migrationVersion": "20261105003921",
+    "migrationName": "mg_web_studio_v134_qa_private_mfa_locked_roles",
+    "scopeApprovedByOwner": "2026-11-04 explicitly approved 2 private schemas, 2 tables, 3 locked roles and minimal grants/RLS only",
+    "scopeConsumed": true,
+    "roleCredentialsProvisioned": false,
+    "liveAuthMfaTested": false,
+    "productionAuthorized": false
+  },
+  "observedReadOnlyAfterV134": {
+    "date": "2026-11-04",
+    "project": "tbfhiqkivsoeuudlpkgi",
+    "users": 0,
+    "sessions": 0,
+    "mfaFactors": 0,
+    "mfaChallenges": 0,
+    "journalSchemaPresent": true,
+    "receiptsSchemaPresent": true,
+    "qaRoleCount": 3,
+    "qaRolePasswordNullVerifiedInPgAuthid": 3,
+    "qaForceRlsTables": 2,
+    "rlsPolicies": 7,
+    "privateJournalRows": 0,
+    "privateReceiptRows": 0,
+    "publicSchemasDenied": true,
+    "columnPrivilegesVerified": true,
+    "directAuthSessionsSelectDeniedForQaRoles": true,
+    "customFunctions": 0,
+    "customTriggers": 0,
+    "roleMemberships": 0,
+    "securityAdvisorLintCount": 0,
+    "realDdlApplied": true,
+    "rollbackExecuted": false,
+    "migrationVersion": "20261105003921"
+  },
+  "v135": {
+    "state": "SERVER_IMPLEMENTED_OFFLINE_PASS_REAL_QA_CREDENTIALS_AND_MFA_PENDING",
+    "qaProject": "tbfhiqkivsoeuudlpkgi",
+    "module": "apps/mg-web-studio-cloud/server/v135-private-qa-runtime.cjs",
+    "runbook": "apps/mg-web-studio-cloud/docs/V135-CONEXION-SEGURA-BACKEND-Y-MFA-QA-20261104.md",
+    "powershell": "apps/mg-web-studio-cloud/qa/v135-conectar-postgres-qa-seguro.ps1",
+    "ciRun": 41945577874,
+    "testsPassed": 6,
+    "powershellSyntaxOnlyPassed": true,
+    "backendCredentialProvisioned": false,
+    "realQaPoolsVerified": false,
+    "realMfaAal2Proof": false,
+    "realQaUserCreated": false,
+    "realReceiptWritten": false,
+    "portAndHostPinned": "db.tbfhiqkivsoeuudlpkgi.supabase.co:5432",
+    "realDeployment": false
+  },
+  "observedReadOnlyAfterV135": {
+    "project": "tbfhiqkivsoeuudlpkgi",
+    "users": 0,
+    "sessions": 0,
+    "privateSchemas": 2,
+    "rolePasswordNullCount": 3,
+    "journalRows": 0,
+    "receiptRows": 0,
+    "securityAdvisorLints": 0,
+    "ddlChangedAfterV134": false
+  }
+}

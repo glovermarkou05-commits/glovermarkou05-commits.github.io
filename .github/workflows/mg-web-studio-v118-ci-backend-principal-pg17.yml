@@ -1,0 +1,98 @@
+name: MG Web Studio V118 Nonadmin Backend Principal PG17 Disposable
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v118-ci-backend-principal-pg17.yml
+      - apps/mg-web-studio-cloud/qa/v118-scoped-writer-pool.cjs
+      - apps/mg-web-studio-cloud/tests/v118-pg17-nonprivileged-principal.test.cjs
+      - apps/mg-web-studio-cloud/server/v115-insert-only-pg-adapter.cjs
+      - apps/mg-web-studio-cloud/proposals/v110-private-mfa-ledger-review-only.sql
+      - apps/mg-web-studio-cloud/proposals/v111-insert-only-ledger-writer-review.sql
+      - apps/mg-web-studio-cloud/qa/v116-pg-driver/package-lock.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-webstudio-v118-pr7-disposable-pg17
+  cancel-in-progress: false
+
+jobs:
+  nonadmin-writer-login-disposable:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: qa_ledger
+          POSTGRES_PASSWORD: v118-disposable-admin-public-fixture
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U postgres -d qa_ledger"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    defaults:
+      run:
+        shell: bash
+        working-directory: apps/mg-web-studio-cloud
+    steps:
+      - name: Checkout read-only without persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Node 22 pinned setup
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Install integrity-locked public PostgreSQL driver
+        run: |
+          set -euo pipefail
+          npm ci --prefix qa/v116-pg-driver --ignore-scripts --no-audit --no-fund
+      - name: Prepare V110 V111 and disposable nonadmin login fixture
+        env:
+          V118_PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          test -n "$V118_PG_CONTAINER"
+          docker exec -i "$V118_PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c \
+            'CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE service_role NOLOGIN;'
+          docker exec -i "$V118_PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger \
+            < proposals/v110-private-mfa-ledger-review-only.sql
+          docker exec -i "$V118_PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger \
+            < proposals/v111-insert-only-ledger-writer-review.sql
+          docker exec -i "$V118_PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger <<'SQL'
+          CREATE ROLE mg_v118_ci_backend LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS
+            PASSWORD 'v118-backend-public-fixture-not-secret';
+          CREATE ROLE mg_v118_ci_untrusted LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS
+            PASSWORD 'v118-denied-public-fixture';
+          GRANT mg_auth_ledger_writer TO mg_v118_ci_backend
+            WITH ADMIN FALSE, INHERIT FALSE, SET TRUE;
+          SQL
+      - name: Verify actual nonadmin role and disposable session eviction
+        env:
+          CI: 'true'
+          NODE_PATH: ${{ github.workspace }}/apps/mg-web-studio-cloud/qa/v116-pg-driver/node_modules
+          V118_DISPOSABLE_ONLY: '1'
+          V118_PG_HOST: '127.0.0.1'
+          V118_PG_PORT: ${{ job.services.postgres.ports[5432] }}
+          V118_PG_DB: qa_ledger
+          V118_PG_PASSWORD: v118-backend-public-fixture-not-secret
+          V118_PG_ADMIN_PASSWORD: v118-disposable-admin-public-fixture
+        run: |
+          set -euo pipefail
+          node --test --test-concurrency=1 tests/v118-pg17-nonprivileged-principal.test.cjs
+      - name: Explicitly retain production NO_GO
+        if: always()
+        run: |
+          echo "Only CI synthetic PostgreSQL, never live Supabase or backend credential."
+          echo "TEST principal is not production-approved; all role-bearing connections are evicted."
+          echo "TLS, vault rotation, production pool sizing, revocation and business idempotency remain UNVERIFIED."
+          echo "PR #7 draft. No merge. V67 32 PENDING / 0 PASS. Production NO_GO."

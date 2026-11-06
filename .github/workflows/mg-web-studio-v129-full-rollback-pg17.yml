@@ -1,0 +1,136 @@
+name: MG Web Studio V129 Guarded Full Rollback Contract PG17
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v129-full-rollback-pg17.yml
+      - apps/mg-web-studio-cloud/proposals/v129-full-rollback-disposable-review-only.sql
+
+permissions:
+  contents: read
+
+jobs:
+  rollback-disposable-postgres-only:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: qa_ledger
+          POSTGRES_PASSWORD: v129-disposable-only
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U postgres -d qa_ledger"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout pinned without credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Create disposable ledger + journal + issuer/reader roles fixture
+        env:
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger <<'SQL'
+          CREATE SCHEMA auth;
+          CREATE TABLE auth.sessions(id uuid PRIMARY KEY, user_id uuid NOT NULL, not_after timestamptz);
+          CREATE ROLE mg_auth_ledger_writer NOLOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+          CREATE ROLE mg_v118_ci_backend LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+          CREATE ROLE mg_v122_ci_auth_reader LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+          CREATE ROLE mg_v126_ci_issuer LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+          CREATE ROLE mg_v126_ci_reader LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+          CREATE ROLE mg_v128_ci_journal LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS;
+          GRANT mg_auth_ledger_writer TO mg_v118_ci_backend WITH ADMIN FALSE, INHERIT FALSE, SET TRUE;
+          GRANT USAGE ON SCHEMA auth TO mg_v122_ci_auth_reader;
+          GRANT SELECT(id,user_id,not_after) ON auth.sessions TO mg_v122_ci_auth_reader;
+
+          CREATE SCHEMA mg_auth_ledger;
+          CREATE TABLE mg_auth_ledger.mfa_redemptions(event_key text PRIMARY KEY);
+          ALTER TABLE mg_auth_ledger.mfa_redemptions ENABLE ROW LEVEL SECURITY;
+          ALTER TABLE mg_auth_ledger.mfa_redemptions FORCE ROW LEVEL SECURITY;
+          GRANT USAGE ON SCHEMA mg_auth_ledger TO mg_auth_ledger_writer;
+          GRANT INSERT(event_key) ON mg_auth_ledger.mfa_redemptions TO mg_auth_ledger_writer;
+          CREATE POLICY v111_mfa_insert_writer ON mg_auth_ledger.mfa_redemptions FOR INSERT TO mg_auth_ledger_writer WITH CHECK(true);
+
+          CREATE SCHEMA mg_v126_fictional;
+          CREATE TABLE mg_v126_fictional.verified_mfa_events(
+            receipt_id uuid PRIMARY KEY, event_id uuid NOT NULL UNIQUE DEFAULT gen_random_uuid(),
+            proof_reference uuid UNIQUE NOT NULL, subject uuid NOT NULL,
+            session_id uuid NOT NULL, method text NOT NULL, verified_at_sec bigint NOT NULL);
+          ALTER TABLE mg_v126_fictional.verified_mfa_events ENABLE ROW LEVEL SECURITY;
+          ALTER TABLE mg_v126_fictional.verified_mfa_events FORCE ROW LEVEL SECURITY;
+          GRANT USAGE ON SCHEMA mg_v126_fictional TO mg_v126_ci_issuer,mg_v126_ci_reader;
+          GRANT SELECT ON mg_v126_fictional.verified_mfa_events TO mg_v126_ci_issuer,mg_v126_ci_reader;
+          GRANT INSERT(receipt_id,proof_reference,subject,session_id,method,verified_at_sec) ON mg_v126_fictional.verified_mfa_events TO mg_v126_ci_issuer;
+          CREATE POLICY v126_private_reader ON mg_v126_fictional.verified_mfa_events FOR SELECT TO mg_v126_ci_issuer,mg_v126_ci_reader USING(true);
+          CREATE POLICY v126_private_issuer ON mg_v126_fictional.verified_mfa_events FOR INSERT TO mg_v126_ci_issuer WITH CHECK(true);
+
+          CREATE SCHEMA mg_v128_fictional;
+          CREATE TABLE mg_v128_fictional.challenge_journal(
+            proof_reference uuid PRIMARY KEY,challenge_id uuid NOT NULL UNIQUE,
+            factor_id uuid NOT NULL,subject uuid NOT NULL,session_id uuid NOT NULL,
+            method text NOT NULL,created_at_sec bigint NOT NULL,
+            state text NOT NULL DEFAULT 'PENDING',claimed_at_sec bigint);
+          ALTER TABLE mg_v128_fictional.challenge_journal ENABLE ROW LEVEL SECURITY;
+          ALTER TABLE mg_v128_fictional.challenge_journal FORCE ROW LEVEL SECURITY;
+          GRANT USAGE ON SCHEMA mg_v128_fictional TO mg_v128_ci_journal;
+          GRANT SELECT,INSERT,UPDATE(state,claimed_at_sec) ON mg_v128_fictional.challenge_journal TO mg_v128_ci_journal;
+          CREATE POLICY v128_reader ON mg_v128_fictional.challenge_journal FOR SELECT TO mg_v128_ci_journal USING(true);
+          CREATE POLICY v128_insert ON mg_v128_fictional.challenge_journal FOR INSERT TO mg_v128_ci_journal WITH CHECK(true);
+          CREATE POLICY v128_claim ON mg_v128_fictional.challenge_journal FOR UPDATE TO mg_v128_ci_journal USING(state='PENDING') WITH CHECK(state='CLAIMED');
+          SQL
+      - name: Refuse rollback when durable evidence is nonempty
+        env:
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "INSERT INTO mg_auth_ledger.mfa_redemptions VALUES('synthetic-event')"
+          if docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger < proposals/v129-full-rollback-disposable-review-only.sql; then
+            echo 'FAIL: nonempty ledger rollback was not blocked'; exit 1
+          fi
+          test "$(docker exec -i "$PG_CONTAINER" psql -X -At -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "SELECT to_regclass('mg_v128_fictional.challenge_journal') IS NOT NULL")" = "t"
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "DELETE FROM mg_auth_ledger.mfa_redemptions"
+      - name: Refuse unfamiliar private objects and unexpected external dependencies
+        env:
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "CREATE TABLE mg_v126_fictional.unexpected_foreign_table(id integer)"
+          if docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger < proposals/v129-full-rollback-disposable-review-only.sql; then
+            echo 'FAIL: unfamiliar object was dropped'; exit 1
+          fi
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "DROP TABLE mg_v126_fictional.unexpected_foreign_table RESTRICT"
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "CREATE VIEW public.v129_external_dependency AS SELECT proof_reference FROM mg_v128_fictional.challenge_journal"
+          if docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger < proposals/v129-full-rollback-disposable-review-only.sql; then
+            echo 'FAIL: external dependent view was destroyed'; exit 1
+          fi
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "DROP VIEW public.v129_external_dependency RESTRICT"
+      - name: Verify complete rollback on empty CI fixture without touching auth/public
+        env:
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger < proposals/v129-full-rollback-disposable-review-only.sql
+          test "$(docker exec -i "$PG_CONTAINER" psql -X -At -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c "SELECT (SELECT count(*) FROM pg_namespace WHERE nspname IN ('mg_auth_ledger','mg_v126_fictional','mg_v128_fictional'))=0 AND (SELECT count(*) FROM pg_roles WHERE rolname IN ('mg_auth_ledger_writer','mg_v118_ci_backend','mg_v122_ci_auth_reader','mg_v126_ci_issuer','mg_v126_ci_reader','mg_v128_ci_journal'))=0 AND to_regclass('auth.sessions') IS NOT NULL AND (SELECT count(*) FROM pg_namespace WHERE nspname='public')=1")" = "t"
+          echo 'V129_SUCCESS: 3 private schemas, 3 tables and 6 fixture roles removed; auth/public preserved.'
+      - name: No actual QA migration or authorization
+        if: always()
+        run: |
+          echo 'Only ephemeral PostgreSQL 17 rollback pattern was tested.'
+          echo 'File cannot execute against actual Supabase QA database by design.'
+          echo 'Requires DBA-approved real QA schema/role names, backups, retention and explicit owner consent.'
+          echo 'PR #7 draft; V67 0/32; production NO_GO.'

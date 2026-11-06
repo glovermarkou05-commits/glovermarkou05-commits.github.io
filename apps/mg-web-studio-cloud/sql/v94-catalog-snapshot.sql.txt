@@ -1,0 +1,43 @@
+-- V94B catalog and synthetic row snapshot, deterministic and content-free except fixture slug count.
+-- Do not include timestamps or real user data.
+\set ON_ERROR_STOP on
+COPY (
+WITH snap AS (
+ SELECT 'TABLE|'||n.nspname||'.'||c.relname||'|'||
+        pg_get_userbyid(c.relowner)||'|'||c.relrowsecurity::text||'|'||
+        c.relforcerowsecurity::text||'|'||
+        COALESCE(c.relacl::text,'NULL') AS line
+ FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
+ WHERE c.relkind='r' AND n.nspname IN ('public','mg_private') AND c.relname LIKE 'mg_%'
+ UNION ALL
+ SELECT 'COLUMN|'||table_schema||'.'||table_name||'|'||column_name||'|'||
+        data_type||'|'||is_nullable||'|'||COALESCE(column_default,'NULL')
+ FROM information_schema.columns
+ WHERE table_schema IN ('public','mg_private') AND table_name LIKE 'mg_%'
+ UNION ALL
+ SELECT 'INDEX|'||schemaname||'.'||indexname||'|'||indexdef
+ FROM pg_indexes
+ WHERE schemaname IN ('public','mg_private') AND tablename LIKE 'mg_%'
+ UNION ALL
+ SELECT 'POLICY|'||n.nspname||'.'||c.relname||'|'||p.polname||'|'||
+        p.polcmd::text||'|'||COALESCE(pg_get_expr(p.polqual,p.polrelid),'')||'|'||
+        COALESCE(pg_get_expr(p.polwithcheck,p.polrelid),'')
+ FROM pg_policy p JOIN pg_class c ON c.oid=p.polrelid
+ JOIN pg_namespace n ON n.oid=c.relnamespace
+ WHERE n.nspname IN ('public','mg_private') AND c.relname LIKE 'mg_%'
+ UNION ALL
+ SELECT 'CONSTRAINT|'||n.nspname||'.'||c.relname||'|'||con.conname||'|'||
+        pg_get_constraintdef(con.oid)
+ FROM pg_constraint con JOIN pg_class c ON c.oid=con.conrelid
+ JOIN pg_namespace n ON n.oid=c.relnamespace
+ WHERE n.nspname IN ('public','mg_private') AND c.relname LIKE 'mg_%'
+ UNION ALL
+ SELECT 'EXTENSION|'||extname||'|'||extversion||'|'||extnamespace::regnamespace::text
+ FROM pg_extension
+ WHERE extname='pgtap'
+ UNION ALL
+ SELECT 'MG_DATA|v94_lab_fixture_count|'||count(*)::text
+ FROM public.mg_organizations WHERE slug='v94-lab-fixture'
+)
+SELECT line FROM snap ORDER BY line
+) TO STDOUT;

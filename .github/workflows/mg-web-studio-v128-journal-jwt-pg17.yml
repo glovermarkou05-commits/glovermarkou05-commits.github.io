@@ -1,0 +1,123 @@
+name: MG Web Studio V128 Private Journal and JWT Verifier PG17
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v128-journal-jwt-pg17.yml
+      - apps/mg-web-studio-cloud/server/v128-private-challenge-journal.cjs
+      - apps/mg-web-studio-cloud/server/v126-durable-mfa-event-store.cjs
+      - apps/mg-web-studio-cloud/server/v122-private-auth-session-row-reader.cjs
+      - apps/mg-web-studio-cloud/tests/v129-configured-private-roles.test.cjs
+      - apps/mg-web-studio-cloud/server/v128-supabase-claims-verifier.cjs
+      - apps/mg-web-studio-cloud/tests/v128-private-journal-pg17.test.cjs
+      - apps/mg-web-studio-cloud/server/v127-supabase-native-mfa-bridge.cjs
+      - apps/mg-web-studio-cloud/qa/v116-pg-driver/package-lock.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-webstudio-v128-journal-jwt-pr7
+  cancel-in-progress: false
+
+jobs:
+  journal-and-jwt:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: qa_ledger
+          POSTGRES_PASSWORD: v128-disposable-admin
+        ports:
+          - 5432/tcp
+        options: >-
+          --health-cmd "pg_isready -U postgres -d qa_ledger"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout PR without retained credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Setup pinned Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Integrity locked PostgreSQL client
+        run: |
+          set -euo pipefail
+          npm ci --prefix qa/v116-pg-driver --ignore-scripts --no-audit --no-fund
+      - name: Create private synthetic journal and nonadmin identity ONLY in disposable PG17
+        env:
+          PG_CONTAINER: ${{ job.services.postgres.id }}
+        run: |
+          set -euo pipefail
+          test -n "$PG_CONTAINER"
+          docker exec -i "$PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger <<'SQL'
+          CREATE ROLE anon NOLOGIN;
+          CREATE ROLE authenticated NOLOGIN;
+          CREATE ROLE service_role NOLOGIN;
+          CREATE SCHEMA auth;
+          REVOKE ALL ON SCHEMA auth FROM PUBLIC;
+          CREATE TABLE auth.sessions (id uuid PRIMARY KEY);
+          REVOKE ALL ON auth.sessions FROM PUBLIC,anon,authenticated,service_role;
+          CREATE SCHEMA mg_v128_fictional;
+          REVOKE ALL ON SCHEMA mg_v128_fictional FROM PUBLIC,anon,authenticated,service_role;
+          CREATE TABLE mg_v128_fictional.challenge_journal (
+            proof_reference uuid PRIMARY KEY,
+            challenge_id uuid NOT NULL UNIQUE,
+            factor_id uuid NOT NULL,
+            subject uuid NOT NULL,
+            session_id uuid NOT NULL,
+            method text NOT NULL CHECK (method IN ('totp','mfa/phone')),
+            created_at_sec bigint NOT NULL CHECK (created_at_sec>0),
+            state text NOT NULL DEFAULT 'PENDING' CHECK (state IN ('PENDING','CLAIMED')),
+            claimed_at_sec bigint,
+            CONSTRAINT claimed_state_consistent CHECK (
+              (state='PENDING' AND claimed_at_sec IS NULL) OR
+              (state='CLAIMED' AND claimed_at_sec IS NOT NULL))
+          );
+          ALTER TABLE mg_v128_fictional.challenge_journal ENABLE ROW LEVEL SECURITY;
+          ALTER TABLE mg_v128_fictional.challenge_journal FORCE ROW LEVEL SECURITY;
+          REVOKE ALL ON mg_v128_fictional.challenge_journal FROM PUBLIC,anon,authenticated,service_role;
+          CREATE ROLE mg_v128_ci_journal LOGIN NOINHERIT NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS
+            PASSWORD 'v128-disposable-journal';
+          GRANT USAGE ON SCHEMA mg_v128_fictional TO mg_v128_ci_journal;
+          GRANT SELECT ON mg_v128_fictional.challenge_journal TO mg_v128_ci_journal;
+          GRANT INSERT(proof_reference,challenge_id,factor_id,subject,session_id,method,created_at_sec)
+            ON mg_v128_fictional.challenge_journal TO mg_v128_ci_journal;
+          GRANT UPDATE(state,claimed_at_sec) ON mg_v128_fictional.challenge_journal TO mg_v128_ci_journal;
+          CREATE POLICY v128_reader ON mg_v128_fictional.challenge_journal FOR SELECT TO mg_v128_ci_journal USING (true);
+          CREATE POLICY v128_insert ON mg_v128_fictional.challenge_journal FOR INSERT TO mg_v128_ci_journal WITH CHECK (true);
+          CREATE POLICY v128_claim ON mg_v128_fictional.challenge_journal FOR UPDATE TO mg_v128_ci_journal USING (state='PENDING') WITH CHECK (state='CLAIMED');
+          SQL
+      - name: Test real PG17 journal and getClaims adapter with fake JWT verifying client
+        env:
+          CI: 'true'
+          NODE_PATH: ${{ github.workspace }}/apps/mg-web-studio-cloud/qa/v116-pg-driver/node_modules
+          V128_DISPOSABLE_ONLY: '1'
+          V128_HOST: '127.0.0.1'
+          V128_PORT: ${{ job.services.postgres.ports[5432] }}
+          V128_DB: qa_ledger
+          V128_ADMIN_PASS: v128-disposable-admin
+          V128_READER_PASS: v128-disposable-journal
+        run: |
+          set -euo pipefail
+          node --test --test-concurrency=1 tests/v128-private-journal-pg17.test.cjs tests/v129-configured-private-roles.test.cjs
+      - name: Security gate remains closed
+        if: always()
+        run: |
+          echo 'V128 uses ephemeral PostgreSQL 17 and fake getClaims return values.'
+          echo 'No Supabase QA project schema, Auth API calls, tokens, secrets or real verified JWTs.'
+          echo 'No public endpoint, no merge, no production release. V67 0/32, production NO_GO.'

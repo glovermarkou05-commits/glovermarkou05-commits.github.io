@@ -1,0 +1,48 @@
+name: MG Web Studio V127 Official Supabase MFA Native Bridge Offline
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v127-native-supabase-mfa-offline.yml
+      - apps/mg-web-studio-cloud/server/v127-supabase-native-mfa-bridge.cjs
+      - apps/mg-web-studio-cloud/tests/v127-native-auth-mfa-bridge.test.cjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v127-official-mfa-pr7
+  cancel-in-progress: false
+
+jobs:
+  native-auth-flow-contract:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Pinned checkout with no credentials persisted
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Pinned Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Test Supabase API protocol with synthetic in-process MFA without network
+        run: |
+          set -euo pipefail
+          node --require ./server/native-network-guard-v70.cjs --test --test-concurrency=1 tests/v127-native-auth-mfa-bridge.test.cjs
+      - name: Preserve QA and production authorization boundaries
+        run: |
+          echo "Only official Supabase MFA challenge and verify API interface shape simulated."
+          echo "No actual Supabase Auth API call, no live JWT, no QA data changes or DDL."
+          echo "Durable pending challenge journal and signed JWT verifier are not implemented."
+          echo "No deployed route, no key, no production secrets or scope widening."
+          echo "PR #7 draft/no merge, V67 0/32, production NO_GO."

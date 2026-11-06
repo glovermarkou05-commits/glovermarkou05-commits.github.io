@@ -1,0 +1,303 @@
+{
+  "version": "V94B",
+  "createdOn": "2026-11-01",
+  "scope": "MG_WEB_STUDIO_CLOUD_ONLY",
+  "classification": "TECHNICAL_LAB_PASS_PENDING_INDEPENDENT_REVIEW_PRODUCTION_NO_GO",
+  "readOnly": false,
+  "sqlAuthorized": true,
+  "restoreAuthorized": true,
+  "productionAuthorized": false,
+  "v67": {
+    "formalPending": 32,
+    "formalPass": 0,
+    "decision": "NO_GO"
+  },
+  "evidence": {
+    "v93OfflineTests": 85,
+    "v53HistoricalPgTapAssertions": 56,
+    "v90SyntheticRows": 4,
+    "v94BActualLab": "SUCCESS",
+    "v94BStaticTestsPassed": 17,
+    "v94BRestoredPgTapPassed": 56,
+    "v94BRestoredMgTables": 16,
+    "v94BFormalV67Accepted": 0
+  },
+  "sourceBase": "feature/mg-digital-v5-web-services",
+  "canonicalSchema": {
+    "status": "PROPOSED_BASELINE_NOT_APPROVED",
+    "priorV45Source": "db/v45-drafts/INSTALL_OBJECT_SCOPED.review.sql.txt",
+    "v45DdlHistoricalStatus": "APPLIED_IN_STAGING_WITH_TRACE_V57",
+    "doNotBlindlyReplay": true,
+    "publicTables": [
+      "mg_profiles",
+      "mg_organizations",
+      "mg_memberships",
+      "mg_sites",
+      "mg_pages",
+      "mg_membership_site_scopes",
+      "mg_site_draft_versions",
+      "mg_site_proposals",
+      "mg_proposal_revisions",
+      "mg_proposal_reviews",
+      "mg_proposal_notifications",
+      "mg_notification_reads"
+    ],
+    "privateTables": [
+      "mg_staff_roles",
+      "mg_audit_events",
+      "mg_proposal_outbox",
+      "mg_operation_idempotency"
+    ],
+    "dependencies": [
+      "auth.users",
+      "authenticated",
+      "anon",
+      "service_role",
+      "extensions.pgtap",
+      "pgcrypto",
+      "mg_private schema"
+    ],
+    "constraints": [
+      "Reconcile V45 canonical order",
+      "V54 defaults do not close function ACL",
+      "No customer identifiers, secrets or staging dumps",
+      "V53 assertions only after restored complete schema"
+    ],
+    "proposedRecoveryBaseline": "V45_HISTORICAL_APPLIED_IN_STAGING_NOT_EXECUTABLE",
+    "proposedDecisionFile": "docs/V94A-DECISION-FUENTE-CANONICA-RECUPERACION.md",
+    "ownershipScope": "MG_OWNED_16_TABLES_ONLY",
+    "staticInventory": {
+      "createTableDeclarations": 16,
+      "publicTableDeclarations": 12,
+      "privateTableDeclarations": 4,
+      "createIndexDeclarations": 11,
+      "createPolicyDeclarations": 12,
+      "enableRlsDeclarations": 16,
+      "createFunctionDeclarations": 0,
+      "schemaCoreDraftTables": 8,
+      "overlapsWithCoreDraft": 7,
+      "coreDraftOnly": [
+        "public.mg_domains"
+      ],
+      "sharedContentDraftOnly": [
+        "public.mg_site_identity",
+        "public.mg_site_products",
+        "public.mg_site_promotions",
+        "public.mg_site_content_releases"
+      ],
+      "authorizationConflict": "Core draft grants INSERT/UPDATE to authenticated for public.mg_sites and public.mg_pages, while V45 grants SELECT-only after REVOKE",
+      "migrationV54Scope": "ALTER DEFAULT PRIVILEGES FOR ROLE postgres IN SCHEMA public; TABLES+SEQUENCES only"
+    },
+    "excludedSources": [
+      "db/schema_core.review.sql",
+      "db/modelo-contenido-compartido.review.sql"
+    ],
+    "preconditionsForExecution": [
+      "Explicit new SQL/PG17 authorization",
+      "Separate ephemeral database source and destination",
+      "Synthetic-only auth users/roles/pgTAP extensions",
+      "Full canonicity and SQL parser/DDL runtime validation",
+      "Independent security review"
+    ]
+  },
+  "gates": [
+    {
+      "id": "G1",
+      "state": "PENDING",
+      "reason": "V45 DDL restored and catalog matched in isolated PG17, but portable canonical production migration not reviewed or approved independently",
+      "technicalStatus": "FULL_SCHEMA_LAB_RESTORED"
+    },
+    {
+      "id": "G2",
+      "state": "PENDING",
+      "reason": "Lab auth.uid/auth.users roles and extensions.pgtap functioned in 56/56 V53 tests; real Supabase Auth/MFA not certified",
+      "technicalStatus": "SYNTHETIC_AUTH_AND_PGTAP_LAB_PASS"
+    },
+    {
+      "id": "G3",
+      "state": "PENDING",
+      "reason": "16 MG tables, 12 policies, 11 indexes, canonical snapshots equal, V53 rollback clean; formal REC acceptance requires independent reviewer",
+      "technicalStatus": "PG17_FULL_RESTORE_AND_56_PGTAP_PASS"
+    },
+    {
+      "id": "G4",
+      "state": "AUTHORIZED_AND_EXERCISED_LAB_ONLY",
+      "reason": "User explicitly authorized two ephemeral GitHub-hosted PG17, synthetic SQL, pg_dump/pg_restore and pgTAP; completed run 41387289030; no staging or production authorization"
+    },
+    {
+      "id": "G5",
+      "state": "PENDING",
+      "reason": "No ports/network on DB, resource checks, 2/2 cleanup PASS; digest/supply-chain pin and independent review still pending",
+      "technicalStatus": "GITHUB_RUNNER_ISOLATION_AND_CLEANUP_PASS"
+    },
+    {
+      "id": "G6",
+      "state": "UNASSIGNED",
+      "reason": "Independent reviewer and evidence custodian missing"
+    },
+    {
+      "id": "G7",
+      "state": "NO_GO",
+      "reason": "32 V67 formal cases remain PENDING"
+    }
+  ],
+  "actionsPerformed": [
+    "Documentary inspection",
+    "Preparation of read-only manifest",
+    "Creation of draft review artifacts",
+    "Proposal of canonical source selection and explicit exclusion of conflicting drafts",
+    "Created scoped V94B synthetic Auth shim, pgTAP Docker image, catalog snapshot and guarded workflow",
+    "Executed two disposable PG17 clusters on GitHub Actions with user authorization",
+    "Executed isolated V45 DDL and one synthetic MG row",
+    "Completed pg_dump -Fc and pg_restore -Fc with matching canonical catalogs",
+    "Executed V53 pgTAP 56/56 PASS on restored destination and rollback verified",
+    "Verified cleanup of both containers and backup archive"
+  ],
+  "actionsNotPerformed": [
+    "Production deploy",
+    "Merge",
+    "Approval of V67",
+    "Creation of production migration",
+    "Signing or approving G1",
+    "Connecting STAGING or Supabase remote",
+    "Touching user BAZAR-ONLINE/FINZY/Ventry/MG CLUB+ data",
+    "Independent reviewer signoff"
+  ],
+  "staticReconciliation": {
+    "reviewedOn": "2026-11-01",
+    "method": "TEXT_ONLY_NO_SQL_PARSER_NO_DB",
+    "sources": {
+      "v45": {
+        "path": "db/v45-drafts/INSTALL_OBJECT_SCOPED.review.sql.txt",
+        "blobSha": "135ff2c25d935d87e5c8e9e0f9189705cd40b411"
+      },
+      "v53": {
+        "path": "tests/v53-rls-runtime.test.sql",
+        "blobSha": "18a10e935ef1487524da93f3e49ee849ba3784bf"
+      },
+      "v54": {
+        "path": "supabase/migrations/20261020191612_mg_web_studio_v54_postgres_public_table_sequence_defaults.sql",
+        "blobSha": "a4b7221a4c38696a1c2abeef79a56ee68e151a5a"
+      },
+      "coreDraft": {
+        "path": "db/schema_core.review.sql",
+        "blobSha": "02912849894f6968560211d596002d409f6a1d3a"
+      }
+    },
+    "v45Tables": 16,
+    "v45PublicTables": 12,
+    "v45PrivateTables": 4,
+    "v45PolicyDeclarations": 12,
+    "v53PublicInsertTargets": 12,
+    "v53PublicInsertTargetsMissingInV45": 0,
+    "v53InsertColumnNamesMissingInV45": 0,
+    "v53ExternalAuthUsersInsert": true,
+    "v53HistoricalPgTapCount": 56,
+    "v53RollbackMarker": true,
+    "overlappingCoreDraftTableCount": 7,
+    "overlappingTables": [
+      "public.mg_profiles",
+      "public.mg_organizations",
+      "public.mg_memberships",
+      "public.mg_sites",
+      "public.mg_pages",
+      "mg_private.mg_staff_roles",
+      "mg_private.mg_audit_events"
+    ],
+    "v54DefaultGrantScope": "postgres/public TABLES+SEQUENCES only",
+    "unresolved": [
+      "No canonical portable DDL",
+      "Auth role + auth.users reconstruction not verified",
+      "pgtap extension placement/version",
+      "postgres and supabase_admin function defaults",
+      "PG17 runtime, FK/policy and RLS validation not executed",
+      "Independent reviewer not assigned"
+    ],
+    "noFormalSignoff": true,
+    "report": "docs/V94A-RESULTADO-CONCILIACION-ESTATICA-V45-V53-V54.md"
+  },
+  "permissionsAndDependenciesReview": {
+    "cutoff": "2026-11-01",
+    "method": "STATIC_CODE_INSPECTION_ONLY",
+    "report": "docs/V94A-MATRIZ-PERMISOS-DEPENDENCIAS-POR-OBJETO.md",
+    "data": "docs/V94A-MATRIZ-PERMISOS-DEPENDENCIAS-POR-OBJETO.json",
+    "mgTables": 16,
+    "publicTables": 12,
+    "privateTables": 4,
+    "declaredRls": 16,
+    "declaredSelectPolicies": 12,
+    "explicitIndexes": 11,
+    "uniqueIndexes": 2,
+    "effectivePrivilegesVerified": false,
+    "actualPostgresCatalogInspected": false,
+    "independentSignoff": false,
+    "sqlExecuted": false,
+    "materialGaps": [
+      "Postgres real ACL/default privileges including supabase_admin and PUBLIC EXECUTE",
+      "Auth fixture and external extensions",
+      "DDL canonical compatibility",
+      "Independent review and V94B scoped authorization"
+    ]
+  },
+  "finalPreflight": {
+    "date": "2026-11-01",
+    "status": "DOCUMENTED_NOT_READY_NOT_AUTHORIZED",
+    "report": "docs/V94B-PREFLIGHT-FINAL-Y-CRITERIOS-DE-EJECUCION.md",
+    "baseline": "V45_PROPOSED_NOT_EXECUTABLE",
+    "referenceLab": "V90_SAFE_PATTERNS_ONLY",
+    "roleMismatch": [
+      "V90 only mg_v86_tenant_a/tenant_b/guest",
+      "V53 requires anon/authenticated/service_role, auth.users and auth.uid()"
+    ],
+    "pgTapAvailabilityInPostgresImage": "UNVERIFIED",
+    "v90Image": "postgres:17-bookworm",
+    "pgDumpRestoresGlobalRoles": false,
+    "ownershipPreservationWithNoOwner": "UNVERIFIED",
+    "testsOnRestoredFullMgSchema": 0,
+    "requiredHistoricalAssertions": 56,
+    "runtimeSqlAuthorized": false,
+    "permissionForLab": "NOT_AUTHORIZED",
+    "newWorkflowCreated": false,
+    "v67RemainingFormal": 32,
+    "deployment": "NO_GO",
+    "supersededByRealRun": "docs/V94B-RESULTADO-ENSAYO-PG17-MG-COMPLETO-20261101.md"
+  },
+  "authorizationScope": "USER_EXPLICIT_V94B_20261101_GITHUB_HOSTED_TWO_PG17_SYNTHETIC_ONLY",
+  "actualV94BRun": {
+    "localDate": "2026-11-01",
+    "utcRun": "2026-11-02T04:14Z",
+    "workflowRunId": 41387289030,
+    "jobId": 125090834612,
+    "workflowRunUrl": "https://github.com/glovermarkou05-commits/glovermarkou05-commits.github.io/actions/runs/41387289030",
+    "testedCommitSha": "199fba2044f1ac1a03f2894847d6d6740510795e",
+    "conclusion": "completed/success",
+    "postgresVersion": "17.11",
+    "imageId": "sha256:9e86de80168c59cb57107393ccafb3720dda3bf97c06c248adcd5205fd5a2a40",
+    "labOnly": true,
+    "networkIsolated": true,
+    "testResults": {
+      "staticPassed": 17,
+      "staticFailed": 0,
+      "pgTapPassed": 56,
+      "pgTapFailed": 0,
+      "restoredMgTables": 16,
+      "policies": 12,
+      "explicitIndexes": 11,
+      "syntheticRows": 1,
+      "sourceDestinationSnapshotsEqual": true,
+      "rollbackClean": true,
+      "containersRemoved": 2
+    },
+    "backup": {
+      "format": "PGDMP",
+      "bytes": 335153,
+      "sha256": "e9b68532b7262a0717d315a61c405cb9333c04c7c484eea21f2602beb00ca69f",
+      "persisted": false
+    },
+    "catalogSnapshotSha256": "7be760a4a97aa8e38a2547112e00e6a6747f97b77636fec01c5f4fed60b9300f",
+    "report": "docs/V94B-RESULTADO-ENSAYO-PG17-MG-COMPLETO-20261101.md",
+    "independenceVerified": false,
+    "productionGo": false,
+    "supplyChainDigestPinned": false
+  }
+}

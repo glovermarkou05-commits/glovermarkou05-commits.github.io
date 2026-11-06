@@ -1,0 +1,43 @@
+name: MG Web Studio V95 V67 Independent Evidence Integrity
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v95-independent-evidence.yml
+      - apps/mg-web-studio-cloud/server/v95-evidence-crosswalk.cjs
+      - apps/mg-web-studio-cloud/scripts/audit-v95-evidence.cjs
+      - apps/mg-web-studio-cloud/tests/v95-evidence-crosswalk.test.cjs
+      - apps/mg-web-studio-cloud/docs/V95-TRAZABILIDAD-32-CONTROLES-V94B.json
+      - apps/mg-web-studio-cloud/docs/V95-ENTREGA-REVISION-INDEPENDIENTE.md
+permissions:
+  contents: read
+concurrency:
+  group: mg-webstudio-v95-offline-evidence-guard
+  cancel-in-progress: false
+jobs:
+  v95-document-integrity-only:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Exact PR checkout, read only
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # pinned v4.2.2
+        with:
+          persist-credentials: false
+      - name: Fixed Node.js toolchain
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # verified upstream commit
+        with:
+          node-version: '22'
+      - name: Read-only V95 audit and tampering regression tests
+        run: |
+          node --require ./server/native-network-guard-v70.cjs --test tests/v95-evidence-crosswalk.test.cjs
+          node --require ./server/native-network-guard-v70.cjs scripts/audit-v95-evidence.cjs --json
+      - name: Preserve unsigned production gate
+        run: echo "V95 offline evidence PASS does not authorize SQL, independent approval, merge or deployment. V67=32 PENDING, 0 PASS."

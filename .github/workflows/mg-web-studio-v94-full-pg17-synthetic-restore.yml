@@ -1,0 +1,59 @@
+name: MG Web Studio V94B PG17 Full Schema Synthetic Restore
+
+# V94B: Historical PASS at run 41387289030. Automatic execution disabled after
+# discovering PR path filters re-evaluate the full PR file set on synchronize.
+# Re-enabling this workflow requires fresh scope review. The job guard below
+# rejects workflow_dispatch: no DB operations will run from this paused file.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-webstudio-v94-only-synthetic-postgres-restore
+  cancel-in-progress: false
+
+jobs:
+  v94-disposable-pg17-only:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      NODE_ENV: test
+      MG_V94_SCOPE: V94B_20261101_TWO_DISPOSABLE_PG17_ONLY
+      V70_TEST_ISOLATION: '1'
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Read exact PR draft branch, no credential persistence
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node.js 22 for offline contract tests
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate shell and refusal tests (no Docker started)
+        run: |
+          bash -n scripts/run-v94-pg17-full-schema-lab.sh
+          node --require ./server/native-network-guard-v70.cjs --test tests/v94-pg17-full-restore-contract.test.cjs tests/inspect-gh-runner-v94.test.cjs
+      - name: Verify GitHub-hosted runner resources
+        run: node --require ./server/native-network-guard-v70.cjs scripts/inspect-gh-runner-v94.cjs --json
+      - name: Restore full MG synthetic PG17 schema and run V53 56 TAP cases
+        run: bash scripts/run-v94-pg17-full-schema-lab.sh
+      - name: Always verify no temporary V94 databases remain
+        if: always()
+        run: |
+          fail=0
+          for name in mg-webstudio-v94-source mg-webstudio-v94-destination; do
+            if docker container inspect "$name" >/dev/null 2>&1; then
+              echo "V94 CLEANUP FAIL: leftover container" >&2
+              fail=1
+            fi
+          done
+          if [[ "$fail" != 0 ]]; then exit 1; fi
+          echo "V94 final: both disposable container names absent"
+          echo "No archives or DB logs uploaded; V67 remains 32 PENDING, production NO_GO"

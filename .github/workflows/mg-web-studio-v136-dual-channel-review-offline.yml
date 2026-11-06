@@ -1,0 +1,44 @@
+name: MG Web Studio V136 Dual-Channel Preview Offline
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches: [feature/mg-digital-v5-web-services]
+    paths:
+      - .github/workflows/mg-web-studio-v136-dual-channel-review-offline.yml
+      - apps/mg-web-studio-cloud/server/v136-dual-channel-preview.cjs
+      - apps/mg-web-studio-cloud/tests/v136-dual-channel-preview.test.cjs
+      - apps/mg-web-studio-cloud/server/v96-private-observability.cjs
+      - apps/mg-web-studio-cloud/tests/v96-private-observability.test.cjs
+      - apps/mg-web-studio-cloud/docs/V136-PREVISUALIZACION-ALERTAS-DOBLE-CANAL.md
+
+permissions:
+  contents: read
+
+jobs:
+  v136-offline-only:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout without persistent credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Node 22 pinned setup action
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Offline V136 and V96 regression tests with network guard
+        run: |
+          set -euo pipefail
+          node --require ./server/native-network-guard-v70.cjs --test tests/v136-dual-channel-preview.test.cjs tests/v96-private-observability.test.cjs
+          node --require ./server/native-network-guard-v70.cjs --test tests/security-acceptance-v67.test.cjs tests/v67-evidence-template.test.cjs
+      - name: Fail-closed scope reminder
+        run: |
+          echo 'V136 REVIEW_ONLY: no WhatsApp, email or webhook calls; no recipients, secrets, live monitoring, persistence or production changes.'
+          echo 'Formal V67 remains 0/32 pending. PR DRAFT; production NO_GO.'

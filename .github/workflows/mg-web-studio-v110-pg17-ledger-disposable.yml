@@ -1,0 +1,65 @@
+name: MG Web Studio V110 PG17 Private Ledger Disposable
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v110-pg17-ledger-disposable.yml
+      - apps/mg-web-studio-cloud/proposals/v110-private-mfa-ledger-review-only.sql
+      - apps/mg-web-studio-cloud/tests/v110-pg17-private-ledger.test.cjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-webstudio-v110-pg17-ledger
+  cancel-in-progress: false
+
+jobs:
+  disposable-postgres-only:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    services:
+      pg:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: temporary-ci-only-not-a-secret
+          POSTGRES_DB: qa_ledger
+        options: >-
+          --health-cmd "pg_isready -U postgres -d qa_ledger"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Checkout with no persistent GitHub credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Pinned Node.js 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Prepare disposable stand-in roles and private schema
+        env:
+          V110_PG_CONTAINER: ${{ job.services.pg.id }}
+        run: |
+          set -euo pipefail
+          test -n "$V110_PG_CONTAINER"
+          docker exec -i "$V110_PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger -c             'CREATE ROLE anon NOLOGIN; CREATE ROLE authenticated NOLOGIN; CREATE ROLE service_role NOLOGIN;'
+          docker exec -i "$V110_PG_CONTAINER" psql -X -v ON_ERROR_STOP=1 -U postgres -d qa_ledger             < proposals/v110-private-mfa-ledger-review-only.sql
+      - name: Run 13 checks with independent real PostgreSQL connections
+        env:
+          V110_PG_CONTAINER: ${{ job.services.pg.id }}
+        run: node --test --test-concurrency=1 tests/v110-pg17-private-ledger.test.cjs
+      - name: Confirm provider separation
+        run: |
+          echo "V110 disposable PostgreSQL 17 only; no Supabase API, no live SQL, no users or MFA."
+          echo "Private ledger DDL is a REVIEW PROPOSAL, NOT a migration applied to QA."
+          echo "V67 32 PENDING / 0 PASS; PR #7 DRAFT, production NO_GO."

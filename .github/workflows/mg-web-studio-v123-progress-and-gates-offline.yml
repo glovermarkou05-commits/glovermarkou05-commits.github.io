@@ -1,0 +1,52 @@
+name: MG Web Studio V123 Progress and Security Gates Offline
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v123-progress-and-gates-offline.yml
+      - apps/mg-web-studio-cloud/qa/v123-release-progress.cjs
+      - apps/mg-web-studio-cloud/tests/v123-release-progress.test.cjs
+      - apps/mg-web-studio-cloud/docs/V123-ESTADO-AVANCE-31-PENDIENTE-NO_GO.md
+      - apps/mg-web-studio-cloud/docs/V67-EVIDENCIAS-PENDIENTES.json
+      - apps/mg-web-studio-cloud/docs/V95-TRAZABILIDAD-32-CONTROLES-V94B.json
+      - apps/mg-web-studio-cloud/proposals/v114-qa-review-manifest.json
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-web-studio-v123-offline-pr7
+  cancel-in-progress: false
+
+jobs:
+  readonly-progress-and-blockers:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Read-only checkout without stored credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Pinned Node 22
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: V123 verify coverage and block any false release claims
+        run: |
+          set -euo pipefail
+          node --require ./server/native-network-guard-v70.cjs --test tests/v123-release-progress.test.cjs
+          node --require ./server/native-network-guard-v70.cjs qa/v123-release-progress.cjs --json
+          node --require ./server/native-network-guard-v70.cjs qa/v123-release-progress.cjs --markdown
+      - name: Never conflate technical estimation with production approval
+        run: |
+          echo 'V123 69 percent is a conservative V95 weighted coverage estimate only.'
+          echo 'V67 0/32 formal PASS; reviewer unassigned; QA DDL unauthorized; production NO_GO.'
+          echo 'No Supabase access, no SQL, no merge, no deployment.'

@@ -1,0 +1,23 @@
+{
+  "version": "V114_REVIEW_ONLY",
+  "qaProjectRef": "tbfhiqkivsoeuudlpkgi",
+  "qaProjectName": "MG WEB STUDIO AUTH QA",
+  "targetBranch": "docs/mg-web-studio-v94-preflight-20261101",
+  "pullRequest": 7,
+  "expected": {
+    "v110-private-mfa-ledger-review-only.sql": "ca85055caed9c19989c7f3179a8593311affd86f",
+    "v111-insert-only-ledger-writer-review.sql": "549733a35805296c5588dfca4c6344a704ef2c7c",
+    "v112-rollback-guarded-review-only.sql": "38491dcd67b345028a18cc9432b297f2f611d9f6"
+  },
+  "review": {
+    "dataApi": "USER_REPORTED_SAVED_RECHECK_REQUIRED",
+    "dba": "PENDING",
+    "backend": "PENDING",
+    "ownerApproval": "PENDING",
+    "rollback": "PENDING",
+    "independentReview": "PENDING"
+  },
+  "authorizedSql": false,
+  "production": "NO_GO",
+  "formalV67Pass": 0
+}

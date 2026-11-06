@@ -1,0 +1,41 @@
+name: MG Web Studio V97 MFA Step-Up Offline Security
+
+on:
+  pull_request:
+    types: [synchronize]
+    branches:
+      - feature/mg-digital-v5-web-services
+    paths:
+      - .github/workflows/mg-web-studio-v97-mfa-step-up-offline.yml
+      - apps/mg-web-studio-cloud/server/v97-sensitive-operation-gate.cjs
+      - apps/mg-web-studio-cloud/tests/v97-sensitive-operation-gate.test.cjs
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mg-webstudio-v97-mfa-stepup-offline
+  cancel-in-progress: false
+
+jobs:
+  v97-no-network-or-production-auth:
+    if: github.repository == 'glovermarkou05-commits/glovermarkou05-commits.github.io' && github.event_name == 'pull_request' && github.event.pull_request.number == 7 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'docs/mg-web-studio-v94-preflight-20261101' && github.base_ref == 'feature/mg-digital-v5-web-services'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: apps/mg-web-studio-cloud
+        shell: bash
+    steps:
+      - name: Read-only checkout, no persisted credentials
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Fixed Node toolchain
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: V97 offline MFA guard tests with network forbidden
+        run: node --require ./server/native-network-guard-v70.cjs --test tests/v97-sensitive-operation-gate.test.cjs
+      - name: Formal gate remains blocked
+        run: echo "V97 mock adapters only. No Supabase Auth/MFA, real session, SQL, merge or deployment. V67 32 PENDING / production NO_GO."

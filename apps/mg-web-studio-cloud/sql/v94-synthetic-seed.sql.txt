@@ -1,0 +1,4 @@
+-- V94B: one non-identifying row exercising data restore; V53 users remain distinct.
+\set ON_ERROR_STOP on
+INSERT INTO public.mg_organizations (id,name,slug,status)
+VALUES ('88000000-0000-4000-8000-000000000001','V94 Lab Fixture','v94-lab-fixture','active');
